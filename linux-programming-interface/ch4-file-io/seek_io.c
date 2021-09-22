@@ -51,8 +51,9 @@ int main(int argc, char *argv[]) {
   }
 
   char errorBuf[500]; // For printing errors
-  long len;
+  long len, offset;
   char *buf;
+  int numWritten;
   for (int argi = 2; argi < argc; argi++) {
     char *op = argv[argi];
     char opType = op[0];
@@ -90,6 +91,23 @@ int main(int argc, char *argv[]) {
       }
       free(buf);
       break;
+
+    case 'w':
+      numWritten = write(file, opArg, strlen(opArg));
+      if (numWritten == -1) {
+	errExit("error writing to file");
+      }
+      printf("%s: wrote %ld bytes\n", op, (long) numWritten);
+      break;
+
+    case 's':
+      offset = getNum(opArg);
+      if (lseek(file, offset, SEEK_SET) == -1) {
+	errExit("error seeking in file");
+      }
+      printf("%s: seek succeeded\n", op);
+      break;
+
     default:
       snprintf(errorBuf, 500, "failed to open %s", path);
       fatal(errorBuf);
