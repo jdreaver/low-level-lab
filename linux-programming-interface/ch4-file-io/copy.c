@@ -1,54 +1,15 @@
-#include <errno.h>
 #include <fcntl.h>  /* open */
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>     /* Prototypes of commonly used library functions,
                            plus EXIT_SUCCESS and EXIT_FAILURE constants */
 #include <string.h>     /* Commonly used string-handling functions */
 #include <unistd.h>	/* read */
 
+#include "error_functions.h"
+
 #ifndef BUF_SIZE
 #define BUF_SIZE 1024
 #endif
-
-#ifdef TRUE
-#undef TRUE
-#endif
-
-#ifdef FALSE
-#undef FALSE
-#endif
-
-typedef enum { FALSE, TRUE } Boolean;
-
-void usageErr(const char *format, ...) {
-  va_list argList;
-
-  fflush(stdout);           /* Flush any pending stdout */
-
-  fprintf(stderr, "Usage: ");
-  va_start(argList, format);
-  vfprintf(stderr, format, argList);
-  va_end(argList);
-
-  fflush(stderr);           /* In case stderr is not line-buffered */
-  exit(EXIT_FAILURE);
-}
-
-void errExit(const char *userText) {
-  char *errorStr;
-  errorStr = strerror(errno);
-
-  fprintf(stderr, "ERROR %s (%s)\n", userText, errorStr);
-  fflush(stderr);           /* In case stderr is not line-buffered */
-  exit(EXIT_FAILURE);
-}
-
-void fatal(const char *userText) {
-  fprintf(stderr, "%s\n", userText);
-  fflush(stderr);           /* In case stderr is not line-buffered */
-  exit(EXIT_FAILURE);
-}
 
 int main(int argc, char *argv[]) {
   if (argc != 3 || strcmp(argv[1], "--help") == 0) {
