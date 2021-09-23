@@ -1,5 +1,7 @@
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -10,7 +12,31 @@
 #endif
 
 int main(int argc, char *argv[]) {
-  if (argc != 2 || strcmp(argv[1], "--help") == 0) {
+  opterr = 0; // Global variable that tells getopt not to print error messages
+
+  // Parse options
+  int c;
+  int helpFlag = 0;
+  while ((c = getopt (argc, argv, "h")) != -1) {
+    switch (c) {
+    case 'h':
+      helpFlag = 1;
+      break;
+    case '?':
+      if (isprint (optopt)) {
+	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+      } else {
+	fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+        exit(EXIT_FAILURE);
+      default:
+        abort();
+      }
+    }
+  }
+
+  // Parse positional argument
+  int numPositionalArgs = argc - optind;
+  if (helpFlag || numPositionalArgs != 1) {
     usageErr("%s FILE\n", argv[0]);
   }
 
