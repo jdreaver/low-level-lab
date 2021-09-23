@@ -17,8 +17,12 @@ int main(int argc, char *argv[]) {
   // Parse options
   int c;
   int helpFlag = 0;
-  while ((c = getopt (argc, argv, "h")) != -1) {
+  int appendFlag = 0;
+  while ((c = getopt (argc, argv, "ha")) != -1) {
     switch (c) {
+    case 'a':
+      appendFlag = 1;
+      break;
     case 'h':
       helpFlag = 1;
       break;
@@ -40,8 +44,8 @@ int main(int argc, char *argv[]) {
     usageErr("%s FILE\n", argv[0]);
   }
 
-  char *path = argv[1];
-  int openFlags = O_CREAT | O_RDWR | O_TRUNC;
+  char *path = argv[optind];
+  int openFlags = O_CREAT | O_RDWR | (appendFlag ? O_APPEND : O_TRUNC);
   mode_t filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH; /* rw-rw-rw- */
   int outputFile = open(path, openFlags, filePerms);
   if (outputFile == -1) {
