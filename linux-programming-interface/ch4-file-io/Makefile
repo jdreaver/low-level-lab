@@ -1,14 +1,14 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I../lib -Wall -Wextra -pedantic
 
 .PHONY: all
 all: copy seek_io tee
 
-copy: copy.c
-	$(CC) $(CFLAGS) -o copy copy.c error_functions.c
+copy: copy.c ../lib/error_functions.c
+	$(CC) $(CFLAGS) -o $@ $^
 
-seek_io: seek_io.c
-	$(CC) $(CFLAGS) -o seek_io seek_io.c error_functions.c
+seek_io: seek_io.c ../lib/error_functions.c
+	$(CC) $(CFLAGS) -o $@ $^
 
-tee: tee.c
-	$(CC) $(CFLAGS) -o tee tee.c error_functions.c
+tee: tee.c ../lib/error_functions.c
+	$(CC) $(CFLAGS) -o $@ $^
