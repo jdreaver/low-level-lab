@@ -7,33 +7,7 @@
 #include<unistd.h>
 
 #include "error_functions.h"
-
-static long getNum(const char *arg) {
-  // Buffer for errors
-  #define BUF_SIZE 500
-  char buf[BUF_SIZE];
-
-  if (arg == NULL || *arg == '\0') {
-    fatal("getNum error: null or empty string");
-  }
-
-  errno = 0;
-  int base = 10;
-  char *endptr;
-  long res = strtol(arg, &endptr, base);
-
-  if (errno != 0) {
-    snprintf(buf, BUF_SIZE, "strtol() failed on text %s", arg);
-    errExit(buf);
-  }
-
-  if (*endptr != '\0') {
-    snprintf(buf, BUF_SIZE, "ERROR nonnumeric characters in text %s", arg);
-    fatal(buf);
-  }
-
-  return res;
-}
+#include "num_args.h"
 
 int main(int argc, char *argv[]) {
   if (argc < 3 || strcmp(argv[1], "--help") == 0) {
@@ -62,7 +36,7 @@ int main(int argc, char *argv[]) {
     switch (opType) {
     case 'r': /* Display bytes at current offset as text */
     case 'R': /* Display bytes at current offset as hex */
-      len = getNum(opArg);
+      len = getLong(opArg);
 
       buf = malloc(len);
       if (buf == NULL) {
@@ -101,7 +75,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case 's':
-      offset = getNum(opArg);
+      offset = getLong(opArg);
       if (lseek(file, offset, SEEK_SET) == -1) {
 	errExit("error seeking in file");
       }
