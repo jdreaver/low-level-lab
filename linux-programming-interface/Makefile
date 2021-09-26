@@ -1,5 +1,13 @@
+# Run like "make DEBUG=1 ..." to turn on debugging symbols
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CFLAGS=-g3 -ggdb -DDEBUG
+else
+    CFLAGS=-DNDEBUG
+endif
+
 CC=gcc
-CFLAGS=-Ilib -Wall -Wextra -pedantic
+CFLAGS+=-Ilib -Wall -Wextra -pedantic
 
 .PHONY: all
 all: bin/copy bin/seek_io bin/tee bin/pid_env bin/free_and_sbrk bin/user_group_info

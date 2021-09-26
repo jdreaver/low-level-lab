@@ -5,5 +5,6 @@ pkgs.mkShell {
     pkgs.hello
 
     pkgs.gcc
+    pkgs.gdb
   ];
 }
