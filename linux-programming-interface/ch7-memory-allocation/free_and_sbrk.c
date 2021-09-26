@@ -3,8 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "error_functions.h"
-#include "num_args.h"
+#include "lib.h"
 
 #define MAX_ALLOCS 1000000
 

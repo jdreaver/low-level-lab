@@ -5,7 +5,7 @@
 #include <string.h>     /* Commonly used string-handling functions */
 #include <unistd.h>	/* read */
 
-#include "error_functions.h"
+#include "lib.h"
 
 #ifndef BUF_SIZE
 #define BUF_SIZE 1024

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "error_functions.h"
+#include "lib.h"
 
 #ifndef BUF_SIZE
 #define BUF_SIZE 1024

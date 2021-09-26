@@ -6,8 +6,7 @@
 #include<string.h>
 #include<unistd.h>
 
-#include "error_functions.h"
-#include "num_args.h"
+#include "lib.h"
 
 int main(int argc, char *argv[]) {
   if (argc < 3 || strcmp(argv[1], "--help") == 0) {
