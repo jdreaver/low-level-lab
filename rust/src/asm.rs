@@ -1,27 +1,10 @@
 use std::str::FromStr;
 
-/// A `BinaryAInstruction` is:
-///     0 vvvvvvvvvvvvvvv
-#[derive(Debug, PartialEq, Clone)]
-pub struct BinaryAInstruction {
-    v: [bool; 15],
-}
-
-/// A `BinaryCInstruction` is:
-///     111 a cccccc ddd jjj
-#[derive(Debug, PartialEq, Clone)]
-pub struct BinaryCInstruction {
-    a: bool,
-    c: [bool; 6],
-    d: [bool; 3],
-    j: [bool; 3],
-}
-
 /// A `SourceLine` is a parsed line of assembly source code.
 #[derive(Debug, PartialEq, Clone)]
 pub struct SourceLine {
-    lineno: usize,
-    element: AssemblyElement,
+    pub lineno: usize,
+    pub element: AssemblyElement,
 }
 
 /// A `AssemblyElement` is a parsed line of assembly code (no empty lines or comments
@@ -44,7 +27,7 @@ pub enum SourceAInstruction {
 /// A symbol can be any sequence of letters, digits, underscore (_), dot (.),
 /// dollar sign ($), and colon (:) that does not begin with a digit.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Symbol(String);
+pub struct Symbol(pub String);
 
 impl FromStr for Symbol {
     type Err = String;
@@ -76,9 +59,9 @@ impl FromStr for Symbol {
 /// code: `dest = comp; jump`
 #[derive(Debug, PartialEq, Clone)]
 pub struct SourceCInstruction {
-    dest: SourceCDest,
-    comp: SourceCComp,
-    jump: SourceCJump,
+    pub dest: SourceCDest,
+    pub comp: SourceCComp,
+    pub jump: SourceCJump,
 }
 
 /// A `SourceCDest` is the `dest` part of a C instruction represented in
@@ -276,7 +259,7 @@ impl FromStr for SourceCJump {
 }
 
 /// Parses an assembly source file.
-pub fn parse_assembly_source(source: String) -> Result<Vec<SourceLine>, String> {
+pub fn parse_assembly_source(source: &String) -> Result<Vec<SourceLine>, String> {
     let parsed: Result<Vec<Option<SourceLine>>, String> = source
         .lines()
         .enumerate()
@@ -319,7 +302,7 @@ D=A
         },
     ];
 
-    assert_eq!(parse_assembly_source(src1.to_string()), Ok(expect1));
+    assert_eq!(parse_assembly_source(&src1.to_string()), Ok(expect1));
 }
 
 /// Parses a line of source code into a `SourceElement`. If the line is empty or
