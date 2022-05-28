@@ -9,7 +9,14 @@
     in {
       devShell.x86_64-linux = pkgs.mkShell {
         buildInputs = with pkgs; [
+          # Java, to run nand2tetris tools
           jre
+
+          # Rust
+          cargo
+          rustc
+          clippy
+          rustfmt
         ];
       };
     };
