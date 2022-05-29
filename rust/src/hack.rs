@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use super::asm;
+use super::asm::Symbol;
 
 pub enum HackInstruction {
     AInstruction(AInstruction),
@@ -22,10 +25,67 @@ pub struct CInstruction {
 }
 
 pub fn assemble(source: &String) -> Result<Vec<String>, String> {
-    asm::parse_assembly_source(source)?
+    let mut symbols: HashMap<Symbol, u16> = HashMap::from([
+        (Symbol("R0".to_string()), 0),
+        (Symbol("R1".to_string()), 1),
+        (Symbol("R2".to_string()), 2),
+        (Symbol("R3".to_string()), 3),
+        (Symbol("R4".to_string()), 4),
+        (Symbol("R5".to_string()), 5),
+        (Symbol("R6".to_string()), 6),
+        (Symbol("R7".to_string()), 7),
+        (Symbol("R8".to_string()), 8),
+        (Symbol("R9".to_string()), 9),
+        (Symbol("R10".to_string()), 10),
+        (Symbol("R11".to_string()), 11),
+        (Symbol("R12".to_string()), 12),
+        (Symbol("R13".to_string()), 13),
+        (Symbol("R14".to_string()), 14),
+        (Symbol("R15".to_string()), 15),
+        (Symbol("SP".to_string()), 0),
+        (Symbol("LCL".to_string()), 1),
+        (Symbol("ARG".to_string()), 2),
+        (Symbol("THIS".to_string()), 3),
+        (Symbol("THAT".to_string()), 4),
+        (Symbol("SCREEN".to_string()), 16384),
+        (Symbol("KBD".to_string()), 24576),
+    ]);
+    let mut next_symbol_loc = 16;
+
+    let parsed = asm::parse_assembly_source(source)?;
+
+    // First pass: define labels and filter them out
+    let mut a_c_instructions = Vec::new();
+    for inst in parsed.iter() {
+        match &inst.element {
+            asm::AssemblyElement::Label(sym) => {
+                // TODO: Check if label already exists and fail
+                symbols.insert(sym.clone(), a_c_instructions.len().try_into().expect("couldn't downcast usize"));
+            }
+            _ => {
+                a_c_instructions.push(inst);
+            }
+        }
+    }
+
+    // Second pass: define other variables
+    for inst in a_c_instructions.iter() {
+        match &inst.element {
+            asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
+                symbols.entry(sym.clone()).or_insert_with(|| {
+                    next_symbol_loc += 1;
+                    next_symbol_loc - 1
+                });
+            }
+            _ => ()
+        }
+    }
+
+    // Third pass: use defined variables
+    a_c_instructions
         .iter()
         .map(|inst| {
-            assembly_instruction_to_hack(inst).map(|inst| hack_instruction_to_string(&inst))
+            assembly_instruction_to_hack(inst, &symbols).map(|inst| hack_instruction_to_string(&inst))
         })
         .collect()
 }
@@ -58,7 +118,7 @@ fn bool_arrays_to_string(bools: &[&[bool]]) -> String {
     chars.iter().collect()
 }
 
-fn assembly_instruction_to_hack(inst: &asm::SourceLine) -> Result<HackInstruction, String> {
+fn assembly_instruction_to_hack(inst: &asm::SourceLine, symbols: &HashMap<Symbol, u16>) -> Result<HackInstruction, String> {
     let asm::SourceLine { lineno, element } = inst;
     match element {
         asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Number(num)) => {
@@ -66,8 +126,13 @@ fn assembly_instruction_to_hack(inst: &asm::SourceLine) -> Result<HackInstructio
                 v: a_num_to_binary(*num),
             }))
         }
-        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(asm::Symbol(sym))) => {
-            Err(format!("line {lineno}: Don't support symbols yet ({sym})"))
+        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
+            match symbols.get(sym) {
+                Some(loc) => Ok(HackInstruction::AInstruction(AInstruction {
+                    v: a_num_to_binary(*loc),
+                })),
+                None => Err(format!("line {lineno}: Don't support symbols yet ({})", sym.0)),
+            }
         }
 
         asm::AssemblyElement::CInstruction(asm::SourceCInstruction { dest, comp, jump }) => {
@@ -78,7 +143,7 @@ fn assembly_instruction_to_hack(inst: &asm::SourceLine) -> Result<HackInstructio
             }))
         }
 
-        _ => Err("line {lineno}: Unsupported instruction {element:#?}".to_string()),
+        _ => Err(format!("line {lineno}: Unsupported Hack instruction {element:?}")),
     }
 }
 

@@ -26,7 +26,7 @@ pub enum SourceAInstruction {
 
 /// A symbol can be any sequence of letters, digits, underscore (_), dot (.),
 /// dollar sign ($), and colon (:) that does not begin with a digit.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Symbol(pub String);
 
 impl FromStr for Symbol {
