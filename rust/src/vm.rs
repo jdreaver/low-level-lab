@@ -214,14 +214,24 @@ fn test_parse_vm_line() {
 
 /// Compiles VM commands to assembly source code.
 pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<Vec<String>, String> {
+    // Counter used for jump labels for comparison operations
+    let mut comparison_jump_label_counter = 0;
+
     commands
         .iter()
-        .map(|cmd| vm_command_to_asm(cmd))
+        .map(|cmd| vm_command_to_asm(cmd, &mut comparison_jump_label_counter))
         .collect::<Result<Vec<Vec<String>>, String>>()
-        .map(|vecs| vecs.into_iter().flatten().collect())
+        .map(|vecs| {
+            // Flatten Vec<Vec<...>> into Vec<...>
+            let parsed: Vec<String> = vecs.into_iter().flatten().collect();
+
+            // TODO: Add footer that ends program with infinite loop
+
+            parsed
+        })
 }
 
-pub fn vm_command_to_asm(command: &SourceLine<VMCommand>) -> Result<Vec<String>, String> {
+pub fn vm_command_to_asm(command: &SourceLine<VMCommand>, comparison_jump_label_counter: &mut usize) -> Result<Vec<String>, String> {
     match &command.item {
         VMCommand::Push(cmd) => push_to_asm(&cmd),
         VMCommand::Pop(_) => Err(format!("unsupported command {command:?}")),
@@ -230,9 +240,9 @@ pub fn vm_command_to_asm(command: &SourceLine<VMCommand>) -> Result<Vec<String>,
         VMCommand::Subtract => binary_op_asm("sub", vec!["D=D-M".to_string()]),
         VMCommand::Negate => unary_op_asm("neg", "M=-M".to_string()),
 
-        VMCommand::Equal => Err(format!("unsupported command {command:?}")),
-        VMCommand::GreaterThan => Err(format!("unsupported command {command:?}")),
-        VMCommand::LessThan => Err(format!("unsupported command {command:?}")),
+        VMCommand::Equal => binary_op_asm("eq", comparison_op_asm("JEQ", comparison_jump_label_counter)),
+        VMCommand::GreaterThan => binary_op_asm("lt", comparison_op_asm("JGT", comparison_jump_label_counter)),
+        VMCommand::LessThan => binary_op_asm("gt", comparison_op_asm("JLT", comparison_jump_label_counter)),
 
         VMCommand::And => binary_op_asm("and", vec!["D=D&M".to_string()]),
         VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
@@ -330,4 +340,41 @@ fn binary_op_asm(op_name: &str, op_code: Vec<String>) -> Result<Vec<String>, Str
     lines.push("M=D".to_string());
 
     Ok(lines)
+}
+
+/// Implements necessary ASM to compute jump results and stores value in D.
+/// Assumes that before this ASM is entered, D contains the value at *(SP-2) and
+/// A is at SP-1, like inside `binary_op_asm`.
+fn comparison_op_asm(jump_op: &str, comparison_jump_label_counter: &mut usize) -> Vec<String> {
+    let success_label = format!("_vm_comp_success_{comparison_jump_label_counter}");
+    let fail_label = format!("_vm_comp_fail_{comparison_jump_label_counter}");
+    let end_label = format!("_vm_comp_end_{comparison_jump_label_counter}");
+    let lines =
+        vec![
+            // Run comparison operation on D and M and jump to appropriate location
+            "D=D-M".to_string(),
+            format!("@{success_label}"),
+            format!("D;{jump_op}"),
+            format!("@{fail_label}"),
+            "0;JMP".to_string(),
+
+            // If the comparison operation succeeds, then jump here and we will set
+            // *(SP-1) to 0b1111... (which is -1 in decimal).
+            format!("({success_label})"),
+            "D=-1".to_string(),
+            format!("@{end_label}"),
+            "0;JMP".to_string(),
+
+            // If the comparison operation fails, then jump here and we will set
+            // *(SP-1) to 0.
+            format!("({fail_label})"),
+            "D=0".to_string(),
+
+            // End label, just to continue execution
+            format!("({end_label})"),
+        ];
+
+    *comparison_jump_label_counter += 1;
+
+    lines
 }
