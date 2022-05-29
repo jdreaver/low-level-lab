@@ -22,9 +22,12 @@ pub struct CInstruction {
 }
 
 pub fn assemble(source: &String) -> Result<Vec<String>, String> {
-    let parsed_assembly = asm::parse_assembly_source(source)?;
-    let hack = assembly_instruction_to_hack(parsed_assembly)?;
-    Ok(hack.iter().map(|inst| hack_instruction_to_string(inst)).collect())
+    asm::parse_assembly_source(source)?
+        .iter()
+        .map(|inst| {
+            assembly_instruction_to_hack(inst).map(|inst| hack_instruction_to_string(&inst))
+        })
+        .collect()
 }
 
 fn hack_instruction_to_string(inst: &HackInstruction) -> String {
@@ -55,32 +58,28 @@ fn bool_arrays_to_string(bools: &[&[bool]]) -> String {
     chars.iter().collect()
 }
 
-fn assembly_instruction_to_hack(source: Vec<asm::SourceLine>) -> Result<Vec<HackInstruction>, String> {
-    source
-        .iter()
-        .map(|asm::SourceLine { lineno, element }| match element {
-            asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Number(num)) => {
-                Ok(HackInstruction::AInstruction(AInstruction {
-                    v: a_num_to_binary(*num),
-                }))
-            },
-            asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(asm::Symbol(
-                sym,
-            ))) => panic!("line {lineno}: Don't support symbols yet ({sym})"),
+fn assembly_instruction_to_hack(inst: &asm::SourceLine) -> Result<HackInstruction, String> {
+    let asm::SourceLine { lineno, element } = inst;
+    match element {
+        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Number(num)) => {
+            Ok(HackInstruction::AInstruction(AInstruction {
+                v: a_num_to_binary(*num),
+            }))
+        }
+        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(asm::Symbol(sym))) => {
+            Err(format!("line {lineno}: Don't support symbols yet ({sym})"))
+        }
 
-            asm::AssemblyElement::CInstruction(asm::SourceCInstruction{dest, comp, jump}) => {
-                Ok(HackInstruction::CInstruction(CInstruction {
-                    ac: c_comp_to_binary(comp),
-                    d: c_dest_to_binary(dest),
-                    j: c_jump_to_binary(jump),
-                }))
-            },
+        asm::AssemblyElement::CInstruction(asm::SourceCInstruction { dest, comp, jump }) => {
+            Ok(HackInstruction::CInstruction(CInstruction {
+                ac: c_comp_to_binary(comp),
+                d: c_dest_to_binary(dest),
+                j: c_jump_to_binary(jump),
+            }))
+        }
 
-            _ => panic!("line {lineno}: Unsupported instruction {element:#?}"),
-
-
-        })
-        .collect()
+        _ => Err("line {lineno}: Unsupported instruction {element:#?}".to_string()),
+    }
 }
 
 /// Converts a decimal number from an A instruction into a binary array
@@ -113,34 +112,34 @@ fn c_dest_to_binary(dest: &asm::SourceCDest) -> [bool; 3] {
 
 fn c_comp_to_binary(comp: &asm::SourceCComp) -> [bool; 7] {
     match comp {
-            asm::SourceCComp::Zero => [false, true, false, true, false, true, false],
-            asm::SourceCComp::One => [false, true, true, true, true, true, true],
-            asm::SourceCComp::NegOne => [false, true, true, true, false, true, false],
-            asm::SourceCComp::D => [false, false, false, true, true, false, false],
-            asm::SourceCComp::A => [false, true, true, false, false, false, false],
-            asm::SourceCComp::M => [true, true, true, false, false, false, false],
-            asm::SourceCComp::NotD => [false, false, false, true, true, false, true],
-            asm::SourceCComp::NotA => [false, true, true, false, false, false, true],
-            asm::SourceCComp::NotM => [true, true, true, false, false, false, true],
-            asm::SourceCComp::NegD => [false, false, false, true, true, true, true],
-            asm::SourceCComp::NegA => [false, true, true, false, false, true, true],
-            asm::SourceCComp::NegM => [true, true, true, false, false, true, true],
-            asm::SourceCComp::DPlusOne => [false, false, true, true, true, true, true],
-            asm::SourceCComp::APlusOne => [false, true, true, false, true, true, true],
-            asm::SourceCComp::MPlusOne => [true, true, true, false, true, true, true],
-            asm::SourceCComp::DMinusOne => [false, false, false, true, true, true, false],
-            asm::SourceCComp::AMinusOne => [false, true, true, false, false, true, false],
-            asm::SourceCComp::MMinusOne => [true, true, true, false, false, true, false],
-            asm::SourceCComp::DPlusA => [false, false, false, false, false, true, false],
-            asm::SourceCComp::DPlusM => [true, false, false, false, false, true, false],
-            asm::SourceCComp::DMinusA => [false, false, true, false, false, true, true],
-            asm::SourceCComp::DMinusM => [true, false, true, false, false, true, true],
-            asm::SourceCComp::AMinusD => [false, false, false, false, true, true, true],
-            asm::SourceCComp::MMinusD => [true, false, false, false, true, true, true],
-            asm::SourceCComp::DAndA => [false, false, false, false, false, false, false],
-            asm::SourceCComp::DAndM => [true, false, false, false, false, false, false],
-            asm::SourceCComp::DOrA => [false, false, true, false, true, false, true],
-            asm::SourceCComp::DOrM => [true, false, true, false, true, false, true],
+        asm::SourceCComp::Zero => [false, true, false, true, false, true, false],
+        asm::SourceCComp::One => [false, true, true, true, true, true, true],
+        asm::SourceCComp::NegOne => [false, true, true, true, false, true, false],
+        asm::SourceCComp::D => [false, false, false, true, true, false, false],
+        asm::SourceCComp::A => [false, true, true, false, false, false, false],
+        asm::SourceCComp::M => [true, true, true, false, false, false, false],
+        asm::SourceCComp::NotD => [false, false, false, true, true, false, true],
+        asm::SourceCComp::NotA => [false, true, true, false, false, false, true],
+        asm::SourceCComp::NotM => [true, true, true, false, false, false, true],
+        asm::SourceCComp::NegD => [false, false, false, true, true, true, true],
+        asm::SourceCComp::NegA => [false, true, true, false, false, true, true],
+        asm::SourceCComp::NegM => [true, true, true, false, false, true, true],
+        asm::SourceCComp::DPlusOne => [false, false, true, true, true, true, true],
+        asm::SourceCComp::APlusOne => [false, true, true, false, true, true, true],
+        asm::SourceCComp::MPlusOne => [true, true, true, false, true, true, true],
+        asm::SourceCComp::DMinusOne => [false, false, false, true, true, true, false],
+        asm::SourceCComp::AMinusOne => [false, true, true, false, false, true, false],
+        asm::SourceCComp::MMinusOne => [true, true, true, false, false, true, false],
+        asm::SourceCComp::DPlusA => [false, false, false, false, false, true, false],
+        asm::SourceCComp::DPlusM => [true, false, false, false, false, true, false],
+        asm::SourceCComp::DMinusA => [false, false, true, false, false, true, true],
+        asm::SourceCComp::DMinusM => [true, false, true, false, false, true, true],
+        asm::SourceCComp::AMinusD => [false, false, false, false, true, true, true],
+        asm::SourceCComp::MMinusD => [true, false, false, false, true, true, true],
+        asm::SourceCComp::DAndA => [false, false, false, false, false, false, false],
+        asm::SourceCComp::DAndM => [true, false, false, false, false, false, false],
+        asm::SourceCComp::DOrA => [false, false, true, false, true, false, true],
+        asm::SourceCComp::DOrM => [true, false, true, false, true, false, true],
     }
 }
 
