@@ -84,7 +84,7 @@ impl ToString for Segment {
 
 /// Parses a VM source file.
 pub fn parse_vm_source(source: &String) -> Result<Vec<SourceLine<VMCommand>>, String> {
-    let parsed: Result<Vec<Option<SourceLine<VMCommand>>>, String> = source
+    source
         .lines()
         .enumerate()
         .map(|(lineno, source_line)| match parse_vm_line(source_line) {
@@ -92,8 +92,8 @@ pub fn parse_vm_source(source: &String) -> Result<Vec<SourceLine<VMCommand>>, St
             Ok(Some(item)) => Ok(Some(SourceLine { lineno, item })),
             Ok(None) => Ok(None),
         })
-        .collect();
-    parsed.map(|p| p.into_iter().flatten().collect())
+        .collect::<Result<Vec<Option<SourceLine<VMCommand>>>, String>>()
+        .map(|p| p.into_iter().flatten().collect())
 }
 
 #[test]

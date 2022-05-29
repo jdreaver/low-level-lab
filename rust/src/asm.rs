@@ -262,7 +262,7 @@ impl FromStr for SourceCJump {
 
 /// Parses an assembly source file.
 pub fn parse_assembly_source(source: &String) -> Result<Vec<SourceLine<AssemblyElement>>, String> {
-    let parsed: Result<Vec<Option<SourceLine<AssemblyElement>>>, String> = source
+    source
         .lines()
         .enumerate()
         .map(
@@ -272,8 +272,8 @@ pub fn parse_assembly_source(source: &String) -> Result<Vec<SourceLine<AssemblyE
                 Ok(None) => Ok(None),
             },
         )
-        .collect();
-    parsed.map(|p| p.into_iter().flatten().collect())
+        .collect::<Result<Vec<Option<SourceLine<AssemblyElement>>>, String>>()
+        .map(|p| p.into_iter().flatten().collect())
 }
 
 #[test]
