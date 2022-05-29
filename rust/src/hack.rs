@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::asm;
 use super::asm::Symbol;
+use super::misc::SourceLine;
 
 pub enum HackInstruction {
     AInstruction(AInstruction),
@@ -57,7 +58,7 @@ pub fn assemble(source: &String) -> Result<Vec<String>, String> {
     // First pass: define labels and filter them out
     let mut a_c_instructions = Vec::new();
     for inst in parsed.iter() {
-        match &inst.element {
+        match &inst.item {
             asm::AssemblyElement::Label(sym) => {
                 // TODO: Check if label already exists and fail
                 symbols.insert(sym.clone(), a_c_instructions.len().try_into().expect("couldn't downcast usize"));
@@ -70,7 +71,7 @@ pub fn assemble(source: &String) -> Result<Vec<String>, String> {
 
     // Second pass: define other variables
     for inst in a_c_instructions.iter() {
-        match &inst.element {
+        match &inst.item {
             asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
                 symbols.entry(sym.clone()).or_insert_with(|| {
                     next_symbol_loc += 1;
@@ -118,9 +119,9 @@ fn bool_arrays_to_string(bools: &[&[bool]]) -> String {
     chars.iter().collect()
 }
 
-fn assembly_instruction_to_hack(inst: &asm::SourceLine, symbols: &HashMap<Symbol, u16>) -> Result<HackInstruction, String> {
-    let asm::SourceLine { lineno, element } = inst;
-    match element {
+fn assembly_instruction_to_hack(inst: &SourceLine<asm::AssemblyElement>, symbols: &HashMap<Symbol, u16>) -> Result<HackInstruction, String> {
+    let SourceLine { lineno, item } = inst;
+    match item {
         asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Number(num)) => {
             Ok(HackInstruction::AInstruction(AInstruction {
                 v: a_num_to_binary(*num),
@@ -143,7 +144,7 @@ fn assembly_instruction_to_hack(inst: &asm::SourceLine, symbols: &HashMap<Symbol
             }))
         }
 
-        _ => Err(format!("line {lineno}: Unsupported Hack instruction {element:?}")),
+        _ => Err(format!("line {lineno}: Unsupported Hack instruction {item:?}")),
     }
 }
 

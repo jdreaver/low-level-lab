@@ -1,11 +1,6 @@
 use std::str::FromStr;
 
-/// A `SourceLine` is a parsed line of assembly source code.
-#[derive(Debug, PartialEq, Clone)]
-pub struct SourceLine {
-    pub lineno: usize,
-    pub element: AssemblyElement,
-}
+use super::misc::SourceLine;
 
 /// A `AssemblyElement` is a parsed line of assembly code (no empty lines or comments
 /// included).
@@ -259,14 +254,14 @@ impl FromStr for SourceCJump {
 }
 
 /// Parses an assembly source file.
-pub fn parse_assembly_source(source: &String) -> Result<Vec<SourceLine>, String> {
-    let parsed: Result<Vec<Option<SourceLine>>, String> = source
+pub fn parse_assembly_source(source: &String) -> Result<Vec<SourceLine<AssemblyElement>>, String> {
+    let parsed: Result<Vec<Option<SourceLine<AssemblyElement>>>, String> = source
         .lines()
         .enumerate()
         .map(
             |(lineno, source_line)| match parse_assembly_line(source_line) {
                 Err(err) => Err(format!("error on line {lineno}: {err}")),
-                Ok(Some(element)) => Ok(Some(SourceLine { lineno, element })),
+                Ok(Some(item)) => Ok(Some(SourceLine { lineno, item })),
                 Ok(None) => Ok(None),
             },
         )
@@ -286,15 +281,15 @@ D=A
     let expect1 = vec![
         SourceLine {
             lineno: 3,
-            element: AssemblyElement::AInstruction(SourceAInstruction::Number(123)),
+            item: AssemblyElement::AInstruction(SourceAInstruction::Number(123)),
         },
         SourceLine {
             lineno: 4,
-            element: AssemblyElement::Label(Symbol("LOOP".to_string())),
+            item: AssemblyElement::Label(Symbol("LOOP".to_string())),
         },
         SourceLine {
             lineno: 5,
-            element: AssemblyElement::CInstruction(SourceCInstruction {
+            item: AssemblyElement::CInstruction(SourceCInstruction {
                 dest: SourceCDest::D,
                 comp: SourceCComp::A,
                 jump: SourceCJump::Null,
