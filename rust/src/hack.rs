@@ -56,37 +56,53 @@ pub fn assemble(source: &String) -> Result<Vec<String>, String> {
     let parsed = asm::parse_assembly_source(source)?;
 
     // First pass: define labels and filter them out
-    let mut a_c_instructions = Vec::new();
+    let mut instructions: Vec<SourceLine<asm::AssemblyInstruction>> = Vec::new();
     for inst in parsed.iter() {
         match &inst.item {
             asm::AssemblyElement::Label(sym) => {
                 // TODO: Check if label already exists and fail
-                symbols.insert(sym.clone(), a_c_instructions.len().try_into().expect("couldn't downcast usize"));
+                symbols.insert(
+                    sym.clone(),
+                    instructions
+                        .len()
+                        .try_into()
+                        .expect("couldn't downcast usize"),
+                );
             }
-            _ => {
-                a_c_instructions.push(inst);
+            asm::AssemblyElement::AInstruction(a_inst) => {
+                instructions.push(SourceLine {
+                    lineno: inst.lineno,
+                    item: asm::AssemblyInstruction::AInstruction(a_inst.clone()),
+                });
+            }
+            asm::AssemblyElement::CInstruction(c_inst) => {
+                instructions.push(SourceLine {
+                    lineno: inst.lineno,
+                    item: asm::AssemblyInstruction::CInstruction(c_inst.clone()),
+                });
             }
         }
     }
 
     // Second pass: define other variables
-    for inst in a_c_instructions.iter() {
+    for inst in instructions.iter() {
         match &inst.item {
-            asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
+            asm::AssemblyInstruction::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
                 symbols.entry(sym.clone()).or_insert_with(|| {
                     next_symbol_loc += 1;
                     next_symbol_loc - 1
                 });
             }
-            _ => ()
+            _ => (),
         }
     }
 
     // Third pass: use defined variables
-    a_c_instructions
+    instructions
         .iter()
         .map(|inst| {
-            assembly_instruction_to_hack(inst, &symbols).map(|inst| hack_instruction_to_string(&inst))
+            assembly_instruction_to_hack(inst, &symbols)
+                .map(|inst| hack_instruction_to_string(&inst))
         })
         .collect()
 }
@@ -119,32 +135,36 @@ fn bool_arrays_to_string(bools: &[&[bool]]) -> String {
     chars.iter().collect()
 }
 
-fn assembly_instruction_to_hack(inst: &SourceLine<asm::AssemblyElement>, symbols: &HashMap<Symbol, u16>) -> Result<HackInstruction, String> {
+fn assembly_instruction_to_hack(
+    inst: &SourceLine<asm::AssemblyInstruction>,
+    symbols: &HashMap<Symbol, u16>,
+) -> Result<HackInstruction, String> {
     let SourceLine { lineno, item } = inst;
     match item {
-        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Number(num)) => {
+        asm::AssemblyInstruction::AInstruction(asm::SourceAInstruction::Number(num)) => {
             Ok(HackInstruction::AInstruction(AInstruction {
                 v: a_num_to_binary(*num),
             }))
         }
-        asm::AssemblyElement::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
+        asm::AssemblyInstruction::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
             match symbols.get(sym) {
                 Some(loc) => Ok(HackInstruction::AInstruction(AInstruction {
                     v: a_num_to_binary(*loc),
                 })),
-                None => Err(format!("line {lineno}: Don't support symbols yet ({})", sym.0)),
+                None => Err(format!(
+                    "line {lineno}: Don't support symbols yet ({})",
+                    sym.0
+                )),
             }
         }
 
-        asm::AssemblyElement::CInstruction(asm::SourceCInstruction { dest, comp, jump }) => {
+        asm::AssemblyInstruction::CInstruction(asm::SourceCInstruction { dest, comp, jump }) => {
             Ok(HackInstruction::CInstruction(CInstruction {
                 ac: c_comp_to_binary(comp),
                 d: c_dest_to_binary(dest),
                 j: c_jump_to_binary(jump),
             }))
         }
-
-        _ => Err(format!("line {lineno}: Unsupported Hack instruction {item:?}")),
     }
 }
 

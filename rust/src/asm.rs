@@ -2,13 +2,20 @@ use std::str::FromStr;
 
 use super::misc::SourceLine;
 
-/// A `AssemblyElement` is a parsed line of assembly code (no empty lines or comments
-/// included).
+/// An `AssemblyElement` is a parsed line of assembly code (no empty lines or
+/// comments included).
 #[derive(Debug, PartialEq, Clone)]
 pub enum AssemblyElement {
     AInstruction(SourceAInstruction),
     CInstruction(SourceCInstruction),
     Label(Symbol),
+}
+
+/// An `AssemblyInstruction` is just A and C instructions (no labels).
+#[derive(Debug, PartialEq, Clone)]
+pub enum AssemblyInstruction {
+    AInstruction(SourceAInstruction),
+    CInstruction(SourceCInstruction),
 }
 
 /// A `SourceAInstruction` is a decimal value ranging from 0 to 32767 (2^15 - 1)
