@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::string::ToString;
 
 use super::misc::SourceLine;
 
@@ -62,6 +63,21 @@ impl FromStr for Segment {
             "temp" => Ok(Segment::Temp),
             "" => Err("Empty string for segment".to_string()),
             _ => Err(format!("Unknown segment {s}")),
+        }
+    }
+}
+
+impl ToString for Segment {
+    fn to_string(&self) -> String {
+        match self {
+            Segment::Argument => "argument".to_string(),
+            Segment::Local => "local".to_string(),
+            Segment::Static => "static".to_string(),
+            Segment::Constant => "constant".to_string(),
+            Segment::This => "this".to_string(),
+            Segment::That => "that".to_string(),
+            Segment::Pointer => "pointer".to_string(),
+            Segment::Temp => "temp".to_string(),
         }
     }
 }
@@ -194,4 +210,72 @@ fn test_parse_vm_line() {
         parse_vm_line("eq stuff"),
         Err("expected no args after eq, got got [\"stuff\"]".to_string())
     );
+}
+
+/// Compiles VM commands to assembly source code.
+pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<String, String> {
+    commands
+        .iter()
+        .map(|cmd| vm_command_to_asm(cmd))
+        .collect()
+}
+
+pub fn vm_command_to_asm(command: &SourceLine<VMCommand>) -> Result<String, String> {
+    match &command.item {
+        VMCommand::Push(cmd) => push_to_asm(&cmd),
+        _ => Err(format!("unsupported command {command:?}")),
+    }
+}
+
+fn push_to_asm(command: &PushCommand) -> Result<String, String> {
+    let PushCommand { segment, index } = command;
+    let segment_str = segment.to_string();
+
+    let mut lines = vec![format!("// push {segment_str} {index}")];
+
+    // Fetch the value from *(segment + index) and put into D
+    let mut fetch_lines = match segment {
+        Segment::Argument => asm_fetch_memory_offset("@ARG".to_string(), *index),
+        Segment::Local => asm_fetch_memory_offset("@LCL".to_string(), *index),
+        Segment::Static => asm_fetch_memory_offset("@16".to_string(), *index),
+        Segment::This => asm_fetch_memory_offset("@THIS".to_string(), *index),
+        Segment::That => asm_fetch_memory_offset("@THAT".to_string(), *index),
+        Segment::Pointer => asm_fetch_memory_offset("@3".to_string(), *index),
+        Segment::Temp => asm_fetch_memory_offset("@5".to_string(), *index),
+
+        // Constant is a virtual segment, used to fetch constant values
+        Segment::Constant => vec![
+            format!("@{index}").to_string(),
+            "D=A".to_string(),
+        ],
+    };
+    lines.append(&mut fetch_lines);
+
+    // Store D onto the stack
+    lines.push("@SP".to_string()); // Set A to SP (RAM[0])
+    lines.push("A=M".to_string()); // Follow pointer
+    lines.push("M=D".to_string()); // Store D in pointer location
+
+    // Increment SP
+    lines.push("@SP".to_string());
+    lines.push("M=M+1".to_string());
+
+    Ok(lines.join("\n"))
+}
+
+/// ASM code to fetch memory from a given base address + offset to the D
+/// register.
+fn asm_fetch_memory_offset(base: String, offset: u16) -> Vec<String> {
+    vec![
+        // Set A to base
+        base,
+        // Set D to point to base memory location
+        "D=M".to_string(),
+        // Load offset into A and add to D
+        format!("@{offset}"),
+        "D=D+A".to_string(),
+        // Follow the pointer by setting A to D and then reading M
+        "A=D".to_string(),
+        "D=M".to_string(),
+    ]
 }
