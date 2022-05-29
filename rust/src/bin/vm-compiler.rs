@@ -17,5 +17,10 @@ fn main() {
         fs::read_to_string(source_path).expect("Something went wrong reading the source file");
 
     let parsed = vm::parse_vm_source(&source_string).expect("failed to parse source");
-    println!("{:#?}", parsed);
+    // println!("{:#?}", parsed);
+
+    let asm = vm::vm_to_asm(parsed).expect("failed to compile source to ASM");
+    for line in &asm {
+        println!("{}", line)
+    }
 }

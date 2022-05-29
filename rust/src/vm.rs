@@ -213,21 +213,34 @@ fn test_parse_vm_line() {
 }
 
 /// Compiles VM commands to assembly source code.
-pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<String, String> {
+pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<Vec<String>, String> {
     commands
         .iter()
         .map(|cmd| vm_command_to_asm(cmd))
-        .collect()
+        .collect::<Result<Vec<Vec<String>>, String>>()
+        .map(|vecs| vecs.into_iter().flatten().collect())
 }
 
-pub fn vm_command_to_asm(command: &SourceLine<VMCommand>) -> Result<String, String> {
+pub fn vm_command_to_asm(command: &SourceLine<VMCommand>) -> Result<Vec<String>, String> {
     match &command.item {
         VMCommand::Push(cmd) => push_to_asm(&cmd),
-        _ => Err(format!("unsupported command {command:?}")),
+        VMCommand::Pop(_) => Err(format!("unsupported command {command:?}")),
+
+        VMCommand::Add => binary_op_asm("add", vec!["D=D+M".to_string()]),
+        VMCommand::Subtract => binary_op_asm("sub", vec!["D=D-M".to_string()]),
+        VMCommand::Negate => unary_op_asm("neg", "M=-M".to_string()),
+
+        VMCommand::Equal => Err(format!("unsupported command {command:?}")),
+        VMCommand::GreaterThan => Err(format!("unsupported command {command:?}")),
+        VMCommand::LessThan => Err(format!("unsupported command {command:?}")),
+
+        VMCommand::And => binary_op_asm("and", vec!["D=D&M".to_string()]),
+        VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
+        VMCommand::Not => unary_op_asm("not", "M=!M".to_string()),
     }
 }
 
-fn push_to_asm(command: &PushCommand) -> Result<String, String> {
+fn push_to_asm(command: &PushCommand) -> Result<Vec<String>, String> {
     let PushCommand { segment, index } = command;
     let segment_str = segment.to_string();
 
@@ -260,7 +273,7 @@ fn push_to_asm(command: &PushCommand) -> Result<String, String> {
     lines.push("@SP".to_string());
     lines.push("M=M+1".to_string());
 
-    Ok(lines.join("\n"))
+    Ok(lines)
 }
 
 /// ASM code to fetch memory from a given base address + offset to the D
@@ -278,4 +291,43 @@ fn asm_fetch_memory_offset(base: String, offset: u16) -> Vec<String> {
         "A=D".to_string(),
         "D=M".to_string(),
     ]
+}
+
+/// Updates the top of the stack in-place with the given operation. When the
+/// operation is applied, A is pointing at SP-1, so you can do the op on M.
+fn unary_op_asm(op_name: &str, op_code: String) -> Result<Vec<String>, String> {
+    Ok(vec![
+        format!("// {op_name}"),
+        // Point A at SP-1
+        "@SP".to_string(),
+        "A=M-1".to_string(),
+        op_code,
+    ])
+}
+
+/// Pops two items off the stack, applies the given operation, and pushes the
+/// result back onto the stack. When the operation is applied, D contains the
+/// value at *(SP-2) and A is at SP-1, so for example addition would be D=D+M.
+fn binary_op_asm(op_name: &str, op_code: Vec<String>) -> Result<Vec<String>, String> {
+    // Decrement SP by 1
+    let mut lines = vec![
+        format!("// {op_name}"),
+        "@SP".to_string(),
+        "M=M-1".to_string(),
+    ];
+
+    // First arg for operation is now at SP-1. Fetch that and put into D.
+    lines.push("A=M-1".to_string());
+    lines.push("D=M".to_string());
+
+    // Get second arg at SP and perform op, storing result in D
+    lines.push("A=A+1".to_string());
+    lines.extend(op_code);
+
+    // Store result in SP-1
+    lines.push("@SP".to_string());
+    lines.push("A=M-1".to_string());
+    lines.push("M=D".to_string());
+
+    Ok(lines)
 }
