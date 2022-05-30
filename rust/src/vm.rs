@@ -243,12 +243,15 @@ pub fn vm_to_asm(
     filename: &String,
     commands: Vec<SourceLine<VMCommand>>,
 ) -> Result<Vec<String>, String> {
+    // Used to prefix labels
+    let mut current_function_name: String = "".to_string();
+
     // Counter used for jump labels for comparison operations
     let mut comparison_jump_label_counter = 0;
 
     commands
         .iter()
-        .map(|cmd| vm_command_to_asm(filename, cmd, &mut comparison_jump_label_counter))
+        .map(|cmd| vm_command_to_asm(filename, cmd, &mut current_function_name, &mut comparison_jump_label_counter))
         .collect::<Result<Vec<Vec<String>>, String>>()
         .map(|vecs| {
             // Flatten Vec<Vec<...>> into Vec<...>
@@ -266,6 +269,7 @@ pub fn vm_to_asm(
 pub fn vm_command_to_asm(
     filename: &String,
     command: &SourceLine<VMCommand>,
+    current_function_name: &mut String,
     comparison_jump_label_counter: &mut usize,
 ) -> Result<Vec<String>, String> {
     match &command.item {
@@ -293,11 +297,9 @@ pub fn vm_command_to_asm(
         VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
         VMCommand::Not => unary_op_asm("not", "M=!M".to_string()),
 
-        // TODO: When we have function scopes, labels for Label and IfGoto
-        // should be {functionName}${sym}
-        VMCommand::Label(Symbol(sym)) => Ok(vec![format!("(${sym})")]),
+        VMCommand::Label(Symbol(sym)) => Ok(vec![format!("({current_function_name}${sym})")]),
         VMCommand::Goto(Symbol(sym)) => Ok(vec![
-            format!("@${sym}"),
+            format!("@{current_function_name}${sym}"),
             "0;JMP".to_string(),
         ]),
         VMCommand::IfGoto(Symbol(sym)) => Ok(vec![
@@ -307,7 +309,7 @@ pub fn vm_command_to_asm(
             "AM=M-1".to_string(),
             // Store M into D and do comparison
             "D=M".to_string(),
-            format!("@${sym}"),
+            format!("@{current_function_name}${sym}"),
             "D;JNE".to_string(),
         ]),
     }
