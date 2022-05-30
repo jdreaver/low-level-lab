@@ -51,8 +51,6 @@ pub fn assemble(source: &String) -> Result<Vec<String>, String> {
         (Symbol("SCREEN".to_string()), 16384),
         (Symbol("KBD".to_string()), 24576),
     ]);
-    let mut next_symbol_loc = 16;
-
     let parsed = asm::parse_assembly_source(source)?;
 
     // First pass: define labels and filter them out
@@ -88,10 +86,13 @@ pub fn assemble(source: &String) -> Result<Vec<String>, String> {
     for inst in instructions.iter() {
         match &inst.item {
             asm::AssemblyInstruction::AInstruction(asm::SourceAInstruction::Symbol(sym)) => {
-                symbols.entry(sym.clone()).or_insert_with(|| {
-                    next_symbol_loc += 1;
-                    next_symbol_loc - 1
-                });
+                // N.B. Symbols start at memory address 16
+                let current_length: u16 = symbols
+                    .len()
+                    .try_into()
+                    .expect("couldn't downcast to usize");
+                let next_address: u16 = current_length + 16;
+                symbols.entry(sym.clone()).or_insert(next_address);
             }
             _ => (),
         }
