@@ -213,13 +213,16 @@ fn test_parse_vm_line() {
 }
 
 /// Compiles VM commands to assembly source code.
-pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<Vec<String>, String> {
+pub fn vm_to_asm(
+    filename: &String,
+    commands: Vec<SourceLine<VMCommand>>,
+) -> Result<Vec<String>, String> {
     // Counter used for jump labels for comparison operations
     let mut comparison_jump_label_counter = 0;
 
     commands
         .iter()
-        .map(|cmd| vm_command_to_asm(cmd, &mut comparison_jump_label_counter))
+        .map(|cmd| vm_command_to_asm(filename, cmd, &mut comparison_jump_label_counter))
         .collect::<Result<Vec<Vec<String>>, String>>()
         .map(|vecs| {
             // Flatten Vec<Vec<...>> into Vec<...>
@@ -235,12 +238,13 @@ pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<Vec<String>, St
 }
 
 pub fn vm_command_to_asm(
+    filename: &String,
     command: &SourceLine<VMCommand>,
     comparison_jump_label_counter: &mut usize,
 ) -> Result<Vec<String>, String> {
     match &command.item {
-        VMCommand::Push(cmd) => push_to_asm(&cmd),
-        VMCommand::Pop(cmd) => pop_to_asm(&cmd),
+        VMCommand::Push(cmd) => push_to_asm(filename, &cmd),
+        VMCommand::Pop(cmd) => pop_to_asm(filename, &cmd),
 
         VMCommand::Add => binary_op_asm("add", vec!["D=D+M".to_string()]),
         VMCommand::Subtract => binary_op_asm("sub", vec!["D=D-M".to_string()]),
@@ -265,14 +269,14 @@ pub fn vm_command_to_asm(
     }
 }
 
-fn push_to_asm(command: &PushCommand) -> Result<Vec<String>, String> {
+fn push_to_asm(filename: &String, command: &PushCommand) -> Result<Vec<String>, String> {
     let PushCommand { segment, index } = command;
     let segment_str = segment.to_string();
 
     let mut lines = vec![format!("// push {segment_str} {index}")];
 
     // Compute *(segment + index) and store in D
-    lines.append(&mut asm_fetch_segment(segment, *index));
+    lines.append(&mut asm_fetch_segment(filename, segment, *index));
 
     // Follow the pointer by setting A to D and then reading M
     if *segment != Segment::Constant {
@@ -294,33 +298,25 @@ fn push_to_asm(command: &PushCommand) -> Result<Vec<String>, String> {
 
 /// ASM code to compute location of given memory segment and index and store
 /// result in D.
-fn asm_fetch_segment(segment: &Segment, index: u16) -> Vec<String> {
+fn asm_fetch_segment(filename: &String, segment: &Segment, index: u16) -> Vec<String> {
     match segment {
         Segment::Argument => asm_fetch_memory_offset("@ARG".to_string(), index),
         Segment::Local => asm_fetch_memory_offset("@LCL".to_string(), index),
         Segment::This => asm_fetch_memory_offset("@THIS".to_string(), index),
         Segment::That => asm_fetch_memory_offset("@THAT".to_string(), index),
 
-        // TODO: This mapping doesn't take filename into account, which might be
-        // a problem later. Here is what the book says on the topic:
-        //
         // Static variables are mapped on addresses 16 to 255 of the host RAM.
-        // The VM translator can realize this mapping automatically, as follows.
-        // Each reference to static i in a VM program stored in file Foo.vm can
-        // be translated to the assembly symbol Foo.i. According to the Hack
-        // machine language specification (chapter 6), the Hack assembler will
-        // map these symbolic variables on the host RAM, starting at address 16.
-        // This convention will cause the static variables that appear in a VM
-        // program to be mapped on addresses 16 and onward, in the order in
-        // which they appear in the VM code. For example, suppose that a VM
-        // program starts with the code push constant 100, push constant 200,
-        // pop static 5, pop static 2. The translation scheme described above
-        // will cause static 5 and static 2 to be mapped on RAM addresses 16 and
-        // 17, respectively
-        Segment::Static => vec![
-            format!("@_vm_static{index}"),
-            "D=A".to_string(),
-        ],
+        // The book says each reference to static i in a VM program stored in
+        // file Foo.vm can be translated to the assembly symbol Foo.i, so the
+        // Hack assembler will map these symbolic variables on the host RAM,
+        // starting at address 16. This convention will cause the static
+        // variables that appear in a VM program to be mapped on addresses 16
+        // and onward, in the order in which they appear in the VM code. For
+        // example, suppose that a VM program starts with the code push constant
+        // 100, push constant 200, pop static 5, pop static 2. The translation
+        // scheme described above will cause static 5 and static 2 to be mapped
+        // on RAM addresses 16 and 17, respectively.
+        Segment::Static => vec![format!("@{filename}.{index}"), "D=A".to_string()],
 
         // pointer is RAM[3-4]
         Segment::Pointer => {
@@ -352,14 +348,14 @@ fn asm_fetch_memory_offset(base: String, offset: u16) -> Vec<String> {
     ]
 }
 
-fn pop_to_asm(command: &PopCommand) -> Result<Vec<String>, String> {
+fn pop_to_asm(filename: &String, command: &PopCommand) -> Result<Vec<String>, String> {
     let PopCommand { segment, index } = command;
     let segment_str = segment.to_string();
 
     let mut lines = vec![format!("// pop {segment_str} {index}")];
 
     // Compute *(segment + index) and store in D
-    lines.append(&mut asm_fetch_segment(segment, *index));
+    lines.append(&mut asm_fetch_segment(filename, segment, *index));
 
     // Store segment target in R13 for now
     lines.push("@R13".to_string());
