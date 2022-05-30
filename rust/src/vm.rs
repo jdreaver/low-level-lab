@@ -24,6 +24,9 @@ pub enum VMCommand {
     Label(Symbol),
     Goto(Symbol),
     IfGoto(Symbol),
+
+    Function(FunctionCommand),
+    Return,
 }
 
 /// Push a value of segment[index] onto the stack.
@@ -84,6 +87,13 @@ impl ToString for Segment {
             Segment::Temp => "temp".to_string(),
         }
     }
+}
+
+/// Define a function with a given label and number of args.
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionCommand {
+    name: Symbol,
+    nvars: u16,
 }
 
 /// Parses a VM source file.
@@ -177,6 +187,11 @@ fn parse_vm_line(line: &str) -> Result<Option<VMCommand>, String> {
             let symbol = single_label_arg("if-goto", rest)?;
             Ok(Some(VMCommand::IfGoto(symbol)))
         }
+        "function" => {
+            let (name, nvars) = parse_function_args("function", "nvars", rest)?;
+            Ok(Some(VMCommand::Function(FunctionCommand { name, nvars })))
+        }
+        "return" => expect_no_args("return", VMCommand::Return, rest),
         _ => Err(format!("unknown VM command {first_word}")),
     }
 }
@@ -209,10 +224,32 @@ fn expect_no_args<A>(command_str: &str, command: A, args: &[&str]) -> Result<Opt
 fn single_label_arg(command_str: &str, args: &[&str]) -> Result<Symbol, String> {
     match args {
         [label] => {
-            let symbol = Symbol::from_str(label).map_err(|err| format!("error {command_str} label symbol: {err}"))?;
+            let symbol = Symbol::from_str(label)
+                .map_err(|err| format!("error {command_str} label symbol: {err}"))?;
             Ok(symbol)
         }
-        _ => Err(format!("expected just one arg to {command_str}, but got {args:?}")),
+        _ => Err(format!(
+            "expected just one arg to {command_str}, but got {args:?}"
+        )),
+    }
+}
+
+fn parse_function_args(
+    command_str: &str,
+    nvars_or_nargs: &str,
+    args: &[&str],
+) -> Result<(Symbol, u16), String> {
+    match args {
+        [name_str, nargs_str] => {
+            let name = Symbol::from_str(name_str)
+                .map_err(|err| format!("error parsing {command_str} function name: {err}"))?;
+            let nargs = u16::from_str(nargs_str)
+                .map_err(|err| format!("error parsing {command_str} {nvars_or_nargs}: {err}"))?;
+            Ok((name, nargs))
+        }
+        _ => Err(format!(
+            "expected <name> <{nvars_or_nargs}> after {command_str}, got {args:?}"
+        )),
     }
 }
 
@@ -251,7 +288,14 @@ pub fn vm_to_asm(
 
     commands
         .iter()
-        .map(|cmd| vm_command_to_asm(filename, cmd, &mut current_function_name, &mut comparison_jump_label_counter))
+        .map(|cmd| {
+            vm_command_to_asm(
+                filename,
+                cmd,
+                &mut current_function_name,
+                &mut comparison_jump_label_counter,
+            )
+        })
         .collect::<Result<Vec<Vec<String>>, String>>()
         .map(|vecs| {
             // Flatten Vec<Vec<...>> into Vec<...>
@@ -312,6 +356,101 @@ pub fn vm_command_to_asm(
             format!("@{current_function_name}${sym}"),
             "D;JNE".to_string(),
         ]),
+
+        VMCommand::Function(FunctionCommand { name, nvars }) => {
+            // Change the current function name
+            let Symbol(name_str) = name;
+            *current_function_name = name_str.clone();
+
+            // Add label for function. N.B. It appears the convention is for
+            // function names to already include the file name, at least
+            // according to the example VM commands I see.
+            let mut lines = vec![
+                format!("// function {name_str} {nvars}"),
+                format!("({name_str})"),
+            ];
+            lines.extend((0..*nvars).flat_map(|i| {
+                vec![
+                    format!("// push local {i}"),
+                    // Get value from LCL + offset and store in D
+                    "@LCL".to_string(),
+                    "D=M".to_string(),
+                    format!("@{i}"),
+                    "A=D+A".to_string(),
+                    "D=M".to_string(),
+                    // Store D onto the stack
+                    "@SP".to_string(), // Set A to SP (RAM[0])
+                    "A=M".to_string(), // Follow pointer
+                    "M=D".to_string(), // Store D in pointer location
+                    // Increment SP
+                    "@SP".to_string(),
+                    "M=M+1".to_string(),
+                ]
+            }));
+
+            Ok(lines)
+        }
+        VMCommand::Return => Ok(vec![
+            "// return".to_string(),
+            // frame = LCL, store frame as temporary variable in R13
+            "@LCL".to_string(),
+            "D=M".to_string(),
+            "@R13".to_string(),
+            "M=D".to_string(),
+            // retAddr = *(frame - 5), store return address in R14
+            "@5".to_string(),
+            "A=D-A".to_string(), // D still points to frame
+            "D=M".to_string(),
+            "@R14".to_string(),
+            "M=D".to_string(),
+            // *ARG = pop(), reposition return value for caller
+            "@SP".to_string(), // First store top of stack in D
+            "A=M-1".to_string(),
+            "D=M".to_string(),
+            "@ARG".to_string(), // Then store D in *ARG
+            "A=M".to_string(),
+            "M=D".to_string(),
+            // SP = ARG + 1, reposition SP for caller
+            "D=A+1".to_string(), // A is still pointing to ARG
+            "@SP".to_string(),
+            "M=D".to_string(),
+            // THAT = *(frame - 1), restores THAT for caller
+            "@R13".to_string(),
+            "D=M".to_string(), // D = frame
+            "@1".to_string(),
+            "A=D-A".to_string(),
+            "D=M".to_string(), // D = *(frame - 1)
+            "@THAT".to_string(),
+            "M=D".to_string(),
+            // THIS = *(frame - 2), restores THIS for caller
+            "@R13".to_string(),
+            "D=M".to_string(), // D = frame
+            "@2".to_string(),
+            "A=D-A".to_string(),
+            "D=M".to_string(), // D = *(frame - 2)
+            "@THIS".to_string(),
+            "M=D".to_string(),
+            // ARG = *(frame - 3), restores ARG for caller
+            "@R13".to_string(),
+            "D=M".to_string(), // D = frame
+            "@3".to_string(),
+            "A=D-A".to_string(),
+            "D=M".to_string(), // D = *(frame - 3)
+            "@ARG".to_string(),
+            "M=D".to_string(),
+            // LCL = *(frame - 4), restores LCL for caller
+            "@R13".to_string(),
+            "D=M".to_string(), // D = frame
+            "@4".to_string(),
+            "A=D-A".to_string(),
+            "D=M".to_string(), // D = *(frame - 4)
+            "@LCL".to_string(),
+            "M=D".to_string(),
+            // goto retAddr
+            "@R14".to_string(),
+            "A=M".to_string(),
+            "0;JMP".to_string(),
+        ]),
     }
 }
 
@@ -323,7 +462,6 @@ fn push_to_asm(filename: &String, command: &PushCommand) -> Result<Vec<String>, 
 
     // Compute *(segment + index) and store in A
     lines.append(&mut asm_fetch_segment(filename, segment, *index));
-
 
     if *segment == Segment::Constant {
         lines.push("D=A".to_string());
