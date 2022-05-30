@@ -3,7 +3,6 @@ use std::fs;
 use std::path::Path;
 use std::process;
 
-use nand2tetris::misc::{SourceLine, Symbol};
 use nand2tetris::vm;
 
 fn main() {
@@ -16,28 +15,7 @@ fn main() {
     // function should just read .vm files (perhaps also parsing them), and then
     // feed them into the translator as a stream.
 
-    // Bootstrap code, set SP = 256 and call Sys.init
-    println!("@256");
-    println!("D=A");
-    println!("@SP");
-    println!("M=D");
-
-    let bootstrap_psuedo_filename = "_vm_bootstrap".to_string();
-    let sys_init_call = SourceLine {
-        lineno: 0,
-        item: vm::VMCommand::Call(vm::CallCommand {
-            name: Symbol("Sys.init".to_string()),
-            nargs: 0,
-        }),
-    };
-    let bootstrap_call_commands = vm::vm_command_to_asm(
-        &bootstrap_psuedo_filename,
-        &sys_init_call,
-        &mut "".to_string(),
-        &mut 0,
-    )
-    .expect("failed to build bootstrap Sys.init call");
-    for line in bootstrap_call_commands {
+    for line in vm::vm_asm_bootstrap_code() {
         println!("{}", line);
     }
 
@@ -66,6 +44,7 @@ fn main() {
     }
 
     // Add footer that ends program with infinite loop
+    // TODO: I think the thing that produces VM files does this for us
     println!("(_vm_END)");
     println!("@_vm_END");
     println!("0;JMP");

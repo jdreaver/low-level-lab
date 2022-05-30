@@ -287,6 +287,37 @@ fn test_parse_vm_line() {
     );
 }
 
+/// The VM translator is responsible for setting SP = 256, and for calling
+/// Sys.init
+pub fn vm_asm_bootstrap_code() -> Vec<String> {
+    // Set SP = 256
+    let mut lines = vec![
+        "@256".to_string(),
+        "D=A".to_string(),
+        "@SP".to_string(),
+        "M=D".to_string(),
+    ];
+
+    // Call Sys.init
+    let bootstrap_psuedo_filename = "_vm_bootstrap".to_string();
+    let sys_init_call = SourceLine {
+        lineno: 0,
+        item: VMCommand::Call(CallCommand {
+            name: Symbol("Sys.init".to_string()),
+            nargs: 0,
+        }),
+    };
+    let bootstrap_call_commands = vm_command_to_asm(
+        &bootstrap_psuedo_filename,
+        &sys_init_call,
+        &mut "".to_string(),
+        &mut 0,
+    )
+    .expect("failed to build bootstrap Sys.init call");
+    lines.extend(bootstrap_call_commands);
+    lines
+}
+
 /// Compiles VM commands to assembly source code.
 pub fn vm_to_asm(
     filename: &String,
