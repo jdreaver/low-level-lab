@@ -234,7 +234,10 @@ pub fn vm_to_asm(commands: Vec<SourceLine<VMCommand>>) -> Result<Vec<String>, St
         })
 }
 
-pub fn vm_command_to_asm(command: &SourceLine<VMCommand>, comparison_jump_label_counter: &mut usize) -> Result<Vec<String>, String> {
+pub fn vm_command_to_asm(
+    command: &SourceLine<VMCommand>,
+    comparison_jump_label_counter: &mut usize,
+) -> Result<Vec<String>, String> {
     match &command.item {
         VMCommand::Push(cmd) => push_to_asm(&cmd),
         VMCommand::Pop(cmd) => pop_to_asm(&cmd),
@@ -243,9 +246,18 @@ pub fn vm_command_to_asm(command: &SourceLine<VMCommand>, comparison_jump_label_
         VMCommand::Subtract => binary_op_asm("sub", vec!["D=D-M".to_string()]),
         VMCommand::Negate => unary_op_asm("neg", "M=-M".to_string()),
 
-        VMCommand::Equal => binary_op_asm("eq", comparison_op_asm("JEQ", comparison_jump_label_counter)),
-        VMCommand::GreaterThan => binary_op_asm("lt", comparison_op_asm("JGT", comparison_jump_label_counter)),
-        VMCommand::LessThan => binary_op_asm("gt", comparison_op_asm("JLT", comparison_jump_label_counter)),
+        VMCommand::Equal => binary_op_asm(
+            "eq",
+            comparison_op_asm("JEQ", comparison_jump_label_counter),
+        ),
+        VMCommand::GreaterThan => binary_op_asm(
+            "lt",
+            comparison_op_asm("JGT", comparison_jump_label_counter),
+        ),
+        VMCommand::LessThan => binary_op_asm(
+            "gt",
+            comparison_op_asm("JLT", comparison_jump_label_counter),
+        ),
 
         VMCommand::And => binary_op_asm("and", vec!["D=D&M".to_string()]),
         VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
@@ -263,8 +275,7 @@ fn push_to_asm(command: &PushCommand) -> Result<Vec<String>, String> {
     lines.append(&mut asm_fetch_segment(segment, *index));
 
     // Follow the pointer by setting A to D and then reading M
-    if let Segment::Constant = segment {
-    } else {
+    if *segment != Segment::Constant {
         lines.push("A=D".to_string());
         lines.push("D=M".to_string());
     }
@@ -285,17 +296,38 @@ fn asm_fetch_segment(segment: &Segment, index: u16) -> Vec<String> {
     match segment {
         Segment::Argument => asm_fetch_memory_offset("@ARG".to_string(), index),
         Segment::Local => asm_fetch_memory_offset("@LCL".to_string(), index),
-        Segment::Static => asm_fetch_memory_offset("@16".to_string(), index),
         Segment::This => asm_fetch_memory_offset("@THIS".to_string(), index),
         Segment::That => asm_fetch_memory_offset("@THAT".to_string(), index),
-        Segment::Pointer => asm_fetch_memory_offset("@3".to_string(), index),
-        Segment::Temp => asm_fetch_memory_offset("@5".to_string(), index),
+
+        // TODO: Static variables are mapped on addresses 16 to 255 of the host
+        // RAM. The VM translator can realize this mapping automatically, as
+        // follows. Each reference to static i in a VM program stored in file
+        // Foo.vm can be translated to the assembly symbol Foo.i. According to
+        // the Hack machine language specification (chapter 6), the Hack
+        // assembler will map these symbolic variables on the host RAM, starting
+        // at address 16. This convention will cause the static variables that
+        // appear in a VM program to be mapped on addresses 16 and onward, in
+        // the order in which they appear in the VM code. For example, suppose
+        // that a VM program starts with the code push constant 100, push
+        // constant 200, pop static 5, pop static 2. The translation scheme
+        // described above will cause static 5 and static 2 to be mapped on RAM
+        // addresses 16 and 17, respectively
+        Segment::Static => panic!("static doesn't work yet"),
+
+        // pointer is RAM[3-4]
+        Segment::Pointer => {
+            let location = 3 + index;
+            vec![format!("@{location}").to_string(), "D=A".to_string()]
+        }
+
+        // temp is always RAM[5-12]
+        Segment::Temp => {
+            let location = 5 + index;
+            vec![format!("@{location}").to_string(), "D=A".to_string()]
+        }
 
         // Constant is a virtual segment, used to fetch constant values
-        Segment::Constant => vec![
-            format!("@{index}").to_string(),
-            "D=A".to_string(),
-        ],
+        Segment::Constant => vec![format!("@{index}").to_string(), "D=A".to_string()],
     }
 }
 
@@ -384,30 +416,26 @@ fn comparison_op_asm(jump_op: &str, comparison_jump_label_counter: &mut usize) -
     let success_label = format!("_vm_comp_success_{comparison_jump_label_counter}");
     let fail_label = format!("_vm_comp_fail_{comparison_jump_label_counter}");
     let end_label = format!("_vm_comp_end_{comparison_jump_label_counter}");
-    let lines =
-        vec![
-            // Run comparison operation on D and M and jump to appropriate location
-            "D=D-M".to_string(),
-            format!("@{success_label}"),
-            format!("D;{jump_op}"),
-            format!("@{fail_label}"),
-            "0;JMP".to_string(),
-
-            // If the comparison operation succeeds, then jump here and we will set
-            // *(SP-1) to 0b1111... (which is -1 in decimal).
-            format!("({success_label})"),
-            "D=-1".to_string(),
-            format!("@{end_label}"),
-            "0;JMP".to_string(),
-
-            // If the comparison operation fails, then jump here and we will set
-            // *(SP-1) to 0.
-            format!("({fail_label})"),
-            "D=0".to_string(),
-
-            // End label, just to continue execution
-            format!("({end_label})"),
-        ];
+    let lines = vec![
+        // Run comparison operation on D and M and jump to appropriate location
+        "D=D-M".to_string(),
+        format!("@{success_label}"),
+        format!("D;{jump_op}"),
+        format!("@{fail_label}"),
+        "0;JMP".to_string(),
+        // If the comparison operation succeeds, then jump here and we will set
+        // *(SP-1) to 0b1111... (which is -1 in decimal).
+        format!("({success_label})"),
+        "D=-1".to_string(),
+        format!("@{end_label}"),
+        "0;JMP".to_string(),
+        // If the comparison operation fails, then jump here and we will set
+        // *(SP-1) to 0.
+        format!("({fail_label})"),
+        "D=0".to_string(),
+        // End label, just to continue execution
+        format!("({end_label})"),
+    ];
 
     *comparison_jump_label_counter += 1;
 
