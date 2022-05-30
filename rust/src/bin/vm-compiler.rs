@@ -7,9 +7,21 @@ use nand2tetris::vm;
 
 fn main() {
     if env::args().len() <= 1 {
-        eprintln!("Usage: assembler <filename>");
+        eprintln!("Usage: assembler <file1> [file2] ...");
         process::exit(1);
     }
+
+    // TODO: The bootstrap code and footer should be in the vm module. This
+    // function should just read .vm files (perhaps also parsing them), and then
+    // feed them into the translator as a stream.
+
+    // Bootstrap code, set SP = 256 and call Sys.init
+    println!("@256");
+    println!("D=A");
+    println!("@SP");
+    println!("M=D");
+    println!("@Sys.init");
+    println!("0;JMP");
 
     for path_str in env::args().skip(1) {
         let path = Path::new(&path_str);
@@ -26,10 +38,18 @@ fn main() {
         // println!("{:#?}", parsed);
 
         let asm = vm::vm_to_asm(&file_basename.to_string(), parsed)
-            .expect("failed to compile source to ASM")
-            .join("\n");
+            .expect("failed to compile source to ASM");
 
-        let output_file_path = path.with_extension("asm");
-        fs::write(output_file_path, format!("{}\n", asm)).expect("failed to write to output file");
+        println!("// SOURCE: {file_basename}");
+        for line in asm {
+            println!("{}", line);
+        }
+        println!("");
     }
+
+    // Add footer that ends program with infinite loop
+    println!("(_vm_END)");
+    println!("@_vm_END");
+    println!("0;JMP");
+
 }
