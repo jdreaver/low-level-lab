@@ -3,6 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::process;
 
+use nand2tetris::misc::{SourceLine, Symbol};
 use nand2tetris::vm;
 
 fn main() {
@@ -20,8 +21,25 @@ fn main() {
     println!("D=A");
     println!("@SP");
     println!("M=D");
-    println!("@Sys.init");
-    println!("0;JMP");
+
+    let bootstrap_psuedo_filename = "_vm_bootstrap".to_string();
+    let sys_init_call = SourceLine {
+        lineno: 0,
+        item: vm::VMCommand::Call(vm::CallCommand {
+            name: Symbol("Sys.init".to_string()),
+            nargs: 0,
+        }),
+    };
+    let bootstrap_call_commands = vm::vm_command_to_asm(
+        &bootstrap_psuedo_filename,
+        &sys_init_call,
+        &mut "".to_string(),
+        &mut 0,
+    )
+    .expect("failed to build bootstrap Sys.init call");
+    for line in bootstrap_call_commands {
+        println!("{}", line);
+    }
 
     for path_str in env::args().skip(1) {
         let path = Path::new(&path_str);
@@ -51,5 +69,4 @@ fn main() {
     println!("(_vm_END)");
     println!("@_vm_END");
     println!("0;JMP");
-
 }

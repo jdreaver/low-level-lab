@@ -26,6 +26,7 @@ pub enum VMCommand {
     IfGoto(Symbol),
 
     Function(FunctionCommand),
+    Call(CallCommand),
     Return,
 }
 
@@ -89,11 +90,18 @@ impl ToString for Segment {
     }
 }
 
-/// Define a function with a given label and number of args.
+/// Define a function with a given label and number of local vars.
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionCommand {
-    name: Symbol,
-    nvars: u16,
+    pub name: Symbol,
+    pub nvars: u16,
+}
+
+/// Call a function with a given label and number of args.
+#[derive(Debug, PartialEq, Clone)]
+pub struct CallCommand {
+    pub name: Symbol,
+    pub nargs: u16,
 }
 
 /// Parses a VM source file.
@@ -191,6 +199,10 @@ fn parse_vm_line(line: &str) -> Result<Option<VMCommand>, String> {
             let (name, nvars) = parse_function_args("function", "nvars", rest)?;
             Ok(Some(VMCommand::Function(FunctionCommand { name, nvars })))
         }
+        "call" => {
+            let (name, nargs) = parse_function_args("function", "nargs", rest)?;
+            Ok(Some(VMCommand::Call(CallCommand { name, nargs })))
+        }
         "return" => expect_no_args("return", VMCommand::Return, rest),
         _ => Err(format!("unknown VM command {first_word}")),
     }
@@ -284,7 +296,7 @@ pub fn vm_to_asm(
     let mut current_function_name: String = "".to_string();
 
     // Counter used for jump labels for comparison operations
-    let mut comparison_jump_label_counter = 0;
+    let mut label_counter = 0;
 
     commands
         .iter()
@@ -293,28 +305,18 @@ pub fn vm_to_asm(
                 filename,
                 cmd,
                 &mut current_function_name,
-                &mut comparison_jump_label_counter,
+                &mut label_counter,
             )
         })
         .collect::<Result<Vec<Vec<String>>, String>>()
-        .map(|vecs| {
-            // Flatten Vec<Vec<...>> into Vec<...>
-            let mut parsed: Vec<String> = vecs.into_iter().flatten().collect();
-
-            // Add footer that ends program with infinite loop
-            parsed.push("(_vm_END)".to_string());
-            parsed.push("@_vm_END".to_string());
-            parsed.push("0;JMP".to_string());
-
-            parsed
-        })
+        .map(|vecs| vecs.into_iter().flatten().collect())
 }
 
 pub fn vm_command_to_asm(
     filename: &String,
     command: &SourceLine<VMCommand>,
     current_function_name: &mut String,
-    comparison_jump_label_counter: &mut usize,
+    label_counter: &mut usize,
 ) -> Result<Vec<String>, String> {
     match &command.item {
         VMCommand::Push(cmd) => push_to_asm(filename, &cmd),
@@ -324,18 +326,9 @@ pub fn vm_command_to_asm(
         VMCommand::Subtract => binary_op_asm("sub", vec!["D=D-M".to_string()]),
         VMCommand::Negate => unary_op_asm("neg", "M=-M".to_string()),
 
-        VMCommand::Equal => binary_op_asm(
-            "eq",
-            comparison_op_asm("JEQ", comparison_jump_label_counter),
-        ),
-        VMCommand::GreaterThan => binary_op_asm(
-            "lt",
-            comparison_op_asm("JGT", comparison_jump_label_counter),
-        ),
-        VMCommand::LessThan => binary_op_asm(
-            "gt",
-            comparison_op_asm("JLT", comparison_jump_label_counter),
-        ),
+        VMCommand::Equal => binary_op_asm("eq", comparison_op_asm("JEQ", label_counter)),
+        VMCommand::GreaterThan => binary_op_asm("lt", comparison_op_asm("JGT", label_counter)),
+        VMCommand::LessThan => binary_op_asm("gt", comparison_op_asm("JLT", label_counter)),
 
         VMCommand::And => binary_op_asm("and", vec!["D=D&M".to_string()]),
         VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
@@ -387,6 +380,73 @@ pub fn vm_command_to_asm(
                     "M=M+1".to_string(),
                 ]
             }));
+
+            Ok(lines)
+        }
+        VMCommand::Call(CallCommand { name, nargs }) => {
+            let Symbol(name_str) = name;
+            // TODO: This uses the global label counter, but the spec says each
+            // function should have its own label counter.
+            let return_label = format!("{current_function_name}$ret.{label_counter}");
+
+            // Reusable code for pushing A to the stack
+            let push_d_to_stack = vec![
+                "@SP".to_string(),
+                "A=M".to_string(),
+                "M=D".to_string(),
+                "@SP".to_string(),
+                "M=M+1".to_string(),
+            ];
+
+            let mut lines = vec![format!("// call {name_str} {nargs}")];
+
+            // push returnAddress, generate a label and push it to the stack
+            lines.push(format!("@{return_label}"));
+            lines.push("D=A".to_string());
+            lines.extend(push_d_to_stack.clone());
+
+            // push LCL, save LCL of caller
+            lines.push("@LCL".to_string());
+            lines.push("D=M".to_string());
+            lines.extend(push_d_to_stack.clone());
+
+            // push ARG, save ARG of caller
+            lines.push("@ARG".to_string());
+            lines.push("D=M".to_string());
+            lines.extend(push_d_to_stack.clone());
+
+            // push THIS, save THIS of caller
+            lines.push("@THIS".to_string());
+            lines.push("D=M".to_string());
+            lines.extend(push_d_to_stack.clone());
+
+            // push THAT, save THAT of caller
+            lines.push("@THAT".to_string());
+            lines.push("D=M".to_string());
+            lines.extend(push_d_to_stack.clone());
+
+            // ARG = SP - 5 - nargs, reposition ARG
+            lines.push("@SP".to_string());
+            lines.push("D=M".to_string());
+            lines.push(format!("@{}", 5 + nargs));
+            lines.push("D=D-A".to_string());
+            lines.push("@ARG".to_string());
+            lines.push("M=D".to_string());
+
+            // LCL = SP, reposition LCL
+            lines.push("@SP".to_string());
+            lines.push("D=M".to_string());
+            lines.push("@LCL".to_string());
+            lines.push("M=D".to_string());
+
+            // goto f
+            lines.push(format!("@{name_str}"));
+            lines.push("0;JMP".to_string());
+
+            // Record the return address label
+            lines.push(format!("({return_label})"));
+
+            *label_counter += 1;
 
             Ok(lines)
         }
@@ -607,10 +667,10 @@ fn binary_op_asm(op_name: &str, op_code: Vec<String>) -> Result<Vec<String>, Str
 /// Implements necessary ASM to compute jump results and stores value in D.
 /// Assumes that before this ASM is entered, D contains the value at *(SP-2) and
 /// A is at SP-1, like inside `binary_op_asm`.
-fn comparison_op_asm(jump_op: &str, comparison_jump_label_counter: &mut usize) -> Vec<String> {
-    let success_label = format!("_vm_comp_success_{comparison_jump_label_counter}");
-    let fail_label = format!("_vm_comp_fail_{comparison_jump_label_counter}");
-    let end_label = format!("_vm_comp_end_{comparison_jump_label_counter}");
+fn comparison_op_asm(jump_op: &str, label_counter: &mut usize) -> Vec<String> {
+    let success_label = format!("_vm_comp_success_{label_counter}");
+    let fail_label = format!("_vm_comp_fail_{label_counter}");
+    let end_label = format!("_vm_comp_end_{label_counter}");
     let lines = vec![
         // Run comparison operation on D and M and jump to appropriate location
         "D=D-M".to_string(),
@@ -632,7 +692,7 @@ fn comparison_op_asm(jump_op: &str, comparison_jump_label_counter: &mut usize) -
         format!("({end_label})"),
     ];
 
-    *comparison_jump_label_counter += 1;
+    *label_counter += 1;
 
     lines
 }
