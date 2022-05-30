@@ -275,12 +275,14 @@ fn push_to_asm(filename: &String, command: &PushCommand) -> Result<Vec<String>, 
 
     let mut lines = vec![format!("// push {segment_str} {index}")];
 
-    // Compute *(segment + index) and store in D
+    // Compute *(segment + index) and store in A
     lines.append(&mut asm_fetch_segment(filename, segment, *index));
 
-    // Follow the pointer by setting A to D and then reading M
-    if *segment != Segment::Constant {
-        lines.push("A=D".to_string());
+
+    if *segment == Segment::Constant {
+        lines.push("D=A".to_string());
+    } else {
+        // Follow the pointer by reading M into D
         lines.push("D=M".to_string());
     }
 
@@ -297,7 +299,7 @@ fn push_to_asm(filename: &String, command: &PushCommand) -> Result<Vec<String>, 
 }
 
 /// ASM code to compute location of given memory segment and index and store
-/// result in D.
+/// result in A.
 fn asm_fetch_segment(filename: &String, segment: &Segment, index: u16) -> Vec<String> {
     match segment {
         Segment::Argument => asm_fetch_memory_offset("@ARG".to_string(), index),
@@ -316,36 +318,40 @@ fn asm_fetch_segment(filename: &String, segment: &Segment, index: u16) -> Vec<St
         // 100, push constant 200, pop static 5, pop static 2. The translation
         // scheme described above will cause static 5 and static 2 to be mapped
         // on RAM addresses 16 and 17, respectively.
-        Segment::Static => vec![format!("@{filename}.{index}"), "D=A".to_string()],
+        Segment::Static => vec![format!("@{filename}.{index}")],
 
         // pointer is RAM[3-4]
         Segment::Pointer => {
             let location = 3 + index;
-            vec![format!("@{location}").to_string(), "D=A".to_string()]
+            vec![format!("@{location}").to_string()]
         }
 
         // temp is always RAM[5-12]
         Segment::Temp => {
             let location = 5 + index;
-            vec![format!("@{location}").to_string(), "D=A".to_string()]
+            vec![format!("@{location}").to_string()]
         }
 
         // Constant is a virtual segment, used to fetch constant values
-        Segment::Constant => vec![format!("@{index}").to_string(), "D=A".to_string()],
+        Segment::Constant => vec![format!("@{index}").to_string()],
     }
 }
 
 /// ASM code to compute memory segment with offset and store in D
 fn asm_fetch_memory_offset(base: String, offset: u16) -> Vec<String> {
-    vec![
-        // Set A to base
-        base,
-        // Set D to point to base memory location
-        "D=M".to_string(),
-        // Load offset into A and add to D
-        format!("@{offset}"),
-        "D=D+A".to_string(),
-    ]
+    // Set A to base
+    let mut lines = vec![base];
+    if offset == 0 {
+        // Follow pointer, store in A
+        lines.push("A=M".to_string());
+    } else {
+        // Set D to point to base memory location so we can add to it
+        lines.push("D=M".to_string());
+        // Load offset into A and add to base from D
+        lines.push(format!("@{offset}"));
+        lines.push("A=D+A".to_string());
+    }
+    lines
 }
 
 fn pop_to_asm(filename: &String, command: &PopCommand) -> Result<Vec<String>, String> {
@@ -354,10 +360,11 @@ fn pop_to_asm(filename: &String, command: &PopCommand) -> Result<Vec<String>, St
 
     let mut lines = vec![format!("// pop {segment_str} {index}")];
 
-    // Compute *(segment + index) and store in D
+    // Compute *(segment + index) and store in A
     lines.append(&mut asm_fetch_segment(filename, segment, *index));
 
     // Store segment target in R13 for now
+    lines.push("D=A".to_string());
     lines.push("@R13".to_string());
     lines.push("M=D".to_string());
 
