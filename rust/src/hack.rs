@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use super::asm;
-use super::asm::Symbol;
-use super::misc::SourceLine;
+use super::misc::{SourceLine, Symbol};
 
 pub enum HackInstruction {
     AInstruction(AInstruction),
