@@ -292,6 +292,8 @@ fn push_to_asm(command: &PushCommand) -> Result<Vec<String>, String> {
     Ok(lines)
 }
 
+/// ASM code to compute location of given memory segment and index and store
+/// result in D.
 fn asm_fetch_segment(segment: &Segment, index: u16) -> Vec<String> {
     match segment {
         Segment::Argument => asm_fetch_memory_offset("@ARG".to_string(), index),
@@ -299,20 +301,26 @@ fn asm_fetch_segment(segment: &Segment, index: u16) -> Vec<String> {
         Segment::This => asm_fetch_memory_offset("@THIS".to_string(), index),
         Segment::That => asm_fetch_memory_offset("@THAT".to_string(), index),
 
-        // TODO: Static variables are mapped on addresses 16 to 255 of the host
-        // RAM. The VM translator can realize this mapping automatically, as
-        // follows. Each reference to static i in a VM program stored in file
-        // Foo.vm can be translated to the assembly symbol Foo.i. According to
-        // the Hack machine language specification (chapter 6), the Hack
-        // assembler will map these symbolic variables on the host RAM, starting
-        // at address 16. This convention will cause the static variables that
-        // appear in a VM program to be mapped on addresses 16 and onward, in
-        // the order in which they appear in the VM code. For example, suppose
-        // that a VM program starts with the code push constant 100, push
-        // constant 200, pop static 5, pop static 2. The translation scheme
-        // described above will cause static 5 and static 2 to be mapped on RAM
-        // addresses 16 and 17, respectively
-        Segment::Static => panic!("static doesn't work yet"),
+        // TODO: This mapping doesn't take filename into account, which might be
+        // a problem later. Here is what the book says on the topic:
+        //
+        // Static variables are mapped on addresses 16 to 255 of the host RAM.
+        // The VM translator can realize this mapping automatically, as follows.
+        // Each reference to static i in a VM program stored in file Foo.vm can
+        // be translated to the assembly symbol Foo.i. According to the Hack
+        // machine language specification (chapter 6), the Hack assembler will
+        // map these symbolic variables on the host RAM, starting at address 16.
+        // This convention will cause the static variables that appear in a VM
+        // program to be mapped on addresses 16 and onward, in the order in
+        // which they appear in the VM code. For example, suppose that a VM
+        // program starts with the code push constant 100, push constant 200,
+        // pop static 5, pop static 2. The translation scheme described above
+        // will cause static 5 and static 2 to be mapped on RAM addresses 16 and
+        // 17, respectively
+        Segment::Static => vec![
+            format!("@_vm_static{index}"),
+            "D=A".to_string(),
+        ],
 
         // pointer is RAM[3-4]
         Segment::Pointer => {
