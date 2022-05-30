@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use std::string::ToString;
 
-use super::misc::SourceLine;
+use super::misc::{SourceLine, Symbol};
 
 /// All possible commands that can be used in a VM line of source code.
 #[derive(Debug, PartialEq, Clone)]
@@ -20,6 +20,10 @@ pub enum VMCommand {
     And,
     Or,
     Not,
+
+    Label(Symbol),
+    Goto(Symbol),
+    IfGoto(Symbol),
 }
 
 /// Push a value of segment[index] onto the stack.
@@ -161,7 +165,19 @@ fn parse_vm_line(line: &str) -> Result<Option<VMCommand>, String> {
         "and" => expect_no_args("and", VMCommand::And, rest),
         "or" => expect_no_args("or", VMCommand::Or, rest),
         "not" => expect_no_args("not", VMCommand::Not, rest),
-        _ => Err("unknown VM command".to_string()),
+        "label" => {
+            let symbol = single_label_arg("label", rest)?;
+            Ok(Some(VMCommand::Label(symbol)))
+        }
+        "goto" => {
+            let symbol = single_label_arg("goto", rest)?;
+            Ok(Some(VMCommand::Goto(symbol)))
+        }
+        "if-goto" => {
+            let symbol = single_label_arg("if-goto", rest)?;
+            Ok(Some(VMCommand::IfGoto(symbol)))
+        }
+        _ => Err(format!("unknown VM command {first_word}")),
     }
 }
 
@@ -187,6 +203,16 @@ fn expect_no_args<A>(command_str: &str, command: A, args: &[&str]) -> Result<Opt
         Err(format!(
             "expected no args after {command_str}, got got {args:?}"
         ))
+    }
+}
+
+fn single_label_arg(command_str: &str, args: &[&str]) -> Result<Symbol, String> {
+    match args {
+        [label] => {
+            let symbol = Symbol::from_str(label).map_err(|err| format!("error {command_str} label symbol: {err}"))?;
+            Ok(symbol)
+        }
+        _ => Err(format!("expected just one arg to {command_str}, but got {args:?}")),
     }
 }
 
@@ -266,6 +292,24 @@ pub fn vm_command_to_asm(
         VMCommand::And => binary_op_asm("and", vec!["D=D&M".to_string()]),
         VMCommand::Or => binary_op_asm("or", vec!["D=D|M".to_string()]),
         VMCommand::Not => unary_op_asm("not", "M=!M".to_string()),
+
+        // TODO: When we have function scopes, labels for Label and IfGoto
+        // should be {functionName}${sym}
+        VMCommand::Label(Symbol(sym)) => Ok(vec![format!("(${sym})")]),
+        VMCommand::Goto(Symbol(sym)) => Ok(vec![
+            format!("@${sym}"),
+            "0;JMP".to_string(),
+        ]),
+        VMCommand::IfGoto(Symbol(sym)) => Ok(vec![
+            format!("// if-goto {sym}"),
+            // Pop stack: Point A at SP-1 and decrement SP
+            "@SP".to_string(),
+            "AM=M-1".to_string(),
+            // Store M into D and do comparison
+            "D=M".to_string(),
+            format!("@${sym}"),
+            "D;JNE".to_string(),
+        ]),
     }
 }
 
