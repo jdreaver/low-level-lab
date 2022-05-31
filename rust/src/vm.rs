@@ -393,19 +393,18 @@ pub fn vm_command_to_asm(
                 format!("// function {name_str} {nvars}"),
                 format!("({name_str})"),
             ];
-            lines.extend((0..*nvars).flat_map(|i| {
+            // Initialize local variables to zero. `call` sets LCL = SP, so we
+            // just need to `push constant 0` nargs times
+            lines.extend((0..*nvars).flat_map(|_| {
                 vec![
-                    format!("// push local {i}"),
-                    // Get value from LCL + offset and store in D
-                    "@LCL".to_string(),
-                    "D=M".to_string(),
-                    format!("@{i}"),
-                    "A=D+A".to_string(),
-                    "D=M".to_string(),
-                    // Store D onto the stack
-                    "@SP".to_string(), // Set A to SP (RAM[0])
-                    "A=M".to_string(), // Follow pointer
-                    "M=D".to_string(), // Store D in pointer location
+                    format!("// Zero out locals: push constant 0"),
+                    // Store constant in A
+                    "@0".to_string(),
+                    "D=A".to_string(),
+                    // Add to top of stack
+                    "@SP".to_string(),
+                    "A=M".to_string(),
+                    "M=D".to_string(),
                     // Increment SP
                     "@SP".to_string(),
                     "M=M+1".to_string(),
