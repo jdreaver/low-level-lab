@@ -17,6 +17,12 @@
           rustc
           clippy
           rustfmt
+
+          # C
+          gcc
+          gcc.man
+          gdb
+          valgrind
         ];
       };
     };
