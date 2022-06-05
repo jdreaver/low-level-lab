@@ -7,8 +7,6 @@
 #include "error.h"
 #include "parser.h"
 
-#include <stdio.h>
-
 /*
  * Eats up all `isspace()` characters and any comment lines in `source`.
  *
@@ -105,9 +103,10 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
  * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), and sets `instruction`
  * to NULL if the line was empty or just comments.
  */
-static enum asm_parse_error parse_instruction_line(char **source, struct instruction *instruction)
+static enum asm_parse_error parse_instruction_line(char **source, struct asm_instruction *instruction)
 {
-
+	// TODO
+	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
 void asm_a_instruction_destroy(struct asm_a_instruction instruction)

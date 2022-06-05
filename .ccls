@@ -1,2 +1,5 @@
 clang
 -Ic/unity
+-Wall
+-Wextra
+-pedantic
