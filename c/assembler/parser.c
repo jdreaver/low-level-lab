@@ -194,21 +194,41 @@ static enum asm_parse_error parse_a_instruction(struct parser_state *state, stru
 
 /*
  * Parses the next line of text in `source`. Returns an error (or
- * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), and sets `instruction`
- * to NULL if the line was empty or just comments.
+ * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), or also
+ * `ASM_PARSE_ERROR_NO_DECLARATION` if no instruction was found on the current
+ * line. Also asserts that we are indeed at the end of a line (or the end of the
+ * string), and otherwise returns `ASM_PARSE_ERROR_EXTRA_INPUT`.
  */
-static enum asm_parse_error parse_instruction_line(struct parser_state *state, struct asm_instruction *instruction)
+static enum asm_parse_error parse_declaration_line(struct parser_state *state, struct asm_declaration *declaration)
 {
-	// TODO: Eat whitespace until end of line
+	// Eat whitespace (until end of line)
+	eat_line_space_comments(state);
 
-	// TODO: Run parser
+	// Run parser for an declaration
+	enum asm_parse_error err;
+	struct asm_a_instruction a_instruction;
 
-	// TODO: Eat whitespace again
+	switch (parser_state_current_char(state)) {
+	case '\0':
+	case '\n':
+		return ASM_PARSE_ERROR_NO_DECLARATION;
+        case '@':
+		 err = parse_a_instruction(state, &a_instruction);
+		 if (err != ASM_PARSE_ERROR_NO_ERROR) {
+			 return err;
+		 }
+		 declaration->type = ASM_DECL_INSTRUCTION;
+		 declaration->instruction.type = ASM_INST_A;
+		 declaration->instruction.a_instruction = a_instruction;
+	}
+
+	// Eat any trailing whitespace
+	eat_line_space_comments(state);
 
 	// Check for newline or EOF. If one of those isn't present, there is
 	// extra crud in the input.
 	char last_char = parser_state_current_char(state);
-	if (!last_char || last_char != '\n') {
+	if (last_char && last_char != '\n') {
 		return ASM_PARSE_ERROR_EXTRA_INPUT;
 	}
 

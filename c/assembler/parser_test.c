@@ -117,10 +117,63 @@ void test_parse_a_instruction()
 	asm_a_instruction_destroy(instruction);
 }
 
+void test_parse_declaration_line()
+{
+	// Successfully parse A instruction
+	struct asm_declaration declaration;
+	struct parser_state state = parser_state_create("  @hello // abc123");
+	enum asm_parse_error err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_INST_A, declaration.instruction.type);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declaration.instruction.a_instruction.type);
+	TEST_ASSERT_EQUAL_STRING("hello", declaration.instruction.a_instruction.label);
+	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(18, state.pos);
+
+	// Newline after with more instructions
+	state = parser_state_create("  @hello \n @more");
+	err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_INST_A, declaration.instruction.type);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declaration.instruction.a_instruction.type);
+	TEST_ASSERT_EQUAL_STRING("hello", declaration.instruction.a_instruction.label);
+	TEST_ASSERT_EQUAL_CHAR('\n', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+
+	// Empty string
+	state = parser_state_create("");
+	err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
+
+	// Empty line once whitespace eaten
+	state = parser_state_create("  // blah");
+	err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
+	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+
+	// Empty line once whitespace eaten, but more after
+	state = parser_state_create("  // blah\n@hello");
+	err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
+	TEST_ASSERT_EQUAL_CHAR('\n', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+
+	// Extra input that isn't whitespace or comment
+	state = parser_state_create("@hello bad");
+	err = parse_declaration_line(&state, &declaration);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_EXTRA_INPUT, err);
+	TEST_ASSERT_EQUAL_CHAR('b', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(7, state.pos);
+
+	asm_declaration_destroy(declaration);
+}
+
 int main(void)
 {
 	UNITY_BEGIN();
 	RUN_TEST(test_eat_line_space_comments);
 	RUN_TEST(test_parse_a_instruction);
+	RUN_TEST(test_parse_declaration_line);
 	return UNITY_END();
 }
