@@ -313,8 +313,6 @@ enum asm_parse_error parse_asm_declarations(char *source, asm_declarations *decl
 		}
 	}
 
-	// TODO: Assert we are at EOF in the parser state
-
 	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
