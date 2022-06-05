@@ -97,11 +97,24 @@ void test_parse_a_instruction()
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE, err);
 
-	// TODO: Add this once we support labels, since this goes down label path
-	// puts("Testing negative @-398");
-	// input = "@-398";
-	// err = parse_a_instruction(&state, &instruction);
-	// assert(err == ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE);
+	// Label
+	state = parser_state_create("@hello");
+	err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, instruction.type);
+	TEST_ASSERT_EQUAL_STRING("hello", instruction.label);
+
+	// Doesn't support negative addresses
+	state = parser_state_create("@-398");
+ 	err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_INVALID_SYMBOL_START, err);
+
+	// Invalid symbol start char
+	state = parser_state_create("@ hello");
+ 	err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_INVALID_SYMBOL_START, err);
+
+	asm_a_instruction_destroy(instruction);
 }
 
 int main(void)

@@ -2,7 +2,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "error.h"
 #include "parser.h"
@@ -110,6 +112,48 @@ static enum asm_parse_error parse_a_address(struct parser_state *state, uint16_t
 	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
+static bool valid_symbol_start_char(char c)
+{
+	return isalpha(c) || c == '_' || c == '.' || c == '$' || c == ':';
+}
+
+static bool valid_symbol_char(char c)
+{
+	return isdigit(c) || valid_symbol_start_char(c);
+}
+
+/*
+ * Parses a symbol. A symbol can be any sequence of letters, digits, underscore
+ * (_), dot (.), dollar sign ($), and colon (:) that does not begin with a
+ * digit.
+ *
+ * Note that this function mallocs the symbol string, which should be freed
+ * later!
+ */
+static enum asm_parse_error asm_parse_symbol(struct parser_state *state, char **symbol)
+{
+	size_t start = state->pos;
+	if (!(valid_symbol_start_char(parser_state_current_char(state)))) {
+		return ASM_PARSE_ERROR_INVALID_SYMBOL_START;
+	}
+
+	while (true) {
+		parser_state_advance(state);
+		if (!(valid_symbol_char(parser_state_current_char(state)))) {
+			break;
+		}
+	}
+
+	const char *symbol_start = state->source + start;
+	size_t symbol_len = state->pos - start;
+	if ((*symbol = strndup(symbol_start, symbol_len)) == NULL) {
+		fprintf(stderr, "strdup malloc error in %s at %s:%d\n", __func__, __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
+
+	return ASM_PARSE_ERROR_NO_ERROR;
+}
+
 /*
  * Parses an A instruction starting at the current parse position.
  */
@@ -136,7 +180,13 @@ static enum asm_parse_error parse_a_instruction(struct parser_state *state, stru
 		instruction->type = ASM_A_INST_ADDRESS;
 		instruction->address = address;
 	} else {
-		// TODO
+		char *symbol;
+		enum asm_parse_error symbol_error = asm_parse_symbol(state, &symbol);
+		if (symbol_error != ASM_PARSE_ERROR_NO_ERROR) {
+			return symbol_error;
+		}
+		instruction->type = ASM_A_INST_LABEL;
+		instruction->label = symbol;
 	}
 
 	return ASM_PARSE_ERROR_NO_ERROR;
@@ -165,7 +215,7 @@ static enum asm_parse_error parse_instruction_line(struct parser_state *state, s
 	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
-void asm_a_instruction_destroy(struct asm_a_instruction instruction)
+static void asm_a_instruction_destroy(struct asm_a_instruction instruction)
 {
 	switch (instruction.type) {
 	case ASM_A_INST_LABEL:
