@@ -2,6 +2,7 @@
 
 #include "parser.h"
 
-int main() {
+int main()
+{
 	printf("sizeof(struct asm_instruction) = %zu\n", sizeof(struct asm_instruction));
 }
