@@ -51,76 +51,95 @@ void test_eat_line_space_comments()
 void test_parse_a_instruction()
 {
 	// Missing @ symbol (empty string)
-	struct asm_a_instruction instruction;
+	struct asm_a_instruction instruction = {0};
 	struct parser_state state = parser_state_create("");
 	enum asm_parse_error err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL, err);
+	asm_a_instruction_destroy(instruction);
 
 	// Doesn't start with @
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("not@");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL, err);
+	asm_a_instruction_destroy(instruction);
 
 	// Simple success
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@123");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
 	TEST_ASSERT_EQUAL_UINT16(123, instruction.address);
+	asm_a_instruction_destroy(instruction);
 
 	// Bare @
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_UNEXPECTED_EOF, err);
+	asm_a_instruction_destroy(instruction);
 
 	// Min allowed value
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@0");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
 	TEST_ASSERT_EQUAL_UINT16(0, instruction.address);
+	asm_a_instruction_destroy(instruction);
 
 	// Max allowed value
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@32767");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
 	TEST_ASSERT_EQUAL_UINT16(32767, instruction.address);
+	asm_a_instruction_destroy(instruction);
 
 	// Logical overflow (fits in uint16_t, but is too large for address)
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@32768");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE, err);
+	asm_a_instruction_destroy(instruction);
 
 	// uint16_t overflow
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@32768231432848329789437289");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE, err);
+	asm_a_instruction_destroy(instruction);
 
 	// Label
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@hello");
 	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, instruction.type);
 	TEST_ASSERT_EQUAL_STRING("hello", instruction.label);
+	asm_a_instruction_destroy(instruction);
 
 	// Doesn't support negative addresses
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@-398");
  	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_INVALID_SYMBOL_START, err);
+	asm_a_instruction_destroy(instruction);
 
 	// Invalid symbol start char
+	memset(&instruction, 0, sizeof(struct asm_a_instruction));
 	state = parser_state_create("@ hello");
  	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_INVALID_SYMBOL_START, err);
-
 	asm_a_instruction_destroy(instruction);
 }
 
 void test_parse_declaration_line()
 {
 	// Successfully parse A instruction
-	struct asm_declaration declaration;
+	struct asm_declaration declaration = {0};
 	struct parser_state state = parser_state_create("  @hello // abc123");
 	enum asm_parse_error err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
@@ -129,8 +148,10 @@ void test_parse_declaration_line()
 	TEST_ASSERT_EQUAL_STRING("hello", declaration.instruction.a_instruction.label);
 	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
 	TEST_ASSERT_EQUAL_size_t(18, state.pos);
+	asm_declaration_destroy(declaration);
 
 	// Newline after with more instructions
+	memset(&declaration, 0, sizeof(struct asm_declaration));
 	state = parser_state_create("  @hello \n @more");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
@@ -139,33 +160,40 @@ void test_parse_declaration_line()
 	TEST_ASSERT_EQUAL_STRING("hello", declaration.instruction.a_instruction.label);
 	TEST_ASSERT_EQUAL_CHAR(' ', parser_state_current_char(&state));
 	TEST_ASSERT_EQUAL_size_t(10, state.pos);
+	asm_declaration_destroy(declaration);
 
 	// Empty string
+	memset(&declaration, 0, sizeof(struct asm_declaration));
 	state = parser_state_create("");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
+	asm_declaration_destroy(declaration);
 
 	// Empty line once whitespace eaten
+	memset(&declaration, 0, sizeof(struct asm_declaration));
 	state = parser_state_create("  // blah");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
 	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
 	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+	asm_declaration_destroy(declaration);
 
 	// Empty line once whitespace eaten, but more after
+	memset(&declaration, 0, sizeof(struct asm_declaration));
 	state = parser_state_create("  // blah\n@hello");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
 	TEST_ASSERT_EQUAL_CHAR('@', parser_state_current_char(&state));
 	TEST_ASSERT_EQUAL_size_t(10, state.pos);
+	asm_declaration_destroy(declaration);
 
 	// Extra input that isn't whitespace or comment
+	memset(&declaration, 0, sizeof(struct asm_declaration));
 	state = parser_state_create("@hello bad");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_EXTRA_INPUT, err);
 	TEST_ASSERT_EQUAL_CHAR('b', parser_state_current_char(&state));
 	TEST_ASSERT_EQUAL_size_t(7, state.pos);
-
 	asm_declaration_destroy(declaration);
 }
 

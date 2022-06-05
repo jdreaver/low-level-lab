@@ -180,13 +180,11 @@ static enum asm_parse_error parse_a_instruction(struct parser_state *state, stru
 		instruction->type = ASM_A_INST_ADDRESS;
 		instruction->address = address;
 	} else {
-		char *symbol;
-		enum asm_parse_error symbol_error = asm_parse_symbol(state, &symbol);
+		enum asm_parse_error symbol_error = asm_parse_symbol(state, &instruction->label);
 		if (symbol_error != ASM_PARSE_ERROR_NO_ERROR) {
 			return symbol_error;
 		}
 		instruction->type = ASM_A_INST_LABEL;
-		instruction->label = symbol;
 	}
 
 	return ASM_PARSE_ERROR_NO_ERROR;
@@ -286,8 +284,12 @@ asm_declarations asm_declarations_create()
 static void asm_declarations_append(asm_declarations *declarations, struct asm_declaration declaration)
 {
 	if (declarations->capacity == declarations->len) {
-		declarations->capacity *= 2;
-		size_t new_size = declarations->capacity * sizeof(asm_declarations);
+		if (declarations->capacity == 0) {
+			declarations->capacity = 1;
+		} else {
+			declarations->capacity *= 2;
+		}
+		size_t new_size = declarations->capacity * sizeof(struct asm_declaration);
 		if ((declarations->declarations = realloc(declarations->declarations, new_size)) == NULL) {
 			fprintf(stderr, "strdup realloc error in %s at %s:%d\n", __func__, __FILE__, __LINE__);
 			exit(EXIT_FAILURE);
