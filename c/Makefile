@@ -22,10 +22,18 @@ assembler_sources := $(filter-out $(wildcard assembler/*_test.c),$(wildcard asse
 assembler_headers := $(wildcard assembler/*.h)
 
 bin/assembler: $(assembler_sources) $(assembler_headers)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(assembler_sources)
+	$(CC) $(CFLAGS) -o $@ $(assembler_sources)
 
-bin/assembler_parser_test: assembler/parser_test.c assembler/parser.c assembler/parser.h
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ assembler/parser_test.c
+
+unity_headers := $(wildcard unity/*.h)
+unity_sources := $(wildcard unity/*.c)
+UNITY_O=unity/unity.o
+
+$(UNITY_O): $(unity_headers) $(unity_sources)
+	$(CC) $(CFLAGS) -c -o $@ $(unity_sources)
+
+bin/assembler_parser_test: assembler/parser_test.c assembler/parser.c assembler/parser.h $(unity_headers) $(UNITY_O)
+	$(CC) $(CFLAGS) -o $@ assembler/parser_test.c -Iunity/ $(UNITY_O) -DTEST
 
 .PHONY: clean
 clean:
