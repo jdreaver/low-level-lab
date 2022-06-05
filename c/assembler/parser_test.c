@@ -10,25 +10,43 @@
 void setUp (void) {} /* Is run before every test, put unit init calls here. */
 void tearDown (void) {} /* Is run after every test, put unit clean-up calls here. */
 
-void test_eat_whitespace_comments()
+void test_eat_line_space_comments()
 {
-	char *empty_line = "";
-	eat_whitespace_comments(&empty_line);
-	TEST_ASSERT_EQUAL_STRING("", empty_line);
+	// Empty line
+	struct parser_state state = parser_state_create("");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_size_t(state.pos, 0);
 
-	char *simple_comment = "   // asdskljlk dfslkjk dslk // sdf// //";
-	eat_whitespace_comments(&simple_comment);
-	TEST_ASSERT_EQUAL_STRING("", simple_comment);
+	// Simple comment, no leading whitespace
+	state = parser_state_create("// blah");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(7, state.pos);
 
-	char *non_comment = "   // asdskljlk dfslkjk dslk // sdf// //\nhello!";
-	eat_whitespace_comments(&non_comment);
-	TEST_ASSERT_EQUAL_STRING("hello!", non_comment);
+	// Simple comment, leading whitespace
+	state = parser_state_create("   // blah");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(10, state.pos);
 
-	char *non_comment_then_space = "   // asdskljlk dfslkjk dslk // sdf// //\n   hello!";
-	eat_whitespace_comments(&non_comment_then_space);
-	TEST_ASSERT_EQUAL_STRING("hello!", non_comment_then_space);
+	// Just whitespace
+	state = parser_state_create("   ");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_CHAR('\0', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(3, state.pos);
+
+	// Eat until next line
+	state = parser_state_create("   // hello\ngoodbye");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_CHAR('\n', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(11, state.pos);
+
+	// Eat whitespace until non whitespace
+	state = parser_state_create("   hello\ngoodbye");
+	eat_line_space_comments(&state);
+	TEST_ASSERT_EQUAL_CHAR('h', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(3, state.pos);
 }
-
 
 void test_parse_a_instruction()
 {
@@ -71,7 +89,7 @@ void test_parse_a_instruction()
 int main(void)
 {
 	UNITY_BEGIN();
-	RUN_TEST(test_eat_whitespace_comments);
+	RUN_TEST(test_eat_line_space_comments);
 	RUN_TEST(test_parse_a_instruction);
 	return UNITY_END();
 }

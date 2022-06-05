@@ -8,22 +8,68 @@
 #include "parser.h"
 
 /*
- * Eats up all `isspace()` characters and any comment lines in `source`.
- *
- * `source` must not be a null pointer (but it _can_ point to a null pointer).
+ * Keeps track of parser location in input string and prevents footguns like
+ * traversing past lines or the end of the string.
  */
-static void eat_whitespace_comments(char **source)
+struct parser_state {
+	/** Input string */
+	const char *source;
+	/** Current position in the input string */
+	size_t pos;
+	// TODO: size_t lineno; (for error reporting. keep track of this in advance)
+};
+
+struct parser_state parser_state_create(const char *source)
 {
-	while (*source != NULL && **source != '\0') {
-		if (isspace(**source)) {
-			(*source)++;
-			continue;
-		} else if (**source == '/' && *(*source + 1) == '/') {
-			while (**source != '\0' && **source != '\n') {
-				(*source)++;
-			}
-		} else {
-			break;
+	struct parser_state state = {.source = source, .pos = 0};
+	return state;
+}
+
+/*
+ * Returns the character at the current pos.
+ */
+static char parser_state_current_char(const struct parser_state *state)
+{
+	return state->source[state->pos];
+}
+
+/*
+ * Returns the next character past the current pos, or \0 if we are already at
+ * the end of the string.
+ */
+static char parser_state_peek(struct parser_state *state)
+{
+	if (!parser_state_current_char(state)) {
+		return '\0';
+	}
+	return state->source[state->pos + 1];
+}
+
+/*
+ * Advances the current position (if we aren't at the end).
+ */
+static void parser_state_advance(struct parser_state *state)
+{
+	if (parser_state_current_char(state)) {
+		state->pos++;
+	}
+}
+
+/*
+ * Advances through current line while eating space chars (' ') and comments
+ * (//)
+ */
+static void eat_line_space_comments(struct parser_state *state)
+{
+	// First eat all whitespace
+	while (parser_state_current_char(state) == ' ') {
+		parser_state_advance(state);
+	}
+
+	// Check if we are at a comment
+	if (parser_state_current_char(state) == '/' && parser_state_peek(state) == '/') {
+		while (parser_state_current_char(state) && parser_state_current_char(state) != '\n') {
+			parser_state_advance(state);
 		}
 	}
 }
