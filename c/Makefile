@@ -14,11 +14,18 @@ CFLAGS+=-pedantic
 .PHONY: all
 all: bin/assembler
 
-assembler_sources := $(wildcard assembler/*.c)
+.PHONY: test
+test: bin/assembler_parser_test
+	./bin/assembler_parser_test
+
+assembler_sources := $(filter-out $(wildcard assembler/*_test.c),$(wildcard assembler/*.c))
 assembler_headers := $(wildcard assembler/*.h)
 
 bin/assembler: $(assembler_sources) $(assembler_headers)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(assembler_sources)
+
+bin/assembler_parser_test: assembler/parser_test.c assembler/parser.c assembler/parser.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ assembler/parser_test.c
 
 .PHONY: clean
 clean:

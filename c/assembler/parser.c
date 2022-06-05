@@ -7,8 +7,12 @@
 #include "error.h"
 #include "parser.h"
 
+#include <stdio.h>
+
 /*
  * Eats up all `isspace()` characters and any comment lines in `source`.
+ *
+ * `source` must not be a null pointer (but it _can_ point to a null pointer).
  */
 static void eat_whitespace_comments(char **source)
 {
@@ -16,15 +20,13 @@ static void eat_whitespace_comments(char **source)
 		if (isspace(**source)) {
 			(*source)++;
 			continue;
-		}
-
-		// If we find a comment (//) then eat the rest of the line
-		if (**source == '/' && *(source + 1) != NULL && **(source + 1) == '/') {
-			while (*source != NULL && **source != '\0' && **source != '\n') {
+		} else if (**source == '/' && *(*source + 1) == '/') {
+			while (**source != '\0' && **source != '\n') {
 				(*source)++;
 			}
+		} else {
+			break;
 		}
-		break;
 	}
 }
 
@@ -70,7 +72,7 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
 		return ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL;
 	}
 
-	source++;
+	(*source)++;
 	if (**source == '\0') {
 		return ASM_PARSE_ERROR_UNEXPECTED_EOF;
 	}
@@ -83,6 +85,7 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
 		if (address_error != ASM_PARSE_ERROR_NO_ERROR) {
 			return address_error;
 		}
+		instruction->type = ASM_A_INST_ADDRESS;
 		instruction->address = address;
 	} else {
 		// TODO
@@ -90,7 +93,7 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
 
 	// Check for newline or EOF. If one of those isn't present, there
 	// is extra crud in the input.
-	if (**source != '\0' || !isspace(**source)) {
+	if (**source != '\0' && !isspace(**source)) {
 		return ASM_PARSE_ERROR_EXTRA_INPUT;
 	}
 
