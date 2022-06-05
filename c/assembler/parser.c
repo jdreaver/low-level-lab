@@ -210,7 +210,10 @@ static enum asm_parse_error parse_declaration_line(struct parser_state *state, s
 
 	switch (parser_state_current_char(state)) {
 	case '\0':
+		return ASM_PARSE_ERROR_NO_DECLARATION;
 	case '\n':
+		// Eat newline
+		parser_state_advance(state);
 		return ASM_PARSE_ERROR_NO_DECLARATION;
         case '@':
 		 err = parse_a_instruction(state, &a_instruction);
@@ -232,6 +235,9 @@ static enum asm_parse_error parse_declaration_line(struct parser_state *state, s
 		return ASM_PARSE_ERROR_EXTRA_INPUT;
 	}
 
+	// Eat newline (if this is EOF we don't advance)
+	parser_state_advance(state);
+
 	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
@@ -247,7 +253,7 @@ static void asm_a_instruction_destroy(struct asm_a_instruction instruction)
 	}
 }
 
-void asm_instruction_destroy(struct asm_instruction instruction)
+static void asm_instruction_destroy(struct asm_instruction instruction)
 {
 	switch (instruction.type) {
 	case ASM_INST_A:
@@ -259,7 +265,7 @@ void asm_instruction_destroy(struct asm_instruction instruction)
 	}
 }
 
-void asm_declaration_destroy(struct asm_declaration declaration)
+static void asm_declaration_destroy(struct asm_declaration declaration)
 {
 	switch (declaration.type) {
 	case ASM_DECL_LABEL:
@@ -269,4 +275,51 @@ void asm_declaration_destroy(struct asm_declaration declaration)
 		asm_instruction_destroy(declaration.instruction);
 		break;
 	}
+}
+
+asm_declarations asm_declarations_create()
+{
+	asm_declarations decls = {.declarations = NULL, .len = 0, .capacity = 0};
+	return decls;
+}
+
+static void asm_declarations_append(asm_declarations *declarations, struct asm_declaration declaration)
+{
+	if (declarations->capacity == declarations->len) {
+		declarations->capacity *= 2;
+		size_t new_size = declarations->capacity * sizeof(asm_declarations);
+		if ((declarations->declarations = realloc(declarations->declarations, new_size)) == NULL) {
+			fprintf(stderr, "strdup realloc error in %s at %s:%d\n", __func__, __FILE__, __LINE__);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	declarations->declarations[declarations->len] = declaration;
+	declarations->len += 1;
+}
+
+enum asm_parse_error parse_asm_declarations(char *source, asm_declarations *declarations)
+{
+	struct parser_state state = parser_state_create(source);
+	while (parser_state_current_char(&state)) {
+		struct asm_declaration declaration;
+		enum asm_parse_error err = parse_declaration_line(&state, &declaration);
+		if (err == ASM_PARSE_ERROR_NO_ERROR) {
+			asm_declarations_append(declarations, declaration);
+		} else if (err != ASM_PARSE_ERROR_NO_DECLARATION) {
+			return err;
+		}
+	}
+
+	// TODO: Assert we are at EOF in the parser state
+
+	return ASM_PARSE_ERROR_NO_ERROR;
+}
+
+void asm_declarations_destroy(asm_declarations declarations)
+{
+	for (size_t i = 0; i < declarations.len; i++) {
+		asm_declaration_destroy(declarations.declarations[i]);
+	}
+	free(declarations.declarations);
 }

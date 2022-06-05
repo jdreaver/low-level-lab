@@ -5,6 +5,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
+
+#include "error.h"
 
 /*
  * An ASM declaration is either a label like (MY_LABEL) or an instruction. This
@@ -140,8 +143,12 @@ struct asm_declaration {
 	};
 };
 
-/*
- * Frees an `asm_instruction`. The components of the instruction must have been
- * allocated with malloc.
- */
-void asm_declaration_destroy(struct asm_declaration);
+typedef struct {
+	struct asm_declaration *declarations;
+	size_t len;
+	size_t capacity;
+} asm_declarations;
+
+asm_declarations asm_declarations_create();
+enum asm_parse_error parse_asm_declarations(char *, asm_declarations *);
+void asm_declarations_destroy(asm_declarations);

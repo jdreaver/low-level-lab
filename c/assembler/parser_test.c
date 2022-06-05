@@ -137,8 +137,8 @@ void test_parse_declaration_line()
 	TEST_ASSERT_EQUAL_INT(ASM_INST_A, declaration.instruction.type);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declaration.instruction.a_instruction.type);
 	TEST_ASSERT_EQUAL_STRING("hello", declaration.instruction.a_instruction.label);
-	TEST_ASSERT_EQUAL_CHAR('\n', parser_state_current_char(&state));
-	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+	TEST_ASSERT_EQUAL_CHAR(' ', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(10, state.pos);
 
 	// Empty string
 	state = parser_state_create("");
@@ -156,8 +156,8 @@ void test_parse_declaration_line()
 	state = parser_state_create("  // blah\n@hello");
 	err = parse_declaration_line(&state, &declaration);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_DECLARATION, err);
-	TEST_ASSERT_EQUAL_CHAR('\n', parser_state_current_char(&state));
-	TEST_ASSERT_EQUAL_size_t(9, state.pos);
+	TEST_ASSERT_EQUAL_CHAR('@', parser_state_current_char(&state));
+	TEST_ASSERT_EQUAL_size_t(10, state.pos);
 
 	// Extra input that isn't whitespace or comment
 	state = parser_state_create("@hello bad");
@@ -169,11 +169,38 @@ void test_parse_declaration_line()
 	asm_declaration_destroy(declaration);
 }
 
+void test_parse_asm_declarations()
+{
+	// Empty input
+	asm_declarations declarations = asm_declarations_create();
+	enum asm_parse_error err = parse_asm_declarations("", &declarations);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	asm_declarations_destroy(declarations);
+
+	// Just space and comments
+	declarations = asm_declarations_create();
+	err = parse_asm_declarations("//my file\n\n  \n\n //", &declarations);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	asm_declarations_destroy(declarations);
+
+	// Single A instruction
+	declarations = asm_declarations_create();
+	err = parse_asm_declarations("//my file\n@hello", &declarations);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_size_t(1, declarations.len);
+	TEST_ASSERT_EQUAL_INT(ASM_INST_A, declarations.declarations[0].instruction.type);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declarations.declarations[0].instruction.a_instruction.type);
+	TEST_ASSERT_EQUAL_STRING("hello", declarations.declarations[0].instruction.a_instruction.label);
+	asm_declarations_destroy(declarations);
+}
+
+
 int main(void)
 {
 	UNITY_BEGIN();
 	RUN_TEST(test_eat_line_space_comments);
 	RUN_TEST(test_parse_a_instruction);
 	RUN_TEST(test_parse_declaration_line);
+	RUN_TEST(test_parse_asm_declarations);
 	return UNITY_END();
 }
