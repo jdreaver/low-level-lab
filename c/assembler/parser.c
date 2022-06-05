@@ -7,9 +7,25 @@
 #include "error.h"
 #include "parser.h"
 
-void asm_instruction_destroy(struct asm_instruction instruction)
+/*
+ * Eats up all `isspace()` characters and any comment lines in `source`.
+ */
+static void eat_whitespace_comments(char **source)
 {
+	while (*source != NULL && **source != '\0') {
+		if (isspace(**source)) {
+			(*source)++;
+			continue;
+		}
 
+		// If we find a comment (//) then eat the rest of the line
+		if (**source == '/' && *(source + 1) != NULL && **(source + 1) == '/') {
+			while (*source != NULL && **source != '\0' && **source != '\n') {
+				(*source)++;
+			}
+		}
+		break;
+	}
 }
 
 /*
@@ -79,4 +95,49 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
 	}
 
 	return ASM_PARSE_ERROR_NO_ERROR;
+}
+
+/*
+ * Parses the next line of text in `source`. Returns an error (or
+ * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), and sets `instruction`
+ * to NULL if the line was empty or just comments.
+ */
+static enum asm_parse_error parse_instruction_line(char **source, struct instruction *instruction)
+{
+
+}
+
+void asm_a_instruction_destroy(struct asm_a_instruction instruction)
+{
+	switch (instruction.type) {
+	case ASM_A_INST_LABEL:
+		free(instruction.label);
+		break;
+	case ASM_A_INST_ADDRESS:
+		// No dynamic memory in address
+		break;
+	}
+}
+
+void asm_instruction_destroy(struct asm_instruction instruction)
+{
+	switch (instruction.type) {
+	case ASM_INST_A:
+		break;
+	case ASM_INST_C:
+		// No dynamic memory in C instructions
+		break;
+	}
+}
+
+void asm_declaration_destroy(struct asm_declaration declaration)
+{
+	switch (declaration.type) {
+	case ASM_DECL_LABEL:
+		free(declaration.label);
+		break;
+	case ASM_DECL_INSTRUCTION:
+		asm_instruction_destroy(declaration.instruction);
+		break;
+	}
 }

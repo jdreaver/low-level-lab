@@ -20,8 +20,8 @@ enum asm_declaration_type {
  * An ASM instruction is either an A or C instruction.
  */
 enum asm_instruction_type {
-	ASM_INST_TYPE_A,
-	ASM_INST_TYPE_C,
+	ASM_INST_A,
+	ASM_INST_C,
 };
 
 /*
@@ -133,15 +133,15 @@ struct asm_instruction {
 };
 
 struct asm_declaration {
-	enum asm_instruction_type type;
+	enum asm_declaration_type type;
 	union {
 		char *label;
-		struct asm_a_instruction a_instruction;
-		struct asm_c_instruction c_instruction;
+		struct asm_instruction instruction;
 	};
 };
 
 /*
- * Frees an `asm_instruction`. TODO: implementme
+ * Frees an `asm_instruction`. The components of the instruction must have been
+ * allocated with malloc.
  */
-void asm_instruction_destroy(struct asm_instruction instruction);
+void asm_declaration_destroy(struct asm_declaration);
