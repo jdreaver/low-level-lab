@@ -50,40 +50,58 @@ void test_eat_line_space_comments()
 
 void test_parse_a_instruction()
 {
-
-	// Missing @ symbol
-	char *input = "";
+	// Missing @ symbol (empty string)
 	struct asm_a_instruction instruction;
-	enum asm_parse_error err = parse_a_instruction(&input, &instruction);
+	struct parser_state state = parser_state_create("");
+	enum asm_parse_error err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL, err);
+
+	// Doesn't start with @
+	state = parser_state_create("not@");
+	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL, err);
 
 	// Simple success
-	input = "@123";
-	err = parse_a_instruction(&input, &instruction);
+	state = parser_state_create("@123");
+	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
 	TEST_ASSERT_EQUAL_UINT16(123, instruction.address);
 
 	// Bare @
-	input = "@";
-	err = parse_a_instruction(&input, &instruction);
+	state = parser_state_create("@");
+	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_UNEXPECTED_EOF, err);
 
+	// Min allowed value
+	state = parser_state_create("@0");
+	err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
+	TEST_ASSERT_EQUAL_UINT16(0, instruction.address);
+
+	// Max allowed value
+	state = parser_state_create("@32767");
+	err = parse_a_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_ADDRESS, instruction.type);
+	TEST_ASSERT_EQUAL_UINT16(32767, instruction.address);
+
 	// Logical overflow (fits in uint16_t, but is too large for address)
-	input = "@32768";
-	err = parse_a_instruction(&input, &instruction);
+	state = parser_state_create("@32768");
+	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE, err);
 
 	// uint16_t overflow
-	input = "@32768231432848329789437289";
-	err = parse_a_instruction(&input, &instruction);
+	state = parser_state_create("@32768231432848329789437289");
+	err = parse_a_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE, err);
 
 	// TODO: Add this once we support labels, since this goes down label path
-	/* puts("Testing negative @-398"); */
-	/* input = "@-398"; */
-	/* err = parse_a_instruction(&input, &instruction); */
-	/* assert(err == ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE); */
+	// puts("Testing negative @-398");
+	// input = "@-398";
+	// err = parse_a_instruction(&state, &instruction);
+	// assert(err == ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE);
 }
 
 int main(void)

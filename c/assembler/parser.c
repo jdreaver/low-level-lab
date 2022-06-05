@@ -78,22 +78,29 @@ static void eat_line_space_comments(struct parser_state *state)
  * Parses a decimal address, which is a non-negative number between 0 and 2^15 -
  * 1 = 32767. This is done character by character to carefully catch overflow.
  */
-static enum asm_parse_error parse_a_address(char **source, uint16_t *address)
+static enum asm_parse_error parse_a_address(struct parser_state *state, uint16_t *address)
 {
 	*address = 0;
-	for (; *source != NULL && isdigit(**source); (*source)++) {
+	while (true) {
+		char current_char = parser_state_current_char(state);
+		if (!current_char || !isdigit(current_char)) {
+			break;
+		}
+
 		// Multiply current address by 10, checking for overflow.
-		if (*address > UINT8_MAX / 10) {
+		if (*address > UINT16_MAX / 10) {
 			return ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE;
 		}
 		*address *= 10;
 
 		// Add digit, checking for overflow
-		uint16_t d = **source - '0';
-		if (*address > UINT8_MAX - d) {
+		uint16_t d = current_char - '0';
+		if (*address > UINT16_MAX - d) {
 			return ASM_PARSE_ERROR_A_INSTRUCTION_ADDRESS_TOO_LARGE;
 		}
 		*address += d;
+
+		parser_state_advance(state);
 	}
 
 	if (*address > 32767) {
@@ -104,28 +111,25 @@ static enum asm_parse_error parse_a_address(char **source, uint16_t *address)
 }
 
 /*
- * Parses an A instruction, assuming whitespace and comments have already been
- * eaten, and returns a pointer to the source after the A instruction.
+ * Parses an A instruction starting at the current parse position.
  */
-static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_instruction *instruction)
+static enum asm_parse_error parse_a_instruction(struct parser_state *state, struct asm_a_instruction *instruction)
 {
-	assert(*source != NULL);
-
 	// A instructions must start with @
-	if (**source != '@') {
+	if (parser_state_current_char(state) != '@') {
 		return ASM_PARSE_ERROR_A_INSTRUCTION_MISSING_AT_SYMBOL;
 	}
+	parser_state_advance(state);
 
-	(*source)++;
-	if (**source == '\0') {
+	if (parser_state_current_char(state) == '\0') {
 		return ASM_PARSE_ERROR_UNEXPECTED_EOF;
 	}
 
 	// If the next character is a number, we must have an address literal.
 	// Otherwise, assume a label.
-	if (isdigit(**source)) {
+	if (isdigit(parser_state_current_char(state))) {
 		uint16_t address;
-		enum asm_parse_error address_error = parse_a_address(source, &address);
+		enum asm_parse_error address_error = parse_a_address(state, &address);
 		if (address_error != ASM_PARSE_ERROR_NO_ERROR) {
 			return address_error;
 		}
@@ -133,12 +137,6 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
 		instruction->address = address;
 	} else {
 		// TODO
-	}
-
-	// Check for newline or EOF. If one of those isn't present, there
-	// is extra crud in the input.
-	if (**source != '\0' && !isspace(**source)) {
-		return ASM_PARSE_ERROR_EXTRA_INPUT;
 	}
 
 	return ASM_PARSE_ERROR_NO_ERROR;
@@ -149,9 +147,21 @@ static enum asm_parse_error parse_a_instruction(char **source, struct asm_a_inst
  * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), and sets `instruction`
  * to NULL if the line was empty or just comments.
  */
-static enum asm_parse_error parse_instruction_line(char **source, struct asm_instruction *instruction)
+static enum asm_parse_error parse_instruction_line(struct parser_state *state, struct asm_instruction *instruction)
 {
-	// TODO
+	// TODO: Eat whitespace until end of line
+
+	// TODO: Run parser
+
+	// TODO: Eat whitespace again
+
+	// Check for newline or EOF. If one of those isn't present, there is
+	// extra crud in the input.
+	char last_char = parser_state_current_char(state);
+	if (!last_char || last_char != '\n') {
+		return ASM_PARSE_ERROR_EXTRA_INPUT;
+	}
+
 	return ASM_PARSE_ERROR_NO_ERROR;
 }
 
