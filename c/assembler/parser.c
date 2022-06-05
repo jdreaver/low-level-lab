@@ -231,6 +231,7 @@ void asm_instruction_destroy(struct asm_instruction instruction)
 {
 	switch (instruction.type) {
 	case ASM_INST_A:
+		asm_a_instruction_destroy(instruction.a_instruction);
 		break;
 	case ASM_INST_C:
 		// No dynamic memory in C instructions
