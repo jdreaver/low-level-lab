@@ -152,6 +152,24 @@ void test_parse_c_instruction()
 	state = parser_state_create("M=");
 	err = parse_c_instruction(&state, &instruction);
 	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_C_A_COMP_MALFORMED, err);
+
+	// Comp and jump
+	memset(&instruction, 0, sizeof(struct asm_c_instruction));
+	state = parser_state_create("0;JGT");
+	err = parse_c_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_C_DEST_NULL, instruction.dest);
+	TEST_ASSERT_EQUAL_INT(ASM_C_A_COMP_ZERO, instruction.a_comp);
+	TEST_ASSERT_EQUAL_INT(ASM_C_JUMP_JGT, instruction.jump);
+
+	// Dest, comp, and jump
+	memset(&instruction, 0, sizeof(struct asm_c_instruction));
+	state = parser_state_create("M=0;JGT");
+	err = parse_c_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_C_DEST_M, instruction.dest);
+	TEST_ASSERT_EQUAL_INT(ASM_C_A_COMP_ZERO, instruction.a_comp);
+	TEST_ASSERT_EQUAL_INT(ASM_C_JUMP_JGT, instruction.jump);
 }
 
 void test_parse_declaration_line()

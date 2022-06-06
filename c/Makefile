@@ -32,8 +32,9 @@ UNITY_O=unity/unity.o
 $(UNITY_O): $(unity_headers) $(unity_sources)
 	$(CC) $(CFLAGS) -c -o $@ $(unity_sources)
 
-bin/assembler_parser_test: assembler/parser_test.c assembler/parser.c assembler/parser.h $(unity_headers) $(UNITY_O)
-	$(CC) $(CFLAGS) -o $@ assembler/parser_test.c -Iunity/ $(UNITY_O) -DTEST
+bin/assembler_parser_test: assembler/parser_test.c assembler/parser.c assembler/parser.h \
+	assembler/substring.h assembler/substring.c assembler/error.h $(unity_headers) $(UNITY_O)
+	$(CC) $(CFLAGS) -o $@ assembler/parser_test.c assembler/substring.c -Iunity/ $(UNITY_O) -DTEST
 
 .PHONY: clean
 clean:
