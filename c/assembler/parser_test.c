@@ -136,6 +136,24 @@ void test_parse_a_instruction()
 	asm_a_instruction_destroy(instruction);
 }
 
+void test_parse_c_instruction()
+{
+	// Dest and comp
+	struct asm_c_instruction instruction = {0};
+	struct parser_state state = parser_state_create("M=0");
+	enum asm_parse_error err = parse_c_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_INT(ASM_C_DEST_M, instruction.dest);
+	TEST_ASSERT_EQUAL_INT(ASM_C_A_COMP_ZERO, instruction.a_comp);
+	TEST_ASSERT_EQUAL_INT(ASM_C_JUMP_NULL, instruction.jump);
+
+	// Missing comp
+	memset(&instruction, 0, sizeof(struct asm_c_instruction));
+	state = parser_state_create("M=");
+	err = parse_c_instruction(&state, &instruction);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_C_A_COMP_MALFORMED, err);
+}
+
 void test_parse_declaration_line()
 {
 	// Successfully parse A instruction
@@ -228,6 +246,7 @@ int main(void)
 	UNITY_BEGIN();
 	RUN_TEST(test_eat_line_space_comments);
 	RUN_TEST(test_parse_a_instruction);
+	RUN_TEST(test_parse_c_instruction);
 	RUN_TEST(test_parse_declaration_line);
 	RUN_TEST(test_parse_asm_declarations);
 	return UNITY_END();

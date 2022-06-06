@@ -191,6 +191,132 @@ static enum asm_parse_error parse_a_instruction(struct parser_state *state, stru
 }
 
 /*
+ * Compares two strings using the minimum of the two given sizes.
+ *
+ * TODO: Move this to a util module
+ */
+static int strncmp_min(const char *str1, const char *str2, size_t s1, size_t s2)
+{
+	size_t s = s1;
+	if (s2 < s) {
+		s = s2;
+	}
+	return strncmp(str1, str2, s);
+}
+
+/*
+ * Parses an C instruction starting at the current parse position. C
+ * instructions look like: DEST=COMP;JUMP
+ */
+static enum asm_parse_error parse_c_instruction(struct parser_state *state, struct asm_c_instruction *instruction)
+{
+	// Parsing a C instruction works like this:
+	// 1. Start parsing until a space or newline, assuming we are parsing COMP
+        // 2. If we find an =, then move COMP to DEST, and start with COMP again
+        // 3. If we find a ;, then start on JUMP
+        // 4. We need one of DEST or JUMP for a valid instruction
+        // 5. Also, our components need to be non-empty and match to valid components
+
+	size_t start = state->pos;
+
+	size_t comp_start = 0;
+	size_t comp_end = 0;
+
+	bool found_dest = false;
+	size_t dest_start = 0;
+	size_t dest_end = 0;
+
+	bool found_jump = false;
+	size_t jump_start = 0;
+	size_t jump_end = 0;
+
+	char current_char;
+	while ((current_char = parser_state_current_char(state)) && current_char != ' ' && current_char != '\n') {
+		if (current_char == '=') {
+			if (found_dest || found_jump) {
+				return ASM_PARSE_ERROR_C_MALFORMED;
+			}
+			found_dest = true;
+			dest_start = start;
+			dest_end = state->pos;
+			start = state->pos + 1;
+		} else if (current_char == ';') {
+			if (found_jump) {
+				return ASM_PARSE_ERROR_C_MALFORMED;
+			}
+			found_jump = true;
+			comp_start = start;
+			comp_end = state->pos;
+			start = state->pos + 1;
+		}
+		parser_state_advance(state);
+	}
+
+	// If we found a jump, then jump_start/end is start/end. Otherwise, it
+	// is comp start/end.
+	if (found_jump) {
+		jump_start = start;
+		jump_end = state->pos;
+	} else {
+		comp_start = start;
+		comp_end = state->pos;
+	}
+
+	// We must have a comp or dest
+	if (!found_dest && !found_jump) {
+		return ASM_PARSE_ERROR_C_MALFORMED;
+	}
+
+	// Pattern match dest
+	enum asm_c_dest dest = ASM_C_DEST_NULL;
+	if (found_dest) {
+		const char *dest_str = state->source + dest_start;
+		size_t dest_len = dest_end - dest_start;
+		if (dest_len == 0) {
+			return ASM_PARSE_ERROR_C_DEST_MALFORMED;
+		} else if (strncmp_min(dest_str, "M", 1, dest_len) == 0) {
+			dest = ASM_C_DEST_M;
+		} else {
+			return ASM_PARSE_ERROR_C_DEST_MALFORMED;
+		}
+	};
+
+	// Pattern match comp
+	enum asm_c_a_comp comp;
+	const char *comp_str = state->source + comp_start;
+	size_t comp_len = comp_end - comp_start;
+	if (comp_len == 0) {
+		return ASM_PARSE_ERROR_C_A_COMP_MALFORMED;
+	} else if (strncmp_min(comp_str, "0", 1, comp_len) == 0) {
+		comp = ASM_C_A_COMP_ZERO;
+	} else {
+		return ASM_PARSE_ERROR_C_A_COMP_MALFORMED;
+	};
+
+
+	// Pattern match jump
+	enum asm_c_jump jump = ASM_C_JUMP_NULL;
+	if (found_jump) {
+		const char *jump_str = state->source + jump_start;
+		size_t jump_len = jump_end - jump_start;
+		if (jump_len == 0) {
+			return ASM_PARSE_ERROR_C_JUMP_MALFORMED;
+		} else if (strncmp_min(jump_str, "JGT", 1, jump_len) == 0) {
+			jump = ASM_C_JUMP_JEQ;
+		} else {
+			return ASM_PARSE_ERROR_C_JUMP_MALFORMED;
+		};
+
+	}
+
+	instruction->dest = dest;
+	instruction->a_comp = comp;
+	instruction->jump = jump;
+
+	return ASM_PARSE_ERROR_NO_ERROR;
+}
+
+/*
  * Parses the next line of text in `source`. Returns an error (or
  * `ASM_PARSE_ERROR_NO_ERROR` if none was encountered), or also
  * `ASM_PARSE_ERROR_NO_DECLARATION` if no instruction was found on the current
@@ -205,6 +331,7 @@ static enum asm_parse_error parse_declaration_line(struct parser_state *state, s
 	// Run parser for an declaration
 	enum asm_parse_error err;
 	struct asm_a_instruction a_instruction;
+	struct asm_c_instruction c_instruction;
 
 	switch (parser_state_current_char(state)) {
 	case '\0':
@@ -221,6 +348,18 @@ static enum asm_parse_error parse_declaration_line(struct parser_state *state, s
 		 declaration->type = ASM_DECL_INSTRUCTION;
 		 declaration->instruction.type = ASM_INST_A;
 		 declaration->instruction.a_instruction = a_instruction;
+		 break;
+        case '(':
+		fprintf(stderr, "TODO support labels %s at %s:%d\n", __func__, __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	default:
+		 err = parse_c_instruction(state, &c_instruction);
+		 if (err != ASM_PARSE_ERROR_NO_ERROR) {
+			 return err;
+		 }
+		 declaration->type = ASM_DECL_INSTRUCTION;
+		 declaration->instruction.type = ASM_INST_C;
+		 declaration->instruction.c_instruction = c_instruction;
 	}
 
 	// Eat any trailing whitespace
