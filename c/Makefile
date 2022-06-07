@@ -28,7 +28,7 @@ all: bin/assembler
 test: bin/assembler_parser_test
 	./bin/assembler_parser_test
 
-bin/assembler: assembler/assembler.o
+bin/assembler: assembler/assembler.o assembler/parser.o assembler/substring.o
 	$(CC) -o $@ $^
 
 bin/assembler_parser_test: assembler/parser_test.o assembler/substring.o unity/unity.o

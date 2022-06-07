@@ -256,6 +256,20 @@ void test_parse_asm_declarations()
 	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declarations.declarations[0].instruction.a_instruction.type);
 	TEST_ASSERT_EQUAL_STRING("hello", declarations.declarations[0].instruction.a_instruction.label);
 	asm_declarations_destroy(declarations);
+
+	// A and C instruction
+	declarations = asm_declarations_create();
+	err = parse_asm_declarations("//my file\n@hello\nM=0;JGT", &declarations);
+	TEST_ASSERT_EQUAL_INT(ASM_PARSE_ERROR_NO_ERROR, err);
+	TEST_ASSERT_EQUAL_size_t(2, declarations.len);
+	TEST_ASSERT_EQUAL_INT(ASM_INST_A, declarations.declarations[0].instruction.type);
+	TEST_ASSERT_EQUAL_INT(ASM_A_INST_LABEL, declarations.declarations[0].instruction.a_instruction.type);
+	TEST_ASSERT_EQUAL_STRING("hello", declarations.declarations[0].instruction.a_instruction.label);
+	TEST_ASSERT_EQUAL_INT(ASM_INST_C, declarations.declarations[1].instruction.type);
+	TEST_ASSERT_EQUAL_INT(ASM_C_DEST_M, declarations.declarations[1].instruction.c_instruction.dest);
+	TEST_ASSERT_EQUAL_INT(ASM_C_A_COMP_ZERO, declarations.declarations[1].instruction.c_instruction.a_comp);
+	TEST_ASSERT_EQUAL_INT(ASM_C_JUMP_JGT, declarations.declarations[1].instruction.c_instruction.jump);
+	asm_declarations_destroy(declarations);
 }
 
 
