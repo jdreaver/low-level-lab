@@ -17,6 +17,7 @@
           rustc
           clippy
           rustfmt
+          rust-analyzer
 
           # C
           gcc
