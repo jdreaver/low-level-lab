@@ -170,14 +170,25 @@ pub fn disassemble_next_instruction(
             let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
             Ok(Some((rest, Instruction::Rrmovq { ra, rb })))
         }
-        [0x30, reg_byte, rest @ ..] => {
+        [0x30, reg_byte, v8, v7, v6, v5, v4, v3, v2, v1, rest @ ..] => {
             if reg_byte >> 4 != 0xF {
                 return Err(err);
             }
             let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
-            // TODO: Left off here
-            let v = 0;
+            let v = u64::from_le_bytes([*v8, *v7, *v6, *v5, *v4, *v3, *v2, *v1]);
             Ok(Some((rest, Instruction::Irmovq { rb, v })))
+        }
+        [0x40, reg_byte, d8, d7, d6, d5, d4, d3, d2, d1, rest @ ..] => {
+            let ra = Register::from_first_4_bits(*reg_byte).ok_or(err.clone())?;
+            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
+            let d = u64::from_le_bytes([*d8, *d7, *d6, *d5, *d4, *d3, *d2, *d1]);
+            Ok(Some((rest, Instruction::Rmmovq { ra, rb, d })))
+        }
+        [0x50, reg_byte, d8, d7, d6, d5, d4, d3, d2, d1, rest @ ..] => {
+            let ra = Register::from_first_4_bits(*reg_byte).ok_or(err.clone())?;
+            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
+            let d = u64::from_le_bytes([*d8, *d7, *d6, *d5, *d4, *d3, *d2, *d1]);
+            Ok(Some((rest, Instruction::Mrmovq { ra, rb, d })))
         }
         _ => Err(err),
     }
@@ -209,7 +220,19 @@ fn test_disassemble_next_instruction() {
             &[][..],
             Instruction::Rrmovq {
                 ra: Register::Rdi,
-                rb: Register::R13
+                rb: Register::R13,
+            }
+        )))
+    );
+
+    // Irmovq
+    assert_eq!(
+        disassemble_next_instruction(&vec![0x30, 0xFD, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01]),
+        Ok(Some((
+            &[][..],
+            Instruction::Irmovq {
+                rb: Register::R13,
+                v: 0x0123456789ABCDEF,
             }
         )))
     );
