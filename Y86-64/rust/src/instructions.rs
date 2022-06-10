@@ -199,14 +199,14 @@ fn test_disassemble_next_instruction() {
     // Halt (with extra)
     assert_eq!(
         disassemble_next_instruction(&vec![0x00, 0xF]),
-        Ok(Some((&vec![0xF][..], Instruction::Halt)))
+        Ok(Some((&[0xF][..], Instruction::Halt)))
     );
 
     // Rrmovq
     assert_eq!(
         disassemble_next_instruction(&vec![0x20, 0x7D]),
         Ok(Some((
-            &vec![][..],
+            &[][..],
             Instruction::Rrmovq {
                 ra: Register::Rdi,
                 rb: Register::R13
