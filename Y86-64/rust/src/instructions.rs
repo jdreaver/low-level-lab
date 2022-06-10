@@ -128,7 +128,6 @@ impl OPqFunction {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum JxxFunction {
     Jmp,
@@ -238,7 +237,8 @@ impl Disassembler {
     }
 
     fn split_next_byte_or_err(&mut self) -> Result<(u8, u8), DisassembleError> {
-        self.split_next_byte().ok_or(DisassembleError::NotEnoughInput)
+        self.split_next_byte()
+            .ok_or(DisassembleError::NotEnoughInput)
     }
 
     fn next_little_endian_u64(&mut self) -> Result<u64, DisassembleError> {
@@ -366,26 +366,19 @@ fn test_disassemble() {
     // Unknown
     assert_eq!(
         disassemble(&vec![0xFA]),
-        Err(DisassembleError::UnknownInstructionCode {
-            code_part: 0xF,
-        })
+        Err(DisassembleError::UnknownInstructionCode { code_part: 0xF })
     );
 
     // Halt
-    assert_eq!(
-        disassemble(&vec![0x00]),
-        Ok(vec![Instruction::Halt])
-    );
+    assert_eq!(disassemble(&vec![0x00]), Ok(vec![Instruction::Halt]));
 
     // Rrmovq
     assert_eq!(
         disassemble(&vec![0x20, 0x7D]),
-        Ok(vec![
-            Instruction::Rrmovq {
-                ra: Register::Rdi,
-                rb: Register::R13,
-            }
-        ])
+        Ok(vec![Instruction::Rrmovq {
+            ra: Register::Rdi,
+            rb: Register::R13,
+        }])
     );
 
     // Irmovq
@@ -393,11 +386,54 @@ fn test_disassemble() {
         disassemble(&vec![
             0x30, 0xFD, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01
         ]),
-        Ok(vec![
-            Instruction::Irmovq {
-                rb: Register::R13,
-                v: 0x0123456789ABCDEF,
-            }
-        ])
+        Ok(vec![Instruction::Irmovq {
+            rb: Register::R13,
+            v: 0x0123456789ABCDEF,
+        }])
     );
+
+    // Complex (example taken from book)
+    let complex_bytes = vec![
+        // 30f80800000000000000 | irmovq $8,%r8
+        0x30, 0xf8, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // 30f90100000000000000 | irmovq $1,%r9
+        0x30, 0xf9, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // 6300                 | xorq %rax,%rax
+        0x63, 0x00, // 6266                 | andq %rsi,%rsi
+        0x62, 0x66, // 708700000000000000   | jmp
+        0x70, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // 805600000000000000   | call
+        0x80, 0x56, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // 90                   | ret
+        0x90,
+    ];
+    let complex_expect = vec![
+        Instruction::Irmovq {
+            rb: Register::R8,
+            v: 8,
+        },
+        Instruction::Irmovq {
+            rb: Register::R9,
+            v: 1,
+        },
+        Instruction::OPq {
+            f: OPqFunction::Xorq,
+            ra: Register::Rax,
+            rb: Register::Rax,
+        },
+        Instruction::OPq {
+            f: OPqFunction::Andq,
+            ra: Register::Rsi,
+            rb: Register::Rsi,
+        },
+        Instruction::Jxx {
+            f: JxxFunction::Jmp,
+            dest: 0x87,
+        },
+        Instruction::Call {
+            dest: 0x56,
+        },
+        Instruction::Ret,
+    ];
+    assert_eq!(disassemble(&complex_bytes), Ok(complex_expect));
 }
