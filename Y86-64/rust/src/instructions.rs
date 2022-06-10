@@ -99,12 +99,8 @@ impl Register {
         }
     }
 
-    fn from_last_4_bits(value: u8) -> Option<Self> {
-        Self::from_u8(value & 0xF)
-    }
-
-    fn from_first_4_bits(value: u8) -> Option<Self> {
-        Self::from_u8(value >> 4)
+    fn from_u8_or_err(reg_bits: u8) -> Result<Self, DisassembleError> {
+        Self::from_u8(reg_bits).ok_or(DisassembleError::InvalidRegister { reg_bits })
     }
 }
 
@@ -139,101 +135,158 @@ pub enum CmovxxFunction {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum DisassembleError {
-    UnknownInstructionSequence { next_9_bytes: Vec<u8> },
+    NotEnoughInput,
+    InvalidInstruction,
+    UnknownInstructionCode { code_part: u8 },
+    UnknownInstructionCodeFn { code_part: u8, fn_part: u8 },
+    InvalidRegister { reg_bits: u8 },
+    Expected0xFRegBits { reg_bits: u8 },
 }
 
 /// Disassamble a stream of bytes into instructions.
-pub fn disassemble(mut input: &[u8]) -> Result<Vec<Instruction>, DisassembleError> {
+pub fn disassemble(input: &[u8]) -> Result<Vec<Instruction>, DisassembleError> {
+    let mut disassembler = Disassembler::from_bytes(input);
     let mut instructions = vec![];
 
-    while let Some((rest, instruction)) = disassemble_next_instruction(input)? {
-        input = rest;
+    while let Some(instruction) = disassembler.next_instruction()? {
         instructions.push(instruction);
     }
 
     Ok(instructions)
 }
 
-pub fn disassemble_next_instruction(
-    input: &[u8],
-) -> Result<Option<(&[u8], Instruction)>, DisassembleError> {
-    let err = DisassembleError::UnknownInstructionSequence {
-        next_9_bytes: input.iter().take(9).cloned().collect(),
-    };
+struct Disassembler {
+    input: Vec<u8>,
+    i: usize,
+}
 
-    match input {
-        [] => Ok(None),
-        [0x00, rest @ ..] => Ok(Some((rest, Instruction::Halt))),
-        [0x10, rest @ ..] => Ok(Some((rest, Instruction::Nop))),
-        [0x20, reg_byte, rest @ ..] => {
-            let ra = Register::from_first_4_bits(*reg_byte).ok_or(err.clone())?;
-            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
-            Ok(Some((rest, Instruction::Rrmovq { ra, rb })))
-        }
-        [0x30, reg_byte, v8, v7, v6, v5, v4, v3, v2, v1, rest @ ..] => {
-            if reg_byte >> 4 != 0xF {
-                return Err(err);
+impl Disassembler {
+    fn from_bytes(bytes: &[u8]) -> Self {
+        let input = bytes.iter().cloned().collect();
+        Disassembler { input, i: 0 }
+    }
+
+    fn next_byte(&mut self) -> Option<u8> {
+        let x = self.input.get(self.i);
+        self.i += 1;
+        x.map(|x| *x)
+    }
+
+    fn next_byte_or_err(&mut self) -> Result<u8, DisassembleError> {
+        self.next_byte().ok_or(DisassembleError::NotEnoughInput)
+    }
+
+    fn split_next_byte(&mut self) -> Option<(u8, u8)> {
+        self.next_byte().map(|b| split_byte(b))
+    }
+
+    fn split_next_byte_or_err(&mut self) -> Result<(u8, u8), DisassembleError> {
+        self.split_next_byte().ok_or(DisassembleError::NotEnoughInput)
+    }
+
+    fn next_little_endian_u64(&mut self) -> Result<u64, DisassembleError> {
+        let x8 = self.next_byte_or_err()?;
+        let x7 = self.next_byte_or_err()?;
+        let x6 = self.next_byte_or_err()?;
+        let x5 = self.next_byte_or_err()?;
+        let x4 = self.next_byte_or_err()?;
+        let x3 = self.next_byte_or_err()?;
+        let x2 = self.next_byte_or_err()?;
+        let x1 = self.next_byte_or_err()?;
+        Ok(u64::from_le_bytes([x8, x7, x6, x5, x4, x3, x2, x1]))
+    }
+
+    fn next_instruction(&mut self) -> Result<Option<Instruction>, DisassembleError> {
+        let (code_part, fn_part) = match self.split_next_byte() {
+            None => return Ok(None),
+            Some(x) => x,
+        };
+
+        match code_part {
+            0x0 => Ok(Some(Instruction::Halt)),
+            0x1 => Ok(Some(Instruction::Nop)),
+            0x2 => {
+                let (ra_bits, rb_bits) = self.split_next_byte_or_err()?;
+                let ra = Register::from_u8_or_err(ra_bits)?;
+                let rb = Register::from_u8_or_err(rb_bits)?;
+                match fn_part {
+                    0x0 => Ok(Some(Instruction::Rrmovq { ra, rb })),
+                    _ => Err(DisassembleError::UnknownInstructionCodeFn { code_part, fn_part }),
+                }
             }
-            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
-            let v = u64::from_le_bytes([*v8, *v7, *v6, *v5, *v4, *v3, *v2, *v1]);
-            Ok(Some((rest, Instruction::Irmovq { rb, v })))
+            0x3 => {
+                let (ra_bits, rb_bits) = self.split_next_byte_or_err()?;
+                if ra_bits != 0xF {
+                    return Err(DisassembleError::Expected0xFRegBits { reg_bits: ra_bits });
+                }
+                let rb = Register::from_u8_or_err(rb_bits)?;
+                let v = self.next_little_endian_u64()?;
+                Ok(Some(Instruction::Irmovq { rb, v }))
+            }
+            0x4 => {
+                let (ra_bits, rb_bits) = self.split_next_byte_or_err()?;
+                let ra = Register::from_u8_or_err(ra_bits)?;
+                let rb = Register::from_u8_or_err(rb_bits)?;
+                let d = self.next_little_endian_u64()?;
+                Ok(Some(Instruction::Rmmovq { ra, rb, d }))
+            }
+            0x5 => {
+                let (ra_bits, rb_bits) = self.split_next_byte_or_err()?;
+                let ra = Register::from_u8_or_err(ra_bits)?;
+                let rb = Register::from_u8_or_err(rb_bits)?;
+                let d = self.next_little_endian_u64()?;
+                Ok(Some(Instruction::Mrmovq { ra, rb, d }))
+            }
+            _ => Err(DisassembleError::UnknownInstructionCode { code_part }),
         }
-        [0x40, reg_byte, d8, d7, d6, d5, d4, d3, d2, d1, rest @ ..] => {
-            let ra = Register::from_first_4_bits(*reg_byte).ok_or(err.clone())?;
-            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
-            let d = u64::from_le_bytes([*d8, *d7, *d6, *d5, *d4, *d3, *d2, *d1]);
-            Ok(Some((rest, Instruction::Rmmovq { ra, rb, d })))
-        }
-        [0x50, reg_byte, d8, d7, d6, d5, d4, d3, d2, d1, rest @ ..] => {
-            let ra = Register::from_first_4_bits(*reg_byte).ok_or(err.clone())?;
-            let rb = Register::from_last_4_bits(*reg_byte).ok_or(err)?;
-            let d = u64::from_le_bytes([*d8, *d7, *d6, *d5, *d4, *d3, *d2, *d1]);
-            Ok(Some((rest, Instruction::Mrmovq { ra, rb, d })))
-        }
-        _ => Err(err),
     }
 }
 
+// Splits a byte into the upper 4 and lower 4 bits
+pub fn split_byte(x: u8) -> (u8, u8) {
+    (x >> 4, x & 0xF)
+}
+
 #[test]
-fn test_disassemble_next_instruction() {
+fn test_disassemble() {
     // Empty
-    assert_eq!(disassemble_next_instruction(&vec![]), Ok(None));
+    assert_eq!(disassemble(&vec![]), Ok(vec![]));
 
     // Unknown
     assert_eq!(
-        disassemble_next_instruction(&vec![0xF, 0x0, 0xA]),
-        Err(DisassembleError::UnknownInstructionSequence {
-            next_9_bytes: vec![0xF, 0x0, 0xA],
+        disassemble(&vec![0xFA]),
+        Err(DisassembleError::UnknownInstructionCode {
+            code_part: 0xF,
         })
     );
 
-    // Halt (with extra)
+    // Halt
     assert_eq!(
-        disassemble_next_instruction(&vec![0x00, 0xF]),
-        Ok(Some((&[0xF][..], Instruction::Halt)))
+        disassemble(&vec![0x00]),
+        Ok(vec![Instruction::Halt])
     );
 
     // Rrmovq
     assert_eq!(
-        disassemble_next_instruction(&vec![0x20, 0x7D]),
-        Ok(Some((
-            &[][..],
+        disassemble(&vec![0x20, 0x7D]),
+        Ok(vec![
             Instruction::Rrmovq {
                 ra: Register::Rdi,
                 rb: Register::R13,
             }
-        )))
+        ])
     );
 
     // Irmovq
     assert_eq!(
-        disassemble_next_instruction(&vec![0x30, 0xFD, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01]),
-        Ok(Some((
-            &[][..],
+        disassemble(&vec![
+            0x30, 0xFD, 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01
+        ]),
+        Ok(vec![
             Instruction::Irmovq {
                 rb: Register::R13,
                 v: 0x0123456789ABCDEF,
             }
-        )))
+        ])
     );
 }
