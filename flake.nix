@@ -23,7 +23,11 @@
           gcc
           gcc.man
           gdb
+          ddd # Nice GUI debugger
           valgrind
+
+          # ASM
+          nasm
         ];
       };
     };

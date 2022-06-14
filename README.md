@@ -6,6 +6,7 @@ etc. In particular, here are some things I've done in hre:
 - Solutions for https://www.nand2tetris.org/
 - Projects related to https://csapp.cs.cmu.edu/
 - General C, Rust, and assembly nonsense
+- Code for https://www.amazon.com/Beginning-x64-Assembly-Programming-Professional/dp/1484250753
 
 ## TODO
 
