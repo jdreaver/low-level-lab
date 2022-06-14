@@ -5,16 +5,16 @@ all: alive hello4
 # without -nostartfiles `list` not quite working; you get
 # `../sysdeps/x86_64/start.S: No such file or directory.`
 alive: alive.o
-	gcc -o alive -nostartfiles --entry main alive.o
+	gcc -o $@ -nostartfiles --entry main $?
 
 alive.o: alive.asm
-	nasm -f elf64 -g -F dwarf alive.asm -l alive.lst
+	nasm -f elf64 -g -F dwarf $? -l alive.lst
 
 hello4: hello4.o
-	gcc -o hello4 -nostartfiles --entry main hello4.o
+	gcc -o $@ -nostartfiles --entry main $?
 
 hello4.o: hello4.asm
-	nasm -f elf64 -g -F dwarf hello4.asm -l hello4.lst
+	nasm -f elf64 -g -F dwarf $? -l hello4.lst
 
 .PHONY: clean
 clean:
