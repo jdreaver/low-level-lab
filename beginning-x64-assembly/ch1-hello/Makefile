@@ -1,5 +1,5 @@
 .PHONY: all
-all: hello hello-gas
+all: hello hello-gas hello-gas-intel
 
 # N.B. Using gcc for linking (as of gcc version 11.3.0 in May 2022 on NixOS)
 # without -nostartfiles `list` not quite working; you get
@@ -18,6 +18,13 @@ hello-gas.o: hello-gas.S
 	gcc -c $? -o hello-gas.o -ggdb
 
 
+hello-gas-intel: hello-gas-intel.o
+	gcc -o $@ -nostartfiles --entry main $? -ggdb
+
+hello-gas-intel.o: hello-gas-intel.S
+	gcc -c $? -o hello-gas-intel.o -ggdb
+
+
 .PHONY: clean
 clean:
-	rm -f hello hello.o hello-gas hello-gas.o
+	rm -f hello hello.o hello-gas hello-gas.o hello-gas-intel hello-gas-intel.o
