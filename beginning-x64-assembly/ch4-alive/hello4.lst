@@ -1,0 +1,26 @@
+     1                                  extern printf
+     2                                  section .data
+     3 00000000 48656C6C6F2C20776F-             msg db  "Hello, world!",0
+     3 00000009 726C642100         
+     4 0000000E 54686973206973206F-             fmtstr db       "This is our string: %s",10,0
+     4 00000017 757220737472696E67-
+     4 00000020 3A2025730A00       
+     5                                  section .bss
+     6                                  section .text
+     7                                          global main
+     8                                  main:
+     9 00000000 55                              push    rbp
+    10 00000001 4889E5                          mov     rbp,rsp
+    11                                  
+    12 00000004 48BF-                           mov     rdi, fmtstr     ; first arg to printf
+    12 00000006 [0E00000000000000] 
+    13 0000000E 48BE-                           mov     rsi, msg        ; second arg to print
+    13 00000010 [0000000000000000] 
+    14 00000018 B800000000                      mov     rax, 0          ; No xmm registers involved
+    15 0000001D E8(00000000)                    call    printf
+    16                                  
+    17 00000022 4889EC                          mov     rsp,rbp
+    18 00000025 5D                              pop     rbp
+    19 00000026 B83C000000                      mov     rax, 60         ; 60 = exit
+    20 0000002B BF00000000                      mov     rdi, 0          ; 0 = success
+    21 00000030 0F05                            syscall                 ; quit
