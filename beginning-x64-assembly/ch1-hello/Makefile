@@ -15,14 +15,14 @@ hello-gas: hello-gas.o
 	gcc -o $@ -nostartfiles --entry main $? -ggdb
 
 hello-gas.o: hello-gas.S
-	gcc -c $? -o hello-gas.o -ggdb
+	gcc -c $? -o $@ -ggdb
 
 
 hello-gas-intel: hello-gas-intel.o
 	gcc -o $@ -nostartfiles --entry main $? -ggdb
 
 hello-gas-intel.o: hello-gas-intel.S
-	gcc -c $? -o hello-gas-intel.o -ggdb
+	gcc -c $? -o $@ -ggdb
 
 
 .PHONY: clean
