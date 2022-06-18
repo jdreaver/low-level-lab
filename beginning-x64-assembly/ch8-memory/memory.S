@@ -2,6 +2,12 @@
 bNum:   .byte   123
 wNum:   .word   12345
 warray: .word   0,0,0,0,0
+
+dNum:   .long   12345
+qNum1:  .quad   12345
+text1:  .asciz  "abc"
+qNum2:  .float  3.141592654
+text2:  .asciz  "cde"
         .bss
 .lcomm  bvar    1
 .lcomm  dvar    4
