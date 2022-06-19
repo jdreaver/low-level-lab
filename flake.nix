@@ -31,6 +31,9 @@
 
           # Python
           python3
+
+          # Misc
+          unzip
         ];
       };
     };
