@@ -30,7 +30,7 @@
           nasm
 
           # Python
-          python2
+          python3
         ];
       };
     };
