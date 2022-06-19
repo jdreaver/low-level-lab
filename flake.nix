@@ -28,6 +28,9 @@
 
           # ASM
           nasm
+
+          # Python
+          python2
         ];
       };
     };
