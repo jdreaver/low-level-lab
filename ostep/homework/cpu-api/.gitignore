@@ -1,2 +1,4 @@
 *.o
 /p4
+/fork-shared
+/fork-write-shared

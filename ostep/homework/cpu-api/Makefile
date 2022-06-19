@@ -1,4 +1,4 @@
-TARGETS=p4
+TARGETS=p4 fork-shared fork-write-shared
 TARGETS_O=$(patsubst %,%.o,$(TARGETS))
 
 CFLAGS=-Wall -Werror -pedantic
