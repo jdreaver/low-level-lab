@@ -1,0 +1,10 @@
+/result/
+/result-dev
+.hello*
+Module*
+hello.mod*
+hello.o
+hello.ko
+.modules*
+.Module*
+modules.order
