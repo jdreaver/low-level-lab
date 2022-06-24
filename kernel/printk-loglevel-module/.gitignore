@@ -1,0 +1,8 @@
+.printk_loglevel*
+Module*
+printk_loglevel.mod*
+printk_loglevel.o
+printk_loglevel.ko
+.modules*
+.Module*
+modules.order
