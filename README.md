@@ -10,6 +10,9 @@ etc. In particular, here are some things I've done in hre:
   - https://pages.cs.wisc.edu/~remzi/OSTEP/ (<https://ostep.org>)
 - Code for https://www.amazon.com/Beginning-x64-Assembly-Programming-Professional/dp/1484250753
 - [The Linux Programming Interface](https://man7.org/tlpi/)
+- Eudyptula challenge
+  - https://github.com/agelastic/eudyptula
+  - http://eudyptula-challenge.org/
 
 ## TODO
 
