@@ -31,3 +31,41 @@ The task this time is this:
 
 As you will be putting your id into the kernel module, of course you
 haven't forgotten it, but just to be safe, it's "7c1caf2f50d1".
+
+## Solution proof
+
+- `make`
+
+```
+$ modinfo eudyptula.ko
+filename:       /home/david/git/low-level-lab/eudyptula/06-misc-char-device-driver/eudyptula.ko
+version:        0.1
+description:    Simple misc char device driver for eudyptula task 6
+author:         David Reaver
+license:        GPL
+srcversion:     582825C13627E38790B8B0C
+depends:
+retpoline:      Y
+name:           eudyptula
+vermagic:       5.15.49 SMP mod_unload
+```
+
+```
+$ sudo insmod eudyptula.ko
+# from journalctl -k
+Jun 27 19:29:45 arnor kernel: Unloaded eudyptula module.
+Jun 27 19:29:46 arnor kernel: Loading eudyptula module. Minor number is 255
+```
+
+```
+$ sudo cat /dev/eudyptula
+7c1caf2f50d1⏎
+```
+
+```
+root@arnor /h/d/g/l/e/06-misc-char-device-driver# echo -n 7c1caf2f50d1 > /dev/eudyptula
+root@arnor /h/d/g/l/e/06-misc-char-device-driver# echo $status
+0
+root@arnor /h/d/g/l/e/06-misc-char-device-driver# echo hello > /dev/eudyptula
+write: Invalid argument
+```
