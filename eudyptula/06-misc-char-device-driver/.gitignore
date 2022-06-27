@@ -1,0 +1,11 @@
+.eudyptula*
+Module*
+eudyptula.mod*
+eudyptula.o
+eudyptula.ko
+.modules*
+.Module*
+modules.order
+compile_commands.json
+.compile_commands.json.cmd
+/.ccls-cache/
