@@ -1,0 +1,11 @@
+.eudyptula_sysfs*
+Module*
+eudyptula_sysfs.mod*
+eudyptula_sysfs.o
+eudyptula_sysfs.ko
+.modules*
+.Module*
+modules.order
+compile_commands.json
+.compile_commands.json.cmd
+/.ccls-cache/
