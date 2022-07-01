@@ -1,0 +1,11 @@
+.linked_list*
+Module*
+linked_list.mod*
+linked_list.o
+linked_list.ko
+.modules*
+.Module*
+modules.order
+compile_commands.json
+.compile_commands.json.cmd
+/.ccls-cache/
