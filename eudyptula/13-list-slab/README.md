@@ -35,54 +35,65 @@ Patch (from git diff --no-index -- ../12-linked-list/linked_list.c list_slab.c >
 
 ```patch
 diff --git a/../12-linked-list/linked_list.c b/list_slab.c
-index cb604a0..a22d3a3 100644
+index bd0be9b..091d8f7 100644
 --- a/../12-linked-list/linked_list.c
 +++ b/list_slab.c
-@@ -20,13 +20,15 @@ struct identity {
+@@ -18,15 +18,27 @@ struct identity {
+ 	struct list_head list;
+ };
 
++/*
++  This constructor is here just so this slab doesn't get merged with others, and
++  we can see it in /proc/slabinfo. See
++  https://stackoverflow.com/questions/24858424/unable-to-find-new-object-create-with-kmem-cache-create-in-proc-slabinfo
++ */
++static void identity_constructor(void *addr)
++{
++	memset(addr, 0, sizeof(struct identity));
++}
++
  static LIST_HEAD(identity_list);
 
 +static struct kmem_cache *identity_cache;
 +
  static int identity_create(char *name, int id)
  {
-        struct identity *new_ident;
+ 	struct identity *new_ident;
 
-        // TODO: Look for id in existing list and fail if exists
+ 	// TODO: Look for id in existing list and fail if exists
 
--       new_ident = kmalloc(sizeof(*new_ident), GFP_KERNEL);
-+       new_ident = kmem_cache_alloc(identity_cache, GFP_KERNEL);
-        if (new_ident == NULL) {
-                return -EINVAL;
-        }
-@@ -56,7 +58,7 @@ static void identity_destroy(int id)
-        struct identity *identity = identity_find(id);
-        if (identity != NULL) {
-                list_del(&(identity->list));
--               kfree(identity);
-+               kmem_cache_free(identity_cache, identity);
-        }
+-	new_ident = kmalloc(sizeof(*new_ident), GFP_KERNEL);
++	new_ident = kmem_cache_alloc(identity_cache, GFP_KERNEL);
+ 	if (new_ident == NULL) {
+ 		return -EINVAL;
+ 	}
+@@ -56,7 +68,7 @@ static void identity_destroy(int id)
+ 	struct identity *identity = identity_find(id);
+ 	if (identity != NULL) {
+ 		list_del(&(identity->list));
+-		kfree(identity);
++		kmem_cache_free(identity_cache, identity);
+ 	}
 
  }
-@@ -67,6 +69,10 @@ static int __init linked_list_start(void)
+@@ -67,6 +79,10 @@ static int __init linked_list_start(void)
 
-        pr_info("Loading %s\n", THIS_MODULE->name);
+ 	pr_info("Loading %s\n", THIS_MODULE->name);
 
-+       identity_cache = kmem_cache_create("identity", sizeof(struct identity), 0, 0, NULL);
-+       if (identity_cache == NULL)
-+               return -ENOMEM;
++	identity_cache = kmem_cache_create("identity", sizeof(struct identity), 0, 0, identity_constructor);
++	if (identity_cache == NULL)
++		return -ENOMEM;
 +
-        if ((identity_create("Alice", 1)) != 0) {
-                return -EINVAL;
-        }
-@@ -108,7 +114,9 @@ static int __init linked_list_start(void)
+ 	if ((identity_create("Alice", 1)) != 0) {
+ 		return -EINVAL;
+ 	}
+@@ -111,6 +127,9 @@ static void __exit linked_list_end(void)
+ 		pr_info("id = 3 is gone now\n");
 
- static void __exit linked_list_end(void)
- {
--       printk(KERN_INFO "Unloading %s\n", THIS_MODULE->name);
-+       pr_info("Unloading %s\n", THIS_MODULE->name);
-+       if (identity_cache)
-+               kmem_cache_destroy(identity_cache);
+ 	pr_info("list_empty() == %d\n", list_empty(&identity_list));
++
++	if (identity_cache)
++		kmem_cache_destroy(identity_cache);
  }
 
  module_init(linked_list_start);
@@ -92,12 +103,19 @@ Tested in QEMU
 
 ```
 [root@nixos:~]# insmod /mnt/list_slab.ko
-[   83.791161] Loading list_slab
-[   83.791280] id 3 = David
-[   83.791371] id 42 not found
-[   83.791471] id = 3 is gone now
-[   83.791579] list_empty() == 1
+[   12.694757] list_slab: loading out-of-tree module taints kernel.
+[   12.695158] Loading list_slab
+[   12.695280] id 3 = David
+[   12.695371] id 42 not found
+
+[root@nixos:~]# cat /sys/kernel/slab/identity/object_size
+48
+
+[root@nixos:~]# grep identity /proc/slabinfo
+identity              73     73     56   73    1 : tunables    0    0    0 : slabdata      1      1      0
 
 [root@nixos:~]# rmmod list_slab
-[   84.878937] Unloading list_slab
+[   37.276525] Unloading list_slab
+[   37.276645] id = 3 is gone now
+[   37.276753] list_empty() == 1
 ```

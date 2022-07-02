@@ -77,13 +77,13 @@ Tested in QEMU
 
 ```
 [root@nixos:~]# insmod /mnt/linked_list.ko
-[   12.937090] linked_list: loading out-of-tree module taints kernel.
-[   12.937601] Loading linked_list
-[   12.937724] id 3 = David
-[   12.937817] id 42 not found
-[   12.937917] id = 3 is gone now
-[   12.938027] list_empty() == 1
+[   12.586426] linked_list: loading out-of-tree module taints kernel.
+[   12.586859] Loading linked_list
+[   12.586985] id 3 = David
+[   12.587076] id 42 not found
 
 [root@nixos:~]# rmmod linked_list
-[   39.764792] Unloading linked_list
+[   16.804029] Unloading linked_list
+[   16.804156] id = 3 is gone now
+[   16.804265] list_empty() == 1
 ```

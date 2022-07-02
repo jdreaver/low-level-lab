@@ -18,6 +18,16 @@ struct identity {
 	struct list_head list;
 };
 
+/*
+  This constructor is here just so this slab doesn't get merged with others, and
+  we can see it in /proc/slabinfo. See
+  https://stackoverflow.com/questions/24858424/unable-to-find-new-object-create-with-kmem-cache-create-in-proc-slabinfo
+ */
+static void identity_constructor(void *addr)
+{
+	memset(addr, 0, sizeof(struct identity));
+}
+
 static LIST_HEAD(identity_list);
 
 static struct kmem_cache *identity_cache;
@@ -69,7 +79,7 @@ static int __init linked_list_start(void)
 
 	pr_info("Loading %s\n", THIS_MODULE->name);
 
-	identity_cache = kmem_cache_create("identity", sizeof(struct identity), 0, 0, NULL);
+	identity_cache = kmem_cache_create("identity", sizeof(struct identity), 0, 0, identity_constructor);
 	if (identity_cache == NULL)
 		return -ENOMEM;
 
@@ -97,6 +107,15 @@ static int __init linked_list_start(void)
 	if (temp == NULL)
 		pr_info("id 42 not found\n");
 
+	return 0;
+}
+
+static void __exit linked_list_end(void)
+{
+	struct identity *temp;
+
+	pr_info("Unloading %s\n", THIS_MODULE->name);
+
         identity_destroy(2);
         identity_destroy(1);
         identity_destroy(10);
@@ -109,12 +128,6 @@ static int __init linked_list_start(void)
 
 	pr_info("list_empty() == %d\n", list_empty(&identity_list));
 
-	return 0;
-}
-
-static void __exit linked_list_end(void)
-{
-	pr_info("Unloading %s\n", THIS_MODULE->name);
 	if (identity_cache)
 		kmem_cache_destroy(identity_cache);
 }

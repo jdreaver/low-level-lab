@@ -91,6 +91,15 @@ static int __init linked_list_start(void)
 	if (temp == NULL)
 		pr_info("id 42 not found\n");
 
+	return 0;
+}
+
+static void __exit linked_list_end(void)
+{
+	struct identity *temp;
+
+	pr_info("Unloading %s\n", THIS_MODULE->name);
+
         identity_destroy(2);
         identity_destroy(1);
         identity_destroy(10);
@@ -102,13 +111,6 @@ static int __init linked_list_start(void)
 		pr_info("id = 3 is gone now\n");
 
 	pr_info("list_empty() == %d\n", list_empty(&identity_list));
-
-	return 0;
-}
-
-static void __exit linked_list_end(void)
-{
-	printk(KERN_INFO "Unloading %s\n", THIS_MODULE->name);
 }
 
 module_init(linked_list_start);
