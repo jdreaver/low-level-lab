@@ -34,6 +34,10 @@
 
           # Misc
           unzip
+
+          # Kernel tools
+          coccinelle
+          sparse
         ];
       };
     };

@@ -39,7 +39,7 @@ static int identity_create(char *name, int id)
 	return 0;
 }
 
-struct identity *identity_find(int id)
+static struct identity *identity_find(int id)
 {
 	struct identity *identity;
 	list_for_each_entry(identity, &identity_list, list) {
@@ -51,7 +51,7 @@ struct identity *identity_find(int id)
 }
 
 
-void identity_destroy(int id)
+static void identity_destroy(int id)
 {
 	struct identity *identity = identity_find(id);
 	if (identity != NULL) {
