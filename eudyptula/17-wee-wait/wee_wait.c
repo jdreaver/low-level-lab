@@ -18,10 +18,16 @@ static struct task_struct *thread;
 
 static int thread_fn(void *data)
 {
-	while (!kthread_should_stop()) {
+	while (1) {
 		pr_info("in kernel thread with PID: %d\n", current->pid);
-		msleep(1000);
+
+		if (wait_event_interruptible(wee_wait, kthread_should_stop()))
+			return -ERESTARTSYS;
+
+		if (kthread_should_stop())
+			break;
 	}
+
 	return 0;
 }
 

@@ -36,36 +36,20 @@ time.
 
 ## Proof
 
-Ran in QEMU. I also ran `dmesg -D` to stop kernel messages from appearing in my
-console, so the thread print didn't interfere with my commands.
+Ran in QEMU.
 
 ```
 [root@nixos:~]# insmod /shared/wee_wait.ko
+[   10.985008] wee_wait: loading out-of-tree module taints kernel.
+[   10.985385] Loading wee_wait. Minor number is 255
+
+[root@nixos:~]# [   10.986708] in kernel thread with PID: 557
+
 
 [root@nixos:~]# ps -ef | grep eudyptula
-root         565       2  0 14:40 ?        00:00:00 [eudyptula]
-root         569     426  0 14:41 ttyS0    00:00:00 grep eudyptula
+root         557       2  0 15:01 ?        00:00:00 [eudyptula]
+root         559     426  0 15:01 ttyS0    00:00:00 grep eudyptula
 
 [root@nixos:~]# rmmod wee_wait
-
-[root@nixos:~]# dmesg | tail -19
-[   76.051593] Loading wee_wait. Minor number is 255
-[   76.051623] device: 'wee_wait': device_add
-[   76.051633] PM: Adding info for No Bus:wee_wait
-[   76.052722] in kernel thread with PID: 565
-[   77.063819] in kernel thread with PID: 565
-[   78.088080] in kernel thread with PID: 565
-[   79.112063] in kernel thread with PID: 565
-[   80.135828] in kernel thread with PID: 565
-[   81.159829] in kernel thread with PID: 565
-[   82.184095] in kernel thread with PID: 565
-[   83.208090] in kernel thread with PID: 565
-[   84.231805] in kernel thread with PID: 565
-[   85.256085] in kernel thread with PID: 565
-[   86.280114] in kernel thread with PID: 565
-[   87.304082] in kernel thread with PID: 565
-[   88.003407] Unloaded wee_wait.
-[   88.003411] device: 'wee_wait': device_unregister
-[   88.003434] PM: Removing info for No Bus:wee_wait
-[   88.003644] device: 'wee_wait': device_create_release
+[   28.676479] Unloaded wee_wait.
 ```
