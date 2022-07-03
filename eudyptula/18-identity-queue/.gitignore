@@ -1,0 +1,11 @@
+.identity_queue*
+Module*
+identity_queue.mod*
+identity_queue.o
+identity_queue.ko
+.modules*
+.Module*
+modules.order
+compile_commands.json
+.compile_commands.json.cmd
+/.ccls-cache/
