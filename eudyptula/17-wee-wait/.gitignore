@@ -1,0 +1,11 @@
+.wee_wait*
+Module*
+wee_wait.mod*
+wee_wait.o
+wee_wait.ko
+.modules*
+.Module*
+modules.order
+compile_commands.json
+.compile_commands.json.cmd
+/.ccls-cache/
