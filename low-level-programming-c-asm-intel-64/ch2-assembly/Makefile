@@ -1,4 +1,4 @@
-TARGETS = hello
+TARGETS = hello print_rax
 TARGETS_O = $(patsubst %,%.o,$(TARGETS))
 
 .PHONY: all

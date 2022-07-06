@@ -1,0 +1,56 @@
+     1                                 %line 1+1 print_rax.asm
+     2                                 [section .data]
+     3                                 codes:
+     4 00000000 303132333435363738-     db '0123456789ABCDEF'
+     5 00000000 39414243444546     
+     6                                 newline:
+     7 00000010 0A                      db 0xA
+     8                                 [section .text]
+     9                                 [global _start]
+    10                                 _start:
+    11                                 
+    12 00000000 48B8EFBF9A344523C1-     mov rax, 0x8C12345349ABFEF
+    13 00000000 08                 
+    14                                 
+    15                                 
+    16                                 
+    17 0000000A 48C7C701000000          mov rdi, 1
+    18 00000011 48C7C201000000          mov rdx, 1
+    19                                 
+    20 00000018 48C7C140000000          mov rcx, 64
+    21                                 
+    22                                 
+    23                                 
+    24                                 .loop:
+    25                                 
+    26                                 
+    27                                 
+    28 0000001F 50                      push rax
+    29                                 
+    30 00000020 4883E904                sub rcx, 4
+    31                                 
+    32                                 
+    33 00000024 48D3F8                  sar rax, cl
+    34 00000027 4883E00F                and rax, 0xf
+    35                                 
+    36                                 
+    37 0000002B 488DB0[00000000]        lea rsi, [codes + rax]
+    38 00000032 48C7C001000000          mov rax, 1
+    39                                 
+    40 00000039 51                      push rcx
+    41 0000003A 0F05                    syscall
+    42 0000003C 59                      pop rcx
+    43                                 
+    44 0000003D 58                      pop rax
+    45 0000003E 4885C9                  test rcx, rcx
+    46 00000041 75DA                    jnz .loop
+    47                                 
+    48                                 
+    49 00000043 48C7C001000000          mov rax, 1
+    50 0000004A 48C7C6[00000000]        mov rsi, newline
+    51 00000051 0F05                    syscall
+    52                                 
+    53                                 
+    54 00000053 48C7C03C000000          mov rax, 60
+    55 0000005A 4831FF                  xor rdi, rdi
+    56 0000005D 0F05                    syscall
