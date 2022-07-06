@@ -15,10 +15,9 @@ etc. In particular, here are some things I've done in hre:
   - http://eudyptula-challenge.org/
 - Low-Level Programming: C, Assembly, and Program Execution on Intel® 64 Architecture
   - https://www.oreilly.com/library/view/low-level-programming-c/9781484224021/
+  - Source code, solutions, projects, etc
+    https://github.com/Apress/low-level-programming
 
-## TODO
-
-nand2tetris C:
-- Have assembler actually run and create integration tests
-- Improve Makefile
-- Consider https://github.com/antirez/sds for strings
+## Resources
+- Intel 64 cheatsheet
+  https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf

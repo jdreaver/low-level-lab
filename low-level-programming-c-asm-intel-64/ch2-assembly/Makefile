@@ -1,15 +1,16 @@
-TARGETS = hello print_rax print_call endianness strlen
-TARGETS_O = $(patsubst %,%.o,$(TARGETS))
+TARGETS = hello print_rax print_call endianness strlen test_lib
+OBJ_FILES = $(patsubst %,%.o,$(TARGETS))
+OBJ_FILES += lib.o
 
 .PHONY: all
 all: $(TARGETS)
 
-$(TARGETS): %: %.o
-	ld -o $@ $?
+$(TARGETS): %: %.o lib.o
+	ld -o $@ $^
 
-$(TARGETS_O): %.o: %.asm
+$(OBJ_FILES): %.o: %.asm
 	yasm -f elf64 -g dwarf2 $? -l $?.lst -o $@
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) $(TARGETS_O) *.lst
+	rm -f $(TARGETS) $(OBJ_FILES) *.lst
