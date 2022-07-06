@@ -1,0 +1,19 @@
+     1                                 %line 1+1 hello.asm
+     2                                 [global _start]
+     3                                 
+     4                                 [section .data]
+     5                                 message:
+     6 00000000 68656C6C6F2C20776F-     db 'hello, world', 10
+     7 00000000 726C640A           
+     8                                 
+     9                                 [section .text]
+    10                                 _start:
+    11 00000000 48C7C001000000          mov rax, 1
+    12 00000007 48C7C701000000          mov rdi, 1
+    13 0000000E 48C7C6[00000000]        mov rsi, message
+    14 00000015 48C7C20E000000          mov rdx, 14
+    15 0000001C 0F05                    syscall
+    16                                 
+    17 0000001E 48C7C03C000000          mov rax, 60
+    18 00000025 4831FF                  xor rdi, rdi
+    19 00000028 0F05                    syscall

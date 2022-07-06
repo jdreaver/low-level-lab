@@ -13,6 +13,8 @@ etc. In particular, here are some things I've done in hre:
 - Eudyptula challenge
   - https://github.com/agelastic/eudyptula
   - http://eudyptula-challenge.org/
+- Low-Level Programming: C, Assembly, and Program Execution on Intel® 64 Architecture
+  - https://www.oreilly.com/library/view/low-level-programming-c/9781484224021/
 
 ## TODO
 
