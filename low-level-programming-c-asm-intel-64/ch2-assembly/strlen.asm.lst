@@ -1,0 +1,31 @@
+     1                                 %line 1+1 strlen.asm
+     2                                 [section .data]
+     3                                 test_string:
+     4 00000000 30313233343500          db "012345", 0
+     5                                 [section .text]
+     6                                 [global _start]
+     7                                 
+     8                                 strlen:
+     9 00000000 4831C0                  xor rax, rax
+    10                                 
+    11                                 .loop:
+    12 00000003 803C0700                cmp byte [rdi + rax], 0
+    13                                 
+    14                                 
+    15                                 
+    16 00000007 7403                    je .end
+    17                                 
+    18 00000009 48FFC0                  inc rax
+    19 0000000C EBF3                    jmp .loop
+    20                                 
+    21                                 .end:
+    22 0000000E C3                      ret
+    23                                 
+    24                                 _start:
+    25 0000000F 48C7C7[00000000]        mov rdi, test_string
+    26 00000016 E8E0FFFFFF              call strlen
+    27                                 
+    28                                 
+    29 0000001B 4889C7                  mov rdi, rax
+    30 0000001E 48C7C03C000000          mov rax, 60
+    31 00000025 0F05                    syscall

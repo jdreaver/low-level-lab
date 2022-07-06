@@ -1,4 +1,4 @@
-TARGETS = hello print_rax
+TARGETS = hello print_rax print_call endianness strlen
 TARGETS_O = $(patsubst %,%.o,$(TARGETS))
 
 .PHONY: all

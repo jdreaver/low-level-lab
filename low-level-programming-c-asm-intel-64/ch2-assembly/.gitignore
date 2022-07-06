@@ -1,3 +1,6 @@
 *.o
 /hello
 /print_rax
+/endianness
+/print_call
+/strlen
