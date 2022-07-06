@@ -1,3 +1,4 @@
 *.o
 /hello
 /hello-gas
+/hello-gas-intel

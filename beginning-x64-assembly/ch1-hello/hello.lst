@@ -1,16 +1,16 @@
-     1                                  section .data
-     2 00000000 68656C6C6F2C20776F-             msg db  "hello, world",0
-     2 00000009 726C6400           
-     3                                  section .bss
-     4                                  section .text
-     5                                          global main
-     6                                  main:
-     7 00000000 B801000000                      mov     rax, 1          ; 1 = write
-     8 00000005 BF01000000                      mov     rdi, 1          ; 1 = to stdout
-     9 0000000A 48BE-                           mov     rsi, msg        ; string to display in rsi
-     9 0000000C [0000000000000000] 
-    10 00000014 BA0C000000                      mov     rdx, 12         ; length of the string, without 0
-    11 00000019 0F05                            syscall                 ; display the string
-    12 0000001B B83C000000                      mov     rax, 60         ; 60 = exit
-    13 00000020 BF00000000                      mov     rdi, 0          ; 0 = success
-    14 00000025 0F05                            syscall                 ; quit
+     1                                 %line 1+1 hello.asm
+     2                                 [section .data]
+     3 00000000 68656C6C6F2C20776F-     msg db "hello, world",0
+     4 00000000 726C6400           
+     5                                 [section .bss]
+     6                                 [section .text]
+     7                                 [global _start]
+     8                                 _start:
+     9 00000000 48C7C001000000          mov rax, 1
+    10 00000007 48C7C701000000          mov rdi, 1
+    11 0000000E 48C7C6[00000000]        mov rsi, msg
+    12 00000015 48C7C20C000000          mov rdx, 12
+    13 0000001C 0F05                    syscall
+    14 0000001E 48C7C03C000000          mov rax, 60
+    15 00000025 48C7C700000000          mov rdi, 0
+    16 0000002C 0F05                    syscall

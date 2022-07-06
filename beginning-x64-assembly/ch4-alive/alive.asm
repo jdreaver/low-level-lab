@@ -7,8 +7,8 @@ section .data
         pi dq           3.14
 section .bss
 section .text
-        global main
-main:
+        global _start
+_start:
         push    rbp             ; function prologue
         mov     rbp,rsp         ; function prologue
 

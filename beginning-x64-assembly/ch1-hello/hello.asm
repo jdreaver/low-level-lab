@@ -2,8 +2,8 @@ section .data
         msg db  "hello, world",0
 section .bss
 section .text
-        global main
-main:
+        global _start
+_start:
         mov     rax, 1          ; 1 = write
         mov     rdi, 1          ; 1 = to stdout
         mov     rsi, msg        ; string to display in rsi

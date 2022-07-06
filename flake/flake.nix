@@ -28,6 +28,13 @@
 
           # ASM
           nasm
+          # N.B. We use yasm instead of nasm because nasm 2.15.05 (Aug 28 2020)
+          # and gdb 12.1 (May 2022) don't play nice together. There doesn't seem
+          # to be any source location information included in the resulting
+          # binary. Specifically, we have to use "ni" instead of "n" for
+          # stepping, and any command that tries to inspect the source (like
+          # layout src, or TUI mode), says "[No Source Available]".
+          yasm
 
           # Python
           python3
