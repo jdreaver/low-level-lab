@@ -35,39 +35,112 @@
     35                                 [global print_string]
     36                                 print_string:
     37                                 
-    38 0000001B 4989F8                  mov r8, rdi
-    39                                 
+    38                                 
+    39 0000001B 4989F8                  mov r8, rdi
     40                                 
-    41 0000001E E8E4FFFFFF              call strlen
-    42                                 
+    41                                 
+    42 0000001E E8E4FFFFFF              call strlen
     43                                 
-    44 00000023 4889C2                  mov rdx, rax
-    45 00000026 48C7C001000000          mov rax, 1
-    46 0000002D 48C7C701000000          mov rdi, 1
-    47 00000034 4C89C6                  mov rsi, r8
-    48 00000037 0F05                    syscall
-    49                                 
-    50 00000039 C3                      ret
-    51                                 
+    44                                 
+    45 00000023 4889C2                  mov rdx, rax
+    46 00000026 48C7C001000000          mov rax, 1
+    47 0000002D 48C7C701000000          mov rdi, 1
+    48 00000034 4C89C6                  mov rsi, r8
+    49 00000037 0F05                    syscall
+    50                                 
+    51 00000039 C3                      ret
     52                                 
     53                                 
-    54                                 [global print_char]
-    55                                 print_char:
-    56                                 
-    57 0000003A 57                      push rdi
-    58                                 
+    54                                 
+    55                                 [global print_char]
+    56                                 print_char:
+    57                                 
+    58 0000003A 57                      push rdi
     59                                 
     60                                 
-    61 0000003B 4889E7                  mov rdi, rsp
-    62 0000003E E8D3FFFFFF              call print_string
-    63                                 
+    61                                 
+    62 0000003B 4889E7                  mov rdi, rsp
+    63 0000003E E8D3FFFFFF              call print_string
     64                                 
-    65 00000043 4883C408                add rsp, 8
-    66                                 
-    67 00000047 C3                      ret
-    68                                 
-    69                                 [global print_newline]
-    70                                 print_newline:
-    71 00000048 48C7C70A000000          mov rdi, 0xA
-    72 0000004F E8E1FFFFFF              call print_char
-    73 00000054 C3                      ret
+    65                                 
+    66 00000043 4883C408                add rsp, 8
+    67                                 
+    68 00000047 C3                      ret
+    69                                 
+    70                                 [global print_newline]
+    71                                 print_newline:
+    72 00000048 48C7C70A000000          mov rdi, 0xA
+    73 0000004F E8E1FFFFFF              call print_char
+    74 00000054 C3                      ret
+    75                                 
+    76                                 
+    77                                 [global print_uint]
+    78                                 print_uint:
+    79                                 
+    80                                 
+    81                                 
+    82 00000055 4889F8                  mov rax, rdi
+    83                                 
+    84                                 
+    85                                 
+    86 00000058 4889E7                  mov rdi, rsp
+    87                                 
+    88                                 
+    89                                 
+    90                                 
+    91                                 
+    92 0000005B 6A00                    push 0
+    93 0000005D 6A00                    push 0
+    94 0000005F 6A00                    push 0
+    95                                 
+    96                                 
+    97                                 
+    98 00000061 48FFCF                  dec rdi
+    99                                 
+   100                                 
+   101 00000064 49C7C00A000000          mov r8, 10
+   102                                 
+   103                                 .loop:
+   104                                 
+   105 0000006B 48FFCF                  dec rdi
+   106                                 
+   107                                 
+   108 0000006E 4831D2                  xor rdx, rdx
+   109                                 
+   110                                 
+   111 00000071 49F7F0                  div r8
+   112                                 
+   113                                 
+   114                                 
+   115 00000074 80C230                  add dl, 0x30
+   116 00000077 8817                    mov [rdi], dl
+   117                                 
+   118                                 
+   119 00000079 4885C0                  test rax, rax
+   120 0000007C 75EB                    jnz .loop
+   121                                 
+   122                                 .end:
+   123                                 
+   124 0000007E E893FFFFFF              call print_string
+   125                                 
+   126                                 
+   127 00000083 4883C418                add rsp, 24
+   128                                 
+   129 00000087 C3                      ret
+   130                                 
+   131                                 
+   132                                 [global print_int]
+   133                                 print_int:
+   134                                 
+   135 00000088 4885FF                  test rdi, rdi
+   136 0000008B 79C6                    jns print_uint
+   137                                 
+   138                                 
+   139 0000008D 4889FB                  mov rbx, rdi
+   140 00000090 48C7C72D000000          mov rdi, '-'
+   141 00000097 E899FFFFFF              call print_char
+   142                                 
+   143                                 
+   144 0000009C 4889DF                  mov rdi, rbx
+   145 0000009F 48F7DF                  neg rdi
+   146 000000A2 EBAF                    jmp print_uint

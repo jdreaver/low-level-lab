@@ -5,6 +5,8 @@ extern strlen
 extern print_string
 extern print_char
 extern print_newline
+extern print_uint
+extern print_int
 
 section .data
 test_string:
@@ -34,6 +36,32 @@ _start:
         call	print_newline
         mov	rdi, '|'
         call	print_char
+        call	print_newline
+
+        ; Call print_uint
+        mov	rdi, 0
+        call	print_uint
+        call	print_newline
+
+        mov	rdi, 12345678901234
+        call	print_uint
+        call	print_newline
+
+        ; Call print_int
+        mov	rdi, 0
+        call	print_int
+        call	print_newline
+
+        mov	rdi, 12345678901234
+        call	print_int
+        call	print_newline
+
+        mov	rdi, -3
+        call	print_int
+        call	print_newline
+
+        mov	rdi, -12345678901234
+        call	print_int
         call	print_newline
 
         ; Call exit()

@@ -33,7 +33,8 @@ strlen:
 ; first char of the string)
 global print_string
 print_string:
-        ; Save rdi (first argument) since that is a caller-save register
+        ; Save rdi (first argument) since that is a caller-save register and
+        ; might get trampled when we call strlen.
         mov	r8, rdi
 
         ; Compute string length. rdi is already set to string
@@ -70,3 +71,75 @@ print_newline:
         mov	rdi, 0xA
         call	print_char
         ret
+
+; Prints a 64 bit (8 byte) unsigned integer to stdout
+global print_uint
+print_uint:
+        ; Store argument in rax, since that is where div will operate. div
+        ; actually operates on the 128 bit integer formed by concatenating
+        ; rdx:rax, but we will zero out rdx before every div.
+        mov	rax, rdi
+
+        ; Before we modify stack, store location of next digit in rdi, which is
+        ; the current value of rsp. This will be the start point for printing.
+        mov	rdi, rsp
+
+        ; Allocate 24 bytes on the stack, since the largest possible decimal
+        ; value of a 64 bit unsigned int is 2^64-1, which is
+        ; 18,446,744,073,709,551,615 (20 digits). We do this with push so we
+        ; zero it out, so we end up allocation 24 bytes, which is fine.
+        push	0
+        push	0
+        push	0
+        ;add	rsp, 20
+
+        ; Last byte in buffer will be null byte so we can call print_string
+        dec	rdi
+
+        ; We will always divide by 10. Store in r8
+        mov	r8, 10
+
+.loop:
+        ; Decrement offset from rsp
+        dec	rdi
+
+        ; Zero out rdx for div so we are just operating on rax
+        xor	rdx, rdx
+
+        ; Divide by 10 (in r8) to get next digit from remainder.
+        div	r8
+
+        ; Remainder is in rdx. Store remainder + 0x30 (ASCII code for zero) in
+        ; buffer. Remember we just want one byte!
+        add	dl, 0x30
+        mov	[rdi], dl
+
+        ; If rax is non-zero, continue loop again
+        test	rax, rax
+        jnz	.loop
+
+.end:
+        ; Print buffer. rdi already stores pointer to head of string.
+        call	print_string
+
+        ; Restore the stack
+        add	rsp, 24
+
+        ret
+
+; Prints a 64 bit (8 byte) signed integer to stdout
+global print_int
+print_int:
+        ; If the integer is positive, just print as if uint
+        test	rdi, rdi
+        jns	print_uint      ; Is this janky?
+
+        ; Print a '-' because we are negative
+        mov	rbx, rdi        ; rbx is callee-save, so it will survive the print_char
+        mov	rdi, '-'
+        call	print_char
+
+        ; Negate the arg and print
+        mov	rdi, rbx
+        neg	rdi
+        jmp	print_uint

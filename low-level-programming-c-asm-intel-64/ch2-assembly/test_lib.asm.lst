@@ -6,48 +6,79 @@
      6                                 [extern print_string]
      7                                 [extern print_char]
      8                                 [extern print_newline]
-     9                                 
-    10                                 [section .data]
-    11                                 test_string:
-    12 00000000 30313233343500          db "012345", 0
-    13                                 
-    14                                 strlen_failed_msg:
-    15 00000007 7374726C656E206861-     db "strlen had incorrect return value!", 0xA, 0
-    16 00000007 6420696E636F727265-
-    17 00000007 63742072657475726E-
-    18 00000007 2076616C7565210A00 
-    19                                 
-    20                                 [section .text]
+     9                                 [extern print_uint]
+    10                                 [extern print_int]
+    11                                 
+    12                                 [section .data]
+    13                                 test_string:
+    14 00000000 30313233343500          db "012345", 0
+    15                                 
+    16                                 strlen_failed_msg:
+    17 00000007 7374726C656E206861-     db "strlen had incorrect return value!", 0xA, 0
+    18 00000007 6420696E636F727265-
+    19 00000007 63742072657475726E-
+    20 00000007 2076616C7565210A00 
     21                                 
-    22                                 [global _start]
-    23                                 _start:
-    24                                 
-    25 00000000 48C7C7[00000000]        mov rdi, test_string
-    26 00000007 E8(F6FFFFFF)            call strlen
-    27 0000000C 4883F806                cmp rax, 6
-    28 00000010 753D                    jne .strlen_failed
-    29                                 
-    30                                 
-    31 00000012 48C7C7[00000000]        mov rdi, test_string
-    32 00000019 E8(F6FFFFFF)            call print_string
-    33                                 
-    34                                 
-    35 0000001E E8(F6FFFFFF)            call print_newline
-    36 00000023 48C7C75F000000          mov rdi, '_'
-    37 0000002A E8(F6FFFFFF)            call print_char
-    38 0000002F E8(F6FFFFFF)            call print_newline
-    39 00000034 48C7C77C000000          mov rdi, '|'
-    40 0000003B E8(F6FFFFFF)            call print_char
-    41 00000040 E8(F6FFFFFF)            call print_newline
-    42                                 
-    43                                 
-    44 00000045 48C7C000000000          mov rax, 0
-    45 0000004C E8(F6FFFFFF)            call exit
-    46                                 
-    47                                 .strlen_failed:
-    48                                 
-    49 00000051 48C7C7[00000000]        mov rdi, strlen_failed_msg
-    50 00000058 E8(F6FFFFFF)            call print_string
-    51                                 
-    52 0000005D 48C7C001000000          mov rax, 1
-    53 00000064 E8(F6FFFFFF)            call exit
+    22                                 [section .text]
+    23                                 
+    24                                 [global _start]
+    25                                 _start:
+    26                                 
+    27 00000000 48C7C7[00000000]        mov rdi, test_string
+    28 00000007 E8(F6FFFFFF)            call strlen
+    29 0000000C 4883F806                cmp rax, 6
+    30 00000010 0F85A8000000            jne .strlen_failed
+    31                                 
+    32                                 
+    33 00000016 48C7C7[00000000]        mov rdi, test_string
+    34 0000001D E8(F6FFFFFF)            call print_string
+    35                                 
+    36                                 
+    37 00000022 E8(F6FFFFFF)            call print_newline
+    38 00000027 48C7C75F000000          mov rdi, '_'
+    39 0000002E E8(F6FFFFFF)            call print_char
+    40 00000033 E8(F6FFFFFF)            call print_newline
+    41 00000038 48C7C77C000000          mov rdi, '|'
+    42 0000003F E8(F6FFFFFF)            call print_char
+    43 00000044 E8(F6FFFFFF)            call print_newline
+    44                                 
+    45                                 
+    46 00000049 48C7C700000000          mov rdi, 0
+    47 00000050 E8(F6FFFFFF)            call print_uint
+    48 00000055 E8(F6FFFFFF)            call print_newline
+    49                                 
+    50 0000005A 48BFF22FCE733A0B00-     mov rdi, 12345678901234
+    51 0000005A 00                 
+    52 00000064 E8(F6FFFFFF)            call print_uint
+    53 00000069 E8(F6FFFFFF)            call print_newline
+    54                                 
+    55                                 
+    56 0000006E 48C7C700000000          mov rdi, 0
+    57 00000075 E8(F6FFFFFF)            call print_int
+    58 0000007A E8(F6FFFFFF)            call print_newline
+    59                                 
+    60 0000007F 48BFF22FCE733A0B00-     mov rdi, 12345678901234
+    61 0000007F 00                 
+    62 00000089 E8(F6FFFFFF)            call print_int
+    63 0000008E E8(F6FFFFFF)            call print_newline
+    64                                 
+    65 00000093 48C7C7FDFFFFFF          mov rdi, -3
+    66 0000009A E8(F6FFFFFF)            call print_int
+    67 0000009F E8(F6FFFFFF)            call print_newline
+    68                                 
+    69 000000A4 48BF0ED0318CC5F4FF-     mov rdi, -12345678901234
+    70 000000A4 FF                 
+    71 000000AE E8(F6FFFFFF)            call print_int
+    72 000000B3 E8(F6FFFFFF)            call print_newline
+    73                                 
+    74                                 
+    75 000000B8 48C7C000000000          mov rax, 0
+    76 000000BF E8(F6FFFFFF)            call exit
+    77                                 
+    78                                 .strlen_failed:
+    79                                 
+    80 000000C4 48C7C7[00000000]        mov rdi, strlen_failed_msg
+    81 000000CB E8(F6FFFFFF)            call print_string
+    82                                 
+    83 000000D0 48C7C001000000          mov rax, 1
+    84 000000D7 E8(F6FFFFFF)            call exit
