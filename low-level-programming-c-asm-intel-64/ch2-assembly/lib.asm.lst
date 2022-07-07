@@ -144,3 +144,22 @@
    144 0000009C 4889DF                  mov rdi, rbx
    145 0000009F 48F7DF                  neg rdi
    146 000000A2 EBAF                    jmp print_uint
+   147                                 
+   148                                 
+   149                                 [global read_char]
+   150                                 read_char:
+   151                                 
+   152                                 
+   153 000000A4 6A00                    push 0
+   154                                 
+   155                                 
+   156 000000A6 48C7C000000000          mov rax, 0
+   157 000000AD 48C7C700000000          mov rdi, 0
+   158 000000B4 4889E6                  mov rsi, rsp
+   159 000000B7 48C7C201000000          mov rdx, 1
+   160 000000BE 0F05                    syscall
+   161                                 
+   162                                 
+   163 000000C0 58                      pop rax
+   164                                 
+   165 000000C1 C3                      ret

@@ -143,3 +143,22 @@ print_int:
         mov	rdi, rbx
         neg	rdi
         jmp	print_uint
+
+; Read a single character from stdin. If stdin is empty and has ended, return 0.
+global read_char
+read_char:
+        ; Create single byte buffer to read into. Initialize buffer to zero in
+        ; case stdin is finished and we don't read anything.
+        push	0
+
+        ; Read syscall
+        mov	rax, 0          ; syscall number for read stored in rax
+        mov	rdi, 0          ; arg #1 in rdi: where to read? 0 for stdin
+        mov	rsi, rsp        ; arg #2 in rsi: buffer to read into
+        mov	rdx, 1          ; arg #3 in rdx: count of how many bytes to read
+        syscall
+
+        ; Store buffer in rax to return it
+        pop	rax
+
+        ret

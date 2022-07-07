@@ -7,6 +7,7 @@ extern print_char
 extern print_newline
 extern print_uint
 extern print_int
+extern read_char
 
 section .data
 test_string:
@@ -14,6 +15,9 @@ test_string:
 
 strlen_failed_msg:
         db	"strlen had incorrect return value!", 0xA, 0
+
+read_char_prompt:
+        db	"type a character to read: ", 0
 
 section .text
 
@@ -62,6 +66,14 @@ _start:
 
         mov	rdi, -12345678901234
         call	print_int
+        call	print_newline
+
+        ; Call read_char and print
+        mov	rdi, read_char_prompt
+        call	print_string
+        call	read_char
+        mov	rdi, rax
+        call	print_char
         call	print_newline
 
         ; Call exit()
