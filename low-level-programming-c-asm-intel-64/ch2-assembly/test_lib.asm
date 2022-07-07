@@ -8,6 +8,7 @@ extern print_newline
 extern print_uint
 extern print_int
 extern read_char
+extern read_word
 
 section .data
 test_string:
@@ -18,6 +19,9 @@ strlen_failed_msg:
 
 read_char_prompt:
         db	"type a character to read: ", 0
+
+read_word_prompt:
+        db	"type a word to read (<= 8 chars): ", 0
 
 section .text
 
@@ -75,6 +79,16 @@ _start:
         mov	rdi, rax
         call	print_char
         call	print_newline
+
+        ; Call read_word (must be length <= 8)
+        mov	rdi, read_word_prompt
+        call	print_string
+        push	0
+        mov	rdi, rsp
+        mov	rsi, 8
+        call	read_word
+        mov	rdi, rsp
+        call	print_string
 
         ; Call exit()
         mov	rax, 0

@@ -35,7 +35,7 @@ global print_string
 print_string:
         ; Save rdi (first argument) since that is a caller-save register and
         ; might get trampled when we call strlen.
-        mov	r8, rdi
+        push	rdi
 
         ; Compute string length. rdi is already set to string
         call	strlen
@@ -44,7 +44,7 @@ print_string:
         mov	rdx, rax        ; arg #3 in rdx: how many bytes to write?
         mov	rax, 1          ; syscall number for write stored in rax
         mov	rdi, 1          ; arg #1 in rdi: where to write? 1 for stdout
-        mov	rsi, r8         ; arg #2 in rsi: where does the string start?
+        pop	rsi             ; arg #2 in rsi: where does the string start?
         syscall
 
         ret
@@ -91,7 +91,6 @@ print_uint:
         push	0
         push	0
         push	0
-        ;add	rsp, 20
 
         ; Last byte in buffer will be null byte so we can call print_string
         dec	rdi
@@ -161,4 +160,66 @@ read_char:
         ; Store buffer in rax to return it
         pop	rax
 
+        ret
+
+; Reads a single word from stdin into a provided buffer. arg1 is a pointer to
+; the buffer, and arg2 is the buffer length. Returns the length of the word read
+; in (including terminating null byte)
+global read_word
+read_word:
+        ; Store first two args on stack to save them
+        push	rdi
+        push	rsi
+
+        ; TODO: We have to keep calling read until we don't see whitespace. That
+        ; is, we have to trim leading whitespace.
+        ;
+        ; Also, the book solution just calls read_char over and over, which
+        ; isn't as elegant, but is probably a good option.
+
+        ; Call read() into buffer
+        mov	rax, 0          ; syscall number for read stored in rax
+        mov	rdx, rsi        ; arg #3 in rdx: count of how many bytes to read
+        mov	rsi, rdi        ; arg #2 in rsi: buffer to read into
+        mov	rdi, 0          ; arg #1 in rdi: where to read? 0 for stdin
+        syscall
+
+        ; Look for whitespace
+        pop	rsi             ; Buffer length
+        pop	rdi             ; Buffer head
+        xor	rax, rax        ; Length of parsed word (we will return this)
+.find_whitespace:
+        ; Check if we are past the end of the buffer
+        cmp	rax, rsi
+        je	.end_not_found
+
+        ; If we find whitespace before end, replace with null byte (making sure
+        ; to keep track of total string length). Store in cl (lower byte of rcx)
+        mov	cl, [rdi + rax]
+
+        ; Check for space (0x20 in ASCII)
+        cmp	cl, 0x20
+        je	.end_found
+
+        ; Check for tab (0x9 in ASCII)
+        cmp	cl, 0x9
+        je	.end_found
+
+        ; Check for line feed (0xA in ASCII)
+        cmp	cl, 0xA
+        je	.end_found
+
+        ; Didn't find any space. Increment and loop
+        inc	rax
+
+.end_not_found:
+        ; Return 0
+        xor	rax, rax
+        ret
+
+.end_found:
+        ; Set current location to null
+        mov	byte [rdi + rax], 0
+
+        ; Return (rax already holds length)
         ret
