@@ -167,59 +167,111 @@ read_char:
 ; in (including terminating null byte)
 global read_word
 read_word:
-        ; Store first two args on stack to save them
-        push	rdi
-        push	rsi
+        ; We will use r12-r15, but those are callee-saved, so we need to save
+        ; them and restore before returning.
+        push	r12
+        push	r13
+        push	r14
+        push	r15
 
-        ; TODO: We have to keep calling read until we don't see whitespace. That
-        ; is, we have to trim leading whitespace.
-        ;
-        ; Also, the book solution just calls read_char over and over, which
-        ; isn't as elegant, but is probably a good option.
+        ; If buffer length is zero for some stupid reason, return
+        test	rsi, rsi
+        jz	.end_return_zero
 
-        ; Call read() into buffer
-        mov	rax, 0          ; syscall number for read stored in rax
-        mov	rdx, rsi        ; arg #3 in rdx: count of how many bytes to read
-        mov	rsi, rdi        ; arg #2 in rsi: buffer to read into
-        mov	rdi, 0          ; arg #1 in rdi: where to read? 0 for stdin
-        syscall
+        ; Initialize some variables
+        mov	r12, rdi        ; Buffer
+        mov	r13, rsi        ; Stack length
+        xor	r14, r14        ; Index into stack
 
-        ; Look for whitespace
-        pop	rsi             ; Buffer length
-        pop	rdi             ; Buffer head
-        xor	rax, rax        ; Length of parsed word (we will return this)
-.find_whitespace:
+.while_whitespace:
+        ; Skip over all initial whitespace
+        call	read_char
+        mov	r15, rax        ; Char we just read is always in r15
+
+        ; If we are at the end of the stream, peace out
+        test	rax, rax
+        jz	.end_return_zero
+
+        ; Check for whitespace
+        mov	rdi, rax
+        call	is_whitespace
+        test	rax, rax
+        jnz	.while_whitespace
+
+        ; Keep calling read_char in a loop and store in buffer as long as we
+        ; aren't reading whitespace.
+.read_into_buffer:
+        ; Store next char in buffer
+        mov	[r12 + r14], r15b
+
+        ; Increment index
+        inc	r14
+
+        call	read_char
+        mov	r15, rax
+
+        ; If we are at the end of the stream, peace out
+        test	r15, r15
+        jz	.end_success
+
+        ; Check for whitespace
+        mov	rdi, r15
+        call	is_whitespace
+        test	rax, rax
+        jnz	.end_success
+
         ; Check if we are past the end of the buffer
-        cmp	rax, rsi
-        je	.end_not_found
+        cmp	r14, r13
+        je	.end_return_zero
 
-        ; If we find whitespace before end, replace with null byte (making sure
-        ; to keep track of total string length). Store in cl (lower byte of rcx)
-        mov	cl, [rdi + rax]
+        ; Didn't find any space, so loop
+        jmp	.read_into_buffer
 
+.end_return_zero:
+        ; Return 0
+        xor	rax, rax
+        jmp	.end
+
+.end_success:
+        ; Set current location to null
+        mov	byte [r12 + r14], 0
+
+.end:
+        ; Return word length, store in rax
+        mov	rax, r14
+
+        ; Restore r12-r15
+        pop	r12
+        pop	r13
+        pop	r14
+        pop	r15
+
+        ; Return (rax already holds length)
+        ret
+
+; Accepts one argument, and returns 1 if the char is whitespace (space, tab,
+; newline, carriage return), else returns 0
+is_whitespace:
         ; Check for space (0x20 in ASCII)
-        cmp	cl, 0x20
+        cmp	dil, 0x20
         je	.end_found
 
         ; Check for tab (0x9 in ASCII)
-        cmp	cl, 0x9
+        cmp	dil, 0x9
         je	.end_found
 
         ; Check for line feed (0xA in ASCII)
-        cmp	cl, 0xA
+        cmp	dil, 0xA
         je	.end_found
 
-        ; Didn't find any space. Increment and loop
-        inc	rax
+        ; Check for carriage return (0xD in ASCII)
+        cmp	dil, 0xD
+        je	.end_found
 
-.end_not_found:
-        ; Return 0
+        ; Note whitespace, return 0
         xor	rax, rax
         ret
 
 .end_found:
-        ; Set current location to null
-        mov	byte [rdi + rax], 0
-
-        ; Return (rax already holds length)
+        mov	rax, 1
         ret

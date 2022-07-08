@@ -89,6 +89,7 @@ _start:
         call	read_word
         mov	rdi, rsp
         call	print_string
+        call	print_newline
 
         ; Call exit()
         mov	rax, 0

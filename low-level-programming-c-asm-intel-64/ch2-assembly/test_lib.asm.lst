@@ -40,7 +40,7 @@
     40 00000000 48C7C7[00000000]        mov rdi, test_string
     41 00000007 E8(F6FFFFFF)            call strlen
     42 0000000C 4883F806                cmp rax, 6
-    43 00000010 0F85EB000000            jne .strlen_failed
+    43 00000010 0F85F0000000            jne .strlen_failed
     44                                 
     45                                 
     46 00000016 48C7C7[00000000]        mov rdi, test_string
@@ -101,15 +101,16 @@
    101 000000EE E8(F6FFFFFF)            call read_word
    102 000000F3 4889E7                  mov rdi, rsp
    103 000000F6 E8(F6FFFFFF)            call print_string
-   104                                 
+   104 000000FB E8(F6FFFFFF)            call print_newline
    105                                 
-   106 000000FB 48C7C000000000          mov rax, 0
-   107 00000102 E8(F6FFFFFF)            call exit
-   108                                 
-   109                                 .strlen_failed:
-   110                                 
-   111 00000107 48C7C7[00000000]        mov rdi, strlen_failed_msg
-   112 0000010E E8(F6FFFFFF)            call print_string
-   113                                 
-   114 00000113 48C7C001000000          mov rax, 1
-   115 0000011A E8(F6FFFFFF)            call exit
+   106                                 
+   107 00000100 48C7C000000000          mov rax, 0
+   108 00000107 E8(F6FFFFFF)            call exit
+   109                                 
+   110                                 .strlen_failed:
+   111                                 
+   112 0000010C 48C7C7[00000000]        mov rdi, strlen_failed_msg
+   113 00000113 E8(F6FFFFFF)            call print_string
+   114                                 
+   115 00000118 48C7C001000000          mov rax, 1
+   116 0000011F E8(F6FFFFFF)            call exit

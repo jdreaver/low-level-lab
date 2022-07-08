@@ -169,58 +169,110 @@
    169                                 [global read_word]
    170                                 read_word:
    171                                 
-   172 000000BE 57                      push rdi
-   173 000000BF 56                      push rsi
-   174                                 
-   175                                 
-   176                                 
+   172                                 
+   173 000000BE 4154                    push r12
+   174 000000C0 4155                    push r13
+   175 000000C2 4156                    push r14
+   176 000000C4 4157                    push r15
    177                                 
    178                                 
-   179                                 
-   180                                 
+   179 000000C6 4885F6                  test rsi, rsi
+   180 000000C9 7449                    jz .end_return_zero
    181                                 
-   182 000000C0 48C7C000000000          mov rax, 0
-   183 000000C7 4889F2                  mov rdx, rsi
-   184 000000CA 4889FE                  mov rsi, rdi
-   185 000000CD 48C7C700000000          mov rdi, 0
-   186 000000D4 0F05                    syscall
-   187                                 
+   182                                 
+   183 000000CB 4989FC                  mov r12, rdi
+   184 000000CE 4989F5                  mov r13, rsi
+   185 000000D1 4D31F6                  xor r14, r14
+   186                                 
+   187                                 .while_whitespace:
    188                                 
-   189 000000D6 5E                      pop rsi
-   190 000000D7 5F                      pop rdi
-   191 000000D8 4831C0                  xor rax, rax
-   192                                 .find_whitespace:
-   193                                 
-   194 000000DB 4839F0                  cmp rax, rsi
-   195 000000DE 7413                    je .end_not_found
+   189 000000D4 E8C2FFFFFF              call read_char
+   190 000000D9 4989C7                  mov r15, rax
+   191                                 
+   192                                 
+   193 000000DC 4885C0                  test rax, rax
+   194 000000DF 7433                    jz .end_return_zero
+   195                                 
    196                                 
-   197                                 
-   198                                 
-   199 000000E0 8A0C07                  mov cl, [rdi + rax]
-   200                                 
+   197 000000E1 4889C7                  mov rdi, rax
+   198 000000E4 E83E000000              call is_whitespace
+   199 000000E9 4885C0                  test rax, rax
+   200 000000EC 75E4                    jnz .while_whitespace
    201                                 
-   202 000000E3 80F920                  cmp cl, 0x20
-   203 000000E6 740F                    je .end_found
-   204                                 
+   202                                 
+   203                                 
+   204                                 .read_into_buffer:
    205                                 
-   206 000000E8 80F909                  cmp cl, 0x9
-   207 000000EB 740A                    je .end_found
+   206 000000EE 47883C34                mov [r12 + r14], r15b
+   207                                 
    208                                 
-   209                                 
-   210 000000ED 80F90A                  cmp cl, 0xA
-   211 000000F0 7405                    je .end_found
-   212                                 
+   209 000000F2 49FFC6                  inc r14
+   210                                 
+   211 000000F5 E8A1FFFFFF              call read_char
+   212 000000FA 4989C7                  mov r15, rax
    213                                 
-   214 000000F2 48FFC0                  inc rax
-   215                                 
-   216                                 .end_not_found:
+   214                                 
+   215 000000FD 4D85FF                  test r15, r15
+   216 00000100 7417                    jz .end_success
    217                                 
-   218 000000F5 4831C0                  xor rax, rax
-   219 000000F8 C3                      ret
-   220                                 
-   221                                 .end_found:
-   222                                 
-   223 000000F9 C6040700                mov byte [rdi + rax], 0
+   218                                 
+   219 00000102 4C89FF                  mov rdi, r15
+   220 00000105 E81D000000              call is_whitespace
+   221 0000010A 4885C0                  test rax, rax
+   222 0000010D 750A                    jnz .end_success
+   223                                 
    224                                 
-   225                                 
-   226 000000FD C3                      ret
+   225 0000010F 4D39EE                  cmp r14, r13
+   226 00000112 7400                    je .end_return_zero
+   227                                 
+   228                                 
+   229 00000114 EBD6                    jmp .read_into_buffer
+   230                                 
+   231                                 .end_return_zero:
+   232                                 
+   233 00000116 4831C0                  xor rax, rax
+   234 00000119 EB03                    jmp .end
+   235                                 
+   236                                 .end_success:
+   237                                 
+   238 0000011B 43C6043400              mov byte [r12 + r14], 0
+   239                                 
+   240                                 .end:
+   241                                 
+   242 00000120 4C89F0                  mov rax, r14
+   243                                 
+   244                                 
+   245 00000123 415C                    pop r12
+   246 00000125 415D                    pop r13
+   247 00000127 415E                    pop r14
+   248 00000129 415F                    pop r15
+   249                                 
+   250                                 
+   251 0000012B C3                      ret
+   252                                 
+   253                                 
+   254                                 
+   255                                 is_whitespace:
+   256                                 
+   257 0000012C 4080FF20                cmp dil, 0x20
+   258 00000130 7414                    je .end_found
+   259                                 
+   260                                 
+   261 00000132 4080FF09                cmp dil, 0x9
+   262 00000136 740E                    je .end_found
+   263                                 
+   264                                 
+   265 00000138 4080FF0A                cmp dil, 0xA
+   266 0000013C 7408                    je .end_found
+   267                                 
+   268                                 
+   269 0000013E 4080FF0D                cmp dil, 0xD
+   270 00000142 7402                    je .end_found
+   271                                 
+   272                                 
+   273 00000144 4831C0                  xor rax, rax
+   274 00000147 C3                      ret
+   275                                 
+   276                                 .end_found:
+   277 00000148 48C7C001000000          mov rax, 1
+   278 0000014F C3                      ret
