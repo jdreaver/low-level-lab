@@ -9,6 +9,7 @@ extern print_uint
 extern print_int
 extern read_char
 extern read_word
+extern parse_uint
 
 section .data
 test_string:
@@ -22,6 +23,9 @@ read_char_prompt:
 
 read_word_prompt:
         db	"type a word to read (<= 8 chars): ", 0
+
+test_uint:
+        db	"0456132", 0
 
 section .text
 
@@ -89,6 +93,13 @@ _start:
         call	read_word
         mov	rdi, rsp
         call	print_string
+        call	print_newline
+
+        ; Call parse_uint
+        mov	rdi, test_uint
+        call	parse_uint
+        mov	rdi, rax
+        call	print_uint
         call	print_newline
 
         ; Call exit()

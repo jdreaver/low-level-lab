@@ -275,3 +275,35 @@ is_whitespace:
 .end_found:
         mov	rax, 1
         ret
+
+; Accepts a null-terminated string and tries to parse an unsigned number from
+; its start. Returns the number parsed in rax, its characters count in rdx.
+;
+; Does not check for overflow!
+global parse_uint
+parse_uint:
+        xor	rax, rax        ; Parsed uint
+        xor	rcx, rcx        ; Character count (stored in rcx b/c we need rdx for mul)
+        mov	r8, 10          ; Store constant 10 here (needed for mul)
+.loop:
+        ; Subtract ASCII code for zero from current char
+        mov	r9b, byte [rdi + rcx]
+        sub	r9b, 0x30
+
+        ; Check if current char is > 9 (it is >= 0 b/c unsigned)
+        cmp	r9b, 9
+        ja	.end
+
+        ; Check passed, multiply and add
+        xor	rdx, rdx
+        mul	r8
+        and	r9, 0x0f
+        add	rax, r9
+
+        ; Continue looping
+        inc	rcx
+        jmp	.loop
+
+.end
+        mov	rdx, rcx
+        ret

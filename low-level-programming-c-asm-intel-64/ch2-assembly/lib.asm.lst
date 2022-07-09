@@ -276,3 +276,35 @@
    276                                 .end_found:
    277 00000148 48C7C001000000          mov rax, 1
    278 0000014F C3                      ret
+   279                                 
+   280                                 
+   281                                 
+   282                                 
+   283                                 
+   284                                 [global parse_uint]
+   285                                 parse_uint:
+   286 00000150 4831C0                  xor rax, rax
+   287 00000153 4831C9                  xor rcx, rcx
+   288 00000156 49C7C00A000000          mov r8, 10
+   289                                 .loop:
+   290                                 
+   291 0000015D 448A0C0F                mov r9b, byte [rdi + rcx]
+   292 00000161 4180E930                sub r9b, 0x30
+   293                                 
+   294                                 
+   295 00000165 4180F909                cmp r9b, 9
+   296 00000169 7710                    ja .end
+   297                                 
+   298                                 
+   299 0000016B 4831D2                  xor rdx, rdx
+   300 0000016E 49F7E0                  mul r8
+   301 00000171 4983E10F                and r9, 0x0f
+   302 00000175 4C01C8                  add rax, r9
+   303                                 
+   304                                 
+   305 00000178 48FFC1                  inc rcx
+   306 0000017B EBDE                    jmp .loop
+   307                                 
+   308                                 .end
+   309 0000017D 4889CA                  mov rdx, rcx
+   310 00000180 C3                      ret
