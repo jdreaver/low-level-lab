@@ -349,3 +349,38 @@ string_equals:
 .fail
         xor	rax, rax
         ret
+
+; Accepts a pointer to a string, a pointer to a buffer, and buffer’s length.
+; Copies string to the destination. The destination address is returned if the
+; string fits the buffer; otherwise zero is returned.
+global string_copy
+string_copy:
+        ; Cache args because we are about to call strlen
+        push	rdi
+        push	rsi
+        push	rdx
+
+        call	strlen          ; N.B. rdi is already pointing to our string
+
+        pop	rdx
+        pop	rsi
+        pop	rdi
+
+        cmp	rax, rdx
+        jae	.fail           ; Use >= to account for null byte
+
+        xor	r8, r8          ; Index var
+.loop
+        mov	r9b, byte [rdi + r8]
+        mov	byte [rsi + r8], r9b
+        inc	r8
+        test	r9b, r9b
+        jnz	.loop           ; Use <= to account for null byte
+
+        ; Success
+        mov	rax, rsi
+        ret
+
+.fail
+        xor	rax, rax
+        ret

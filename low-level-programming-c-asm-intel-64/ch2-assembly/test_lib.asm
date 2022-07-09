@@ -12,6 +12,7 @@ extern read_word
 extern parse_uint
 extern parse_int
 extern string_equals
+extern string_copy
 
 section .data
 test_string:
@@ -21,6 +22,9 @@ strlen_failed_msg:
         db	"strlen had incorrect return value!", 0xA, 0
 
 string_equal_failed_msg:
+        db	"string_equal had incorrect return value!", 0xA, 0
+
+string_copy_failed_msg:
         db	"string_equal had incorrect return value!", 0xA, 0
 
 read_char_prompt:
@@ -35,6 +39,9 @@ test_uint:
 test_int:
         db	"-0456132", 0
 
+section .bss
+string_copy_buffer:
+        resb	7
 
 section .text
 
@@ -137,6 +144,25 @@ _start:
         test	rax, rax
         jnz	.string_equal_failed
 
+        ; Call string_copy
+        mov	rdi, test_string
+        mov	rsi, string_copy_buffer
+        mov	rdx, 7
+        call	string_copy
+        cmp	rax, string_copy_buffer
+        jne	.string_copy_failed
+        mov	rdi, rax
+        call	print_string
+        call	print_newline
+
+        ; string_copy but buffer too big
+        mov	rdi, read_char_prompt
+        mov	rsi, string_copy_buffer
+        mov	rdx, 7
+        call	string_copy
+        test	rax, rax
+        jnz	.string_copy_failed
+
         ; Call exit()
         mov	rax, 0
         call	exit
@@ -152,6 +178,14 @@ _start:
 .string_equal_failed:
         ; Print failure message
         mov	rdi, string_equal_failed_msg
+        call	print_string
+
+        mov	rax, 1
+        call	exit
+
+.string_copy_failed:
+        ; Print failure message
+        mov	rdi, string_copy_failed_msg
         call	print_string
 
         mov	rax, 1

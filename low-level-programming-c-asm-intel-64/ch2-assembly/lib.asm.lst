@@ -350,3 +350,38 @@
    350                                 .fail
    351 000001B7 4831C0                  xor rax, rax
    352 000001BA C3                      ret
+   353                                 
+   354                                 
+   355                                 
+   356                                 
+   357                                 [global string_copy]
+   358                                 string_copy:
+   359                                 
+   360 000001BB 57                      push rdi
+   361 000001BC 56                      push rsi
+   362 000001BD 52                      push rdx
+   363                                 
+   364 000001BE E844FEFFFF              call strlen
+   365                                 
+   366 000001C3 5A                      pop rdx
+   367 000001C4 5E                      pop rsi
+   368 000001C5 5F                      pop rdi
+   369                                 
+   370 000001C6 4839D0                  cmp rax, rdx
+   371 000001C9 7315                    jae .fail
+   372                                 
+   373 000001CB 4D31C0                  xor r8, r8
+   374                                 .loop
+   375 000001CE 468A0C07                mov r9b, byte [rdi + r8]
+   376 000001D2 46880C06                mov byte [rsi + r8], r9b
+   377 000001D6 49FFC0                  inc r8
+   378 000001D9 4584C9                  test r9b, r9b
+   379 000001DC 75EE                    jnz .loop
+   380                                 
+   381                                 
+   382 000001DE 4889F0                  mov rax, rsi
+   383 000001E1 C3                      ret
+   384                                 
+   385                                 .fail
+   386 000001E2 4831C0                  xor rax, rax
+   387 000001E5 C3                      ret
