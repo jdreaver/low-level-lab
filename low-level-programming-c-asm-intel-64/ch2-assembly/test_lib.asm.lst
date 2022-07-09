@@ -11,117 +11,134 @@
     11                                 [extern read_char]
     12                                 [extern read_word]
     13                                 [extern parse_uint]
-    14                                 
-    15                                 [section .data]
-    16                                 test_string:
-    17 00000000 30313233343500          db "012345", 0
-    18                                 
-    19                                 strlen_failed_msg:
-    20 00000007 7374726C656E206861-     db "strlen had incorrect return value!", 0xA, 0
-    21 00000007 6420696E636F727265-
-    22 00000007 63742072657475726E-
-    23 00000007 2076616C7565210A00 
-    24                                 
-    25                                 read_char_prompt:
-    26 0000002B 747970652061206368-     db "type a character to read: ", 0
-    27 0000002B 617261637465722074-
-    28 0000002B 6F20726561643A2000 
-    29                                 
-    30                                 read_word_prompt:
-    31 00000046 74797065206120776F-     db "type a word to read (<= 8 chars): ", 0
-    32 00000046 726420746F20726561-
-    33 00000046 6420283C3D20382063-
-    34 00000046 68617273293A2000   
-    35                                 
-    36                                 test_uint1:
-    37 00000069 3034353631333200        db "0456132", 0
-    38                                 
-    39                                 [section .text]
-    40                                 
-    41                                 [global _start]
-    42                                 _start:
-    43                                 
-    44 00000000 48C7C7[00000000]        mov rdi, test_string
-    45 00000007 E8(F6FFFFFF)            call strlen
-    46 0000000C 4883F806                cmp rax, 6
-    47 00000010 0F8509010000            jne .strlen_failed
-    48                                 
-    49                                 
-    50 00000016 48C7C7[00000000]        mov rdi, test_string
-    51 0000001D E8(F6FFFFFF)            call print_string
+    14                                 [extern parse_int]
+    15                                 
+    16                                 [section .data]
+    17                                 test_string:
+    18 00000000 30313233343500          db "012345", 0
+    19                                 
+    20                                 strlen_failed_msg:
+    21 00000007 7374726C656E206861-     db "strlen had incorrect return value!", 0xA, 0
+    22 00000007 6420696E636F727265-
+    23 00000007 63742072657475726E-
+    24 00000007 2076616C7565210A00 
+    25                                 
+    26                                 read_char_prompt:
+    27 0000002B 747970652061206368-     db "type a character to read: ", 0
+    28 0000002B 617261637465722074-
+    29 0000002B 6F20726561643A2000 
+    30                                 
+    31                                 read_word_prompt:
+    32 00000046 74797065206120776F-     db "type a word to read (<= 8 chars): ", 0
+    33 00000046 726420746F20726561-
+    34 00000046 6420283C3D20382063-
+    35 00000046 68617273293A2000   
+    36                                 
+    37                                 test_uint:
+    38 00000069 3034353631333200        db "0456132", 0
+    39                                 
+    40                                 test_int:
+    41 00000071 2D3034353631333200      db "-0456132", 0
+    42                                 
+    43                                 [section .text]
+    44                                 
+    45                                 [global _start]
+    46                                 _start:
+    47                                 
+    48 00000000 48C7C7[00000000]        mov rdi, test_string
+    49 00000007 E8(F6FFFFFF)            call strlen
+    50 0000000C 4883F806                cmp rax, 6
+    51 00000010 0F853B010000            jne .strlen_failed
     52                                 
     53                                 
-    54 00000022 E8(F6FFFFFF)            call print_newline
-    55 00000027 48C7C75F000000          mov rdi, '_'
-    56 0000002E E8(F6FFFFFF)            call print_char
-    57 00000033 E8(F6FFFFFF)            call print_newline
-    58 00000038 48C7C77C000000          mov rdi, '|'
-    59 0000003F E8(F6FFFFFF)            call print_char
-    60 00000044 E8(F6FFFFFF)            call print_newline
-    61                                 
-    62                                 
-    63 00000049 48C7C700000000          mov rdi, 0
-    64 00000050 E8(F6FFFFFF)            call print_uint
-    65 00000055 E8(F6FFFFFF)            call print_newline
+    54 00000016 48C7C7[00000000]        mov rdi, test_string
+    55 0000001D E8(F6FFFFFF)            call print_string
+    56                                 
+    57                                 
+    58 00000022 E8(F6FFFFFF)            call print_newline
+    59 00000027 48C7C75F000000          mov rdi, '_'
+    60 0000002E E8(F6FFFFFF)            call print_char
+    61 00000033 E8(F6FFFFFF)            call print_newline
+    62 00000038 48C7C77C000000          mov rdi, '|'
+    63 0000003F E8(F6FFFFFF)            call print_char
+    64 00000044 E8(F6FFFFFF)            call print_newline
+    65                                 
     66                                 
-    67 0000005A 48BFF22FCE733A0B00-     mov rdi, 12345678901234
-    68 0000005A 00                 
-    69 00000064 E8(F6FFFFFF)            call print_uint
-    70 00000069 E8(F6FFFFFF)            call print_newline
-    71                                 
-    72                                 
-    73 0000006E 48C7C700000000          mov rdi, 0
-    74 00000075 E8(F6FFFFFF)            call print_int
-    75 0000007A E8(F6FFFFFF)            call print_newline
+    67 00000049 48C7C700000000          mov rdi, 0
+    68 00000050 E8(F6FFFFFF)            call print_uint
+    69 00000055 E8(F6FFFFFF)            call print_newline
+    70                                 
+    71 0000005A 48BFF22FCE733A0B00-     mov rdi, 12345678901234
+    72 0000005A 00                 
+    73 00000064 E8(F6FFFFFF)            call print_uint
+    74 00000069 E8(F6FFFFFF)            call print_newline
+    75                                 
     76                                 
-    77 0000007F 48BFF22FCE733A0B00-     mov rdi, 12345678901234
-    78 0000007F 00                 
-    79 00000089 E8(F6FFFFFF)            call print_int
-    80 0000008E E8(F6FFFFFF)            call print_newline
-    81                                 
-    82 00000093 48C7C7FDFFFFFF          mov rdi, -3
-    83 0000009A E8(F6FFFFFF)            call print_int
-    84 0000009F E8(F6FFFFFF)            call print_newline
+    77 0000006E 48C7C700000000          mov rdi, 0
+    78 00000075 E8(F6FFFFFF)            call print_int
+    79 0000007A E8(F6FFFFFF)            call print_newline
+    80                                 
+    81 0000007F 48BFF22FCE733A0B00-     mov rdi, 12345678901234
+    82 0000007F 00                 
+    83 00000089 E8(F6FFFFFF)            call print_int
+    84 0000008E E8(F6FFFFFF)            call print_newline
     85                                 
-    86 000000A4 48BF0ED0318CC5F4FF-     mov rdi, -12345678901234
-    87 000000A4 FF                 
-    88 000000AE E8(F6FFFFFF)            call print_int
-    89 000000B3 E8(F6FFFFFF)            call print_newline
-    90                                 
-    91                                 
-    92 000000B8 48C7C7[00000000]        mov rdi, read_char_prompt
-    93 000000BF E8(F6FFFFFF)            call print_string
-    94 000000C4 E8(F6FFFFFF)            call read_char
-    95 000000C9 4889C7                  mov rdi, rax
-    96 000000CC E8(F6FFFFFF)            call print_char
-    97 000000D1 E8(F6FFFFFF)            call print_newline
-    98                                 
-    99                                 
-   100 000000D6 48C7C7[00000000]        mov rdi, read_word_prompt
-   101 000000DD E8(F6FFFFFF)            call print_string
-   102 000000E2 6A00                    push 0
-   103 000000E4 4889E7                  mov rdi, rsp
-   104 000000E7 48C7C608000000          mov rsi, 8
-   105 000000EE E8(F6FFFFFF)            call read_word
-   106 000000F3 4889E7                  mov rdi, rsp
-   107 000000F6 E8(F6FFFFFF)            call print_string
-   108 000000FB E8(F6FFFFFF)            call print_newline
-   109                                 
-   110                                 
-   111 00000100 48C7C7[00000000]        mov rdi, test_uint1
-   112 00000107 E8(F6FFFFFF)            call parse_uint
-   113 0000010C 4889C7                  mov rdi, rax
-   114 0000010F E8(F6FFFFFF)            call print_uint
-   115 00000114 E8(F6FFFFFF)            call print_newline
-   116                                 
-   117                                 
-   118 00000119 48C7C000000000          mov rax, 0
-   119 00000120 E8(F6FFFFFF)            call exit
+    86 00000093 48C7C7FDFFFFFF          mov rdi, -3
+    87 0000009A E8(F6FFFFFF)            call print_int
+    88 0000009F E8(F6FFFFFF)            call print_newline
+    89                                 
+    90 000000A4 48BF0ED0318CC5F4FF-     mov rdi, -12345678901234
+    91 000000A4 FF                 
+    92 000000AE E8(F6FFFFFF)            call print_int
+    93 000000B3 E8(F6FFFFFF)            call print_newline
+    94                                 
+    95                                 
+    96 000000B8 48C7C7[00000000]        mov rdi, read_char_prompt
+    97 000000BF E8(F6FFFFFF)            call print_string
+    98 000000C4 E8(F6FFFFFF)            call read_char
+    99 000000C9 4889C7                  mov rdi, rax
+   100 000000CC E8(F6FFFFFF)            call print_char
+   101 000000D1 E8(F6FFFFFF)            call print_newline
+   102                                 
+   103                                 
+   104 000000D6 48C7C7[00000000]        mov rdi, read_word_prompt
+   105 000000DD E8(F6FFFFFF)            call print_string
+   106 000000E2 6A00                    push 0
+   107 000000E4 4889E7                  mov rdi, rsp
+   108 000000E7 48C7C608000000          mov rsi, 8
+   109 000000EE E8(F6FFFFFF)            call read_word
+   110 000000F3 4889E7                  mov rdi, rsp
+   111 000000F6 E8(F6FFFFFF)            call print_string
+   112 000000FB E8(F6FFFFFF)            call print_newline
+   113                                 
+   114                                 
+   115 00000100 48C7C7[00000000]        mov rdi, test_uint
+   116 00000107 E8(F6FFFFFF)            call parse_uint
+   117 0000010C 4889C7                  mov rdi, rax
+   118 0000010F E8(F6FFFFFF)            call print_uint
+   119 00000114 E8(F6FFFFFF)            call print_newline
    120                                 
-   121                                 .strlen_failed:
-   122                                 
-   123 00000125 48C7C7[00000000]        mov rdi, strlen_failed_msg
-   124 0000012C E8(F6FFFFFF)            call print_string
-   125                                 
-   126 00000131 48C7C001000000          mov rax, 1
-   127 00000138 E8(F6FFFFFF)            call exit
+   121                                 
+   122 00000119 48C7C7[00000000]        mov rdi, test_int
+   123 00000120 E8(F6FFFFFF)            call parse_int
+   124 00000125 4889C7                  mov rdi, rax
+   125 00000128 E8(F6FFFFFF)            call print_int
+   126 0000012D E8(F6FFFFFF)            call print_newline
+   127                                 
+   128 00000132 48C7C7[00000000]        mov rdi, test_uint
+   129 00000139 E8(F6FFFFFF)            call parse_int
+   130 0000013E 4889C7                  mov rdi, rax
+   131 00000141 E8(F6FFFFFF)            call print_int
+   132 00000146 E8(F6FFFFFF)            call print_newline
+   133                                 
+   134                                 
+   135 0000014B 48C7C000000000          mov rax, 0
+   136 00000152 E8(F6FFFFFF)            call exit
+   137                                 
+   138                                 .strlen_failed:
+   139                                 
+   140 00000157 48C7C7[00000000]        mov rdi, strlen_failed_msg
+   141 0000015E E8(F6FFFFFF)            call print_string
+   142                                 
+   143 00000163 48C7C001000000          mov rax, 1
+   144 0000016A E8(F6FFFFFF)            call exit

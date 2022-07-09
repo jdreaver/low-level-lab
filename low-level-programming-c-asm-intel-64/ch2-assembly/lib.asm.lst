@@ -308,3 +308,19 @@
    308                                 .end
    309 0000017D 4889CA                  mov rdx, rcx
    310 00000180 C3                      ret
+   311                                 
+   312                                 
+   313                                 
+   314                                 
+   315                                 [global parse_int]
+   316                                 parse_int:
+   317 00000181 4C8B0F                  mov r9, [rdi]
+   318 00000184 4180F92D                cmp r9b, '-'
+   319 00000188 75C4                    jne parse_uint
+   320                                 
+   321                                 
+   322 0000018A 48FFC7                  inc rdi
+   323 0000018D E8B9FFFFFF              call parse_uint
+   324 00000192 48F7D8                  neg rax
+   325 00000195 48FFC2                  inc rdx
+   326 00000198 C3                      ret

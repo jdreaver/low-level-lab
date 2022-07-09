@@ -307,3 +307,19 @@ parse_uint:
 .end
         mov	rdx, rcx
         ret
+
+; Accepts a null-terminated string and tries to parse a signed number from its
+; start. Returns the number parsed in rax; its characters count in rdx
+; (including sign if any). No spaces between sign and digits are allowed.
+global parse_int
+parse_int:
+        mov	r9b, byte [rdi]
+        cmp	r9b, '-'
+        jne	parse_uint
+
+        ; We must be negative
+        inc	rdi             ; Skip '-'
+        call	parse_uint
+        neg	rax
+        inc	rdx             ; Account for '-'
+        ret

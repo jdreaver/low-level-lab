@@ -10,6 +10,7 @@ extern print_int
 extern read_char
 extern read_word
 extern parse_uint
+extern parse_int
 
 section .data
 test_string:
@@ -26,6 +27,9 @@ read_word_prompt:
 
 test_uint:
         db	"0456132", 0
+
+test_int:
+        db	"-0456132", 0
 
 section .text
 
@@ -100,6 +104,19 @@ _start:
         call	parse_uint
         mov	rdi, rax
         call	print_uint
+        call	print_newline
+
+        ; Call parse_int (on both a positive and negative number)
+        mov	rdi, test_int
+        call	parse_int
+        mov	rdi, rax
+        call	print_int
+        call	print_newline
+
+        mov	rdi, test_uint
+        call	parse_int
+        mov	rdi, rax
+        call	print_int
         call	print_newline
 
         ; Call exit()
