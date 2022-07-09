@@ -1,7 +1,5 @@
 ; Library functions used by other assembly programs
 
-section .data
-
 section .text
 
 ; Calls the exit() syscall with the argument (rax)

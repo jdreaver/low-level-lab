@@ -1,387 +1,385 @@
      1                                 %line 1+1 lib.asm
      2                                 
      3                                 
-     4                                 [section .data]
+     4                                 [section .text]
      5                                 
-     6                                 [section .text]
-     7                                 
-     8                                 
-     9                                 [global exit]
-    10                                 exit:
-    11 00000000 4889C7                  mov rdi, rax
-    12 00000003 48C7C03C000000          mov rax, 60
-    13 0000000A 0F05                    syscall
-    14                                 
-    15                                 
-    16                                 [global strlen]
-    17                                 strlen:
-    18 0000000C 4831C0                  xor rax, rax
-    19                                 
-    20                                 .loop:
-    21 0000000F 803C0700                cmp byte [rdi + rax], 0
+     6                                 
+     7                                 [global exit]
+     8                                 exit:
+     9 00000000 4889C7                  mov rdi, rax
+    10 00000003 48C7C03C000000          mov rax, 60
+    11 0000000A 0F05                    syscall
+    12                                 
+    13                                 
+    14                                 [global strlen]
+    15                                 strlen:
+    16 0000000C 4831C0                  xor rax, rax
+    17                                 
+    18                                 .loop:
+    19 0000000F 803C0700                cmp byte [rdi + rax], 0
+    20                                 
+    21                                 
     22                                 
-    23                                 
+    23 00000013 7403                    je .end
     24                                 
-    25 00000013 7403                    je .end
-    26                                 
-    27 00000015 48FFC0                  inc rax
-    28 00000018 EBF3                    jmp .loop
-    29                                 
-    30                                 .end:
-    31 0000001A C3                      ret
+    25 00000015 48FFC0                  inc rax
+    26 00000018 EBF3                    jmp .loop
+    27                                 
+    28                                 .end:
+    29 0000001A C3                      ret
+    30                                 
+    31                                 
     32                                 
-    33                                 
-    34                                 
-    35                                 [global print_string]
-    36                                 print_string:
-    37                                 
+    33                                 [global print_string]
+    34                                 print_string:
+    35                                 
+    36                                 
+    37 0000001B 57                      push rdi
     38                                 
-    39 0000001B 57                      push rdi
-    40                                 
+    39                                 
+    40 0000001C E8E6FFFFFF              call strlen
     41                                 
-    42 0000001C E8E6FFFFFF              call strlen
-    43                                 
-    44                                 
-    45 00000021 4889C2                  mov rdx, rax
-    46 00000024 48C7C001000000          mov rax, 1
-    47 0000002B 48C7C701000000          mov rdi, 1
-    48 00000032 5E                      pop rsi
-    49 00000033 0F05                    syscall
+    42                                 
+    43 00000021 4889C2                  mov rdx, rax
+    44 00000024 48C7C001000000          mov rax, 1
+    45 0000002B 48C7C701000000          mov rdi, 1
+    46 00000032 5E                      pop rsi
+    47 00000033 0F05                    syscall
+    48                                 
+    49 00000035 C3                      ret
     50                                 
-    51 00000035 C3                      ret
+    51                                 
     52                                 
-    53                                 
-    54                                 
-    55                                 [global print_char]
-    56                                 print_char:
+    53                                 [global print_char]
+    54                                 print_char:
+    55                                 
+    56 00000036 57                      push rdi
     57                                 
-    58 00000036 57                      push rdi
+    58                                 
     59                                 
-    60                                 
-    61                                 
-    62 00000037 4889E7                  mov rdi, rsp
-    63 0000003A E8D7FFFFFF              call print_string
-    64                                 
+    60 00000037 4889E7                  mov rdi, rsp
+    61 0000003A E8D7FFFFFF              call print_string
+    62                                 
+    63                                 
+    64 0000003F 4883C408                add rsp, 8
     65                                 
-    66 0000003F 4883C408                add rsp, 8
+    66 00000043 C3                      ret
     67                                 
-    68 00000043 C3                      ret
-    69                                 
-    70                                 [global print_newline]
-    71                                 print_newline:
-    72 00000044 48C7C70A000000          mov rdi, 0xA
-    73 0000004B E8E1FFFFFF              call print_char
-    74 00000050 C3                      ret
-    75                                 
-    76                                 
-    77                                 [global print_uint]
-    78                                 print_uint:
+    68                                 [global print_newline]
+    69                                 print_newline:
+    70 00000044 48C7C70A000000          mov rdi, 0xA
+    71 0000004B E8E1FFFFFF              call print_char
+    72 00000050 C3                      ret
+    73                                 
+    74                                 
+    75                                 [global print_uint]
+    76                                 print_uint:
+    77                                 
+    78                                 
     79                                 
-    80                                 
+    80 00000051 4889F8                  mov rax, rdi
     81                                 
-    82 00000051 4889F8                  mov rax, rdi
+    82                                 
     83                                 
-    84                                 
+    84 00000054 4889E7                  mov rdi, rsp
     85                                 
-    86 00000054 4889E7                  mov rdi, rsp
+    86                                 
     87                                 
     88                                 
     89                                 
-    90                                 
-    91                                 
-    92 00000057 6A00                    push 0
-    93 00000059 6A00                    push 0
-    94 0000005B 6A00                    push 0
-    95                                 
+    90 00000057 6A00                    push 0
+    91 00000059 6A00                    push 0
+    92 0000005B 6A00                    push 0
+    93                                 
+    94                                 
+    95 0000005D 48FFCF                  dec rdi
     96                                 
-    97 0000005D 48FFCF                  dec rdi
-    98                                 
+    97                                 
+    98 00000060 49C7C00A000000          mov r8, 10
     99                                 
-   100 00000060 49C7C00A000000          mov r8, 10
+   100                                 .loop:
    101                                 
-   102                                 .loop:
+   102 00000067 48FFCF                  dec rdi
    103                                 
-   104 00000067 48FFCF                  dec rdi
-   105                                 
+   104                                 
+   105 0000006A 4831D2                  xor rdx, rdx
    106                                 
-   107 0000006A 4831D2                  xor rdx, rdx
-   108                                 
+   107                                 
+   108 0000006D 49F7F0                  div r8
    109                                 
-   110 0000006D 49F7F0                  div r8
+   110                                 
    111                                 
-   112                                 
-   113                                 
-   114 00000070 80C230                  add dl, 0x30
-   115 00000073 8817                    mov [rdi], dl
-   116                                 
-   117                                 
-   118 00000075 4885C0                  test rax, rax
-   119 00000078 75EB                    jnz .loop
+   112 00000070 80C230                  add dl, 0x30
+   113 00000073 8817                    mov [rdi], dl
+   114                                 
+   115                                 
+   116 00000075 4885C0                  test rax, rax
+   117 00000078 75EB                    jnz .loop
+   118                                 
+   119                                 .end:
    120                                 
-   121                                 .end:
+   121 0000007A E897FFFFFF              call print_string
    122                                 
-   123 0000007A E897FFFFFF              call print_string
-   124                                 
+   123                                 
+   124 0000007F 4883C418                add rsp, 24
    125                                 
-   126 0000007F 4883C418                add rsp, 24
+   126 00000083 C3                      ret
    127                                 
-   128 00000083 C3                      ret
-   129                                 
-   130                                 
-   131                                 [global print_int]
-   132                                 print_int:
-   133                                 
-   134 00000084 4885FF                  test rdi, rdi
-   135 00000087 79C6                    jns print_uint
-   136                                 
-   137                                 
-   138 00000089 4889FB                  mov rbx, rdi
-   139 0000008C 48C7C72D000000          mov rdi, '-'
-   140 00000093 E899FFFFFF              call print_char
-   141                                 
-   142                                 
-   143 00000098 4889DF                  mov rdi, rbx
-   144 0000009B 48F7DF                  neg rdi
-   145 0000009E EBAF                    jmp print_uint
-   146                                 
-   147                                 
-   148                                 [global read_char]
-   149                                 read_char:
-   150                                 
+   128                                 
+   129                                 [global print_int]
+   130                                 print_int:
+   131                                 
+   132 00000084 4885FF                  test rdi, rdi
+   133 00000087 79C6                    jns print_uint
+   134                                 
+   135                                 
+   136 00000089 4889FB                  mov rbx, rdi
+   137 0000008C 48C7C72D000000          mov rdi, '-'
+   138 00000093 E899FFFFFF              call print_char
+   139                                 
+   140                                 
+   141 00000098 4889DF                  mov rdi, rbx
+   142 0000009B 48F7DF                  neg rdi
+   143 0000009E EBAF                    jmp print_uint
+   144                                 
+   145                                 
+   146                                 [global read_char]
+   147                                 read_char:
+   148                                 
+   149                                 
+   150 000000A0 6A00                    push 0
    151                                 
-   152 000000A0 6A00                    push 0
-   153                                 
-   154                                 
-   155 000000A2 48C7C000000000          mov rax, 0
-   156 000000A9 48C7C700000000          mov rdi, 0
-   157 000000B0 4889E6                  mov rsi, rsp
-   158 000000B3 48C7C201000000          mov rdx, 1
-   159 000000BA 0F05                    syscall
-   160                                 
+   152                                 
+   153 000000A2 48C7C000000000          mov rax, 0
+   154 000000A9 48C7C700000000          mov rdi, 0
+   155 000000B0 4889E6                  mov rsi, rsp
+   156 000000B3 48C7C201000000          mov rdx, 1
+   157 000000BA 0F05                    syscall
+   158                                 
+   159                                 
+   160 000000BC 58                      pop rax
    161                                 
-   162 000000BC 58                      pop rax
+   162 000000BD C3                      ret
    163                                 
-   164 000000BD C3                      ret
+   164                                 
    165                                 
    166                                 
-   167                                 
-   168                                 
-   169                                 [global read_word]
-   170                                 read_word:
-   171                                 
-   172                                 
-   173 000000BE 4154                    push r12
-   174 000000C0 4155                    push r13
-   175 000000C2 4156                    push r14
-   176 000000C4 4157                    push r15
-   177                                 
-   178                                 
-   179 000000C6 4885F6                  test rsi, rsi
-   180 000000C9 7449                    jz .end_return_zero
-   181                                 
-   182                                 
-   183 000000CB 4989FC                  mov r12, rdi
-   184 000000CE 4989F5                  mov r13, rsi
-   185 000000D1 4D31F6                  xor r14, r14
+   167                                 [global read_word]
+   168                                 read_word:
+   169                                 
+   170                                 
+   171 000000BE 4154                    push r12
+   172 000000C0 4155                    push r13
+   173 000000C2 4156                    push r14
+   174 000000C4 4157                    push r15
+   175                                 
+   176                                 
+   177 000000C6 4885F6                  test rsi, rsi
+   178 000000C9 7449                    jz .end_return_zero
+   179                                 
+   180                                 
+   181 000000CB 4989FC                  mov r12, rdi
+   182 000000CE 4989F5                  mov r13, rsi
+   183 000000D1 4D31F6                  xor r14, r14
+   184                                 
+   185                                 .while_whitespace:
    186                                 
-   187                                 .while_whitespace:
-   188                                 
-   189 000000D4 E8C2FFFFFF              call read_char
-   190 000000D9 4989C7                  mov r15, rax
-   191                                 
-   192                                 
-   193 000000DC 4885C0                  test rax, rax
-   194 000000DF 7433                    jz .end_return_zero
-   195                                 
-   196                                 
-   197 000000E1 4889C7                  mov rdi, rax
-   198 000000E4 E83E000000              call is_whitespace
-   199 000000E9 4885C0                  test rax, rax
-   200 000000EC 75E4                    jnz .while_whitespace
+   187 000000D4 E8C2FFFFFF              call read_char
+   188 000000D9 4989C7                  mov r15, rax
+   189                                 
+   190                                 
+   191 000000DC 4885C0                  test rax, rax
+   192 000000DF 7433                    jz .end_return_zero
+   193                                 
+   194                                 
+   195 000000E1 4889C7                  mov rdi, rax
+   196 000000E4 E83E000000              call is_whitespace
+   197 000000E9 4885C0                  test rax, rax
+   198 000000EC 75E4                    jnz .while_whitespace
+   199                                 
+   200                                 
    201                                 
-   202                                 
+   202                                 .read_into_buffer:
    203                                 
-   204                                 .read_into_buffer:
+   204 000000EE 47883C34                mov [r12 + r14], r15b
    205                                 
-   206 000000EE 47883C34                mov [r12 + r14], r15b
-   207                                 
+   206                                 
+   207 000000F2 49FFC6                  inc r14
    208                                 
-   209 000000F2 49FFC6                  inc r14
-   210                                 
-   211 000000F5 E8A1FFFFFF              call read_char
-   212 000000FA 4989C7                  mov r15, rax
-   213                                 
-   214                                 
-   215 000000FD 4D85FF                  test r15, r15
-   216 00000100 7417                    jz .end_success
-   217                                 
-   218                                 
-   219 00000102 4C89FF                  mov rdi, r15
-   220 00000105 E81D000000              call is_whitespace
-   221 0000010A 4885C0                  test rax, rax
-   222 0000010D 750A                    jnz .end_success
-   223                                 
-   224                                 
-   225 0000010F 4D39EE                  cmp r14, r13
-   226 00000112 7400                    je .end_return_zero
-   227                                 
+   209 000000F5 E8A1FFFFFF              call read_char
+   210 000000FA 4989C7                  mov r15, rax
+   211                                 
+   212                                 
+   213 000000FD 4D85FF                  test r15, r15
+   214 00000100 7417                    jz .end_success
+   215                                 
+   216                                 
+   217 00000102 4C89FF                  mov rdi, r15
+   218 00000105 E81D000000              call is_whitespace
+   219 0000010A 4885C0                  test rax, rax
+   220 0000010D 750A                    jnz .end_success
+   221                                 
+   222                                 
+   223 0000010F 4D39EE                  cmp r14, r13
+   224 00000112 7400                    je .end_return_zero
+   225                                 
+   226                                 
+   227 00000114 EBD6                    jmp .read_into_buffer
    228                                 
-   229 00000114 EBD6                    jmp .read_into_buffer
+   229                                 .end_return_zero:
    230                                 
-   231                                 .end_return_zero:
-   232                                 
-   233 00000116 4831C0                  xor rax, rax
-   234 00000119 EB03                    jmp .end
+   231 00000116 4831C0                  xor rax, rax
+   232 00000119 EB03                    jmp .end
+   233                                 
+   234                                 .end_success:
    235                                 
-   236                                 .end_success:
+   236 0000011B 43C6043400              mov byte [r12 + r14], 0
    237                                 
-   238 0000011B 43C6043400              mov byte [r12 + r14], 0
+   238                                 .end:
    239                                 
-   240                                 .end:
+   240 00000120 4C89F0                  mov rax, r14
    241                                 
-   242 00000120 4C89F0                  mov rax, r14
-   243                                 
-   244                                 
-   245 00000123 415C                    pop r12
-   246 00000125 415D                    pop r13
-   247 00000127 415E                    pop r14
-   248 00000129 415F                    pop r15
-   249                                 
+   242                                 
+   243 00000123 415C                    pop r12
+   244 00000125 415D                    pop r13
+   245 00000127 415E                    pop r14
+   246 00000129 415F                    pop r15
+   247                                 
+   248                                 
+   249 0000012B C3                      ret
    250                                 
-   251 0000012B C3                      ret
+   251                                 
    252                                 
-   253                                 
+   253                                 is_whitespace:
    254                                 
-   255                                 is_whitespace:
-   256                                 
-   257 0000012C 4080FF20                cmp dil, 0x20
-   258 00000130 7414                    je .end_found
-   259                                 
-   260                                 
-   261 00000132 4080FF09                cmp dil, 0x9
-   262 00000136 740E                    je .end_found
-   263                                 
-   264                                 
-   265 00000138 4080FF0A                cmp dil, 0xA
-   266 0000013C 7408                    je .end_found
-   267                                 
-   268                                 
-   269 0000013E 4080FF0D                cmp dil, 0xD
-   270 00000142 7402                    je .end_found
-   271                                 
-   272                                 
-   273 00000144 4831C0                  xor rax, rax
-   274 00000147 C3                      ret
-   275                                 
-   276                                 .end_found:
-   277 00000148 48C7C001000000          mov rax, 1
-   278 0000014F C3                      ret
+   255 0000012C 4080FF20                cmp dil, 0x20
+   256 00000130 7414                    je .end_found
+   257                                 
+   258                                 
+   259 00000132 4080FF09                cmp dil, 0x9
+   260 00000136 740E                    je .end_found
+   261                                 
+   262                                 
+   263 00000138 4080FF0A                cmp dil, 0xA
+   264 0000013C 7408                    je .end_found
+   265                                 
+   266                                 
+   267 0000013E 4080FF0D                cmp dil, 0xD
+   268 00000142 7402                    je .end_found
+   269                                 
+   270                                 
+   271 00000144 4831C0                  xor rax, rax
+   272 00000147 C3                      ret
+   273                                 
+   274                                 .end_found:
+   275 00000148 48C7C001000000          mov rax, 1
+   276 0000014F C3                      ret
+   277                                 
+   278                                 
    279                                 
    280                                 
    281                                 
-   282                                 
-   283                                 
-   284                                 [global parse_uint]
-   285                                 parse_uint:
-   286 00000150 4831C0                  xor rax, rax
-   287 00000153 4831C9                  xor rcx, rcx
-   288 00000156 49C7C00A000000          mov r8, 10
-   289                                 .loop:
-   290                                 
-   291 0000015D 448A0C0F                mov r9b, byte [rdi + rcx]
-   292 00000161 4180E930                sub r9b, 0x30
-   293                                 
-   294                                 
-   295 00000165 4180F909                cmp r9b, 9
-   296 00000169 7710                    ja .end
-   297                                 
-   298                                 
-   299 0000016B 4831D2                  xor rdx, rdx
-   300 0000016E 49F7E0                  mul r8
-   301 00000171 4983E10F                and r9, 0x0f
-   302 00000175 4C01C8                  add rax, r9
-   303                                 
-   304                                 
-   305 00000178 48FFC1                  inc rcx
-   306 0000017B EBDE                    jmp .loop
-   307                                 
-   308                                 .end
-   309 0000017D 4889CA                  mov rdx, rcx
-   310 00000180 C3                      ret
+   282                                 [global parse_uint]
+   283                                 parse_uint:
+   284 00000150 4831C0                  xor rax, rax
+   285 00000153 4831C9                  xor rcx, rcx
+   286 00000156 49C7C00A000000          mov r8, 10
+   287                                 .loop:
+   288                                 
+   289 0000015D 448A0C0F                mov r9b, byte [rdi + rcx]
+   290 00000161 4180E930                sub r9b, 0x30
+   291                                 
+   292                                 
+   293 00000165 4180F909                cmp r9b, 9
+   294 00000169 7710                    ja .end
+   295                                 
+   296                                 
+   297 0000016B 4831D2                  xor rdx, rdx
+   298 0000016E 49F7E0                  mul r8
+   299 00000171 4983E10F                and r9, 0x0f
+   300 00000175 4C01C8                  add rax, r9
+   301                                 
+   302                                 
+   303 00000178 48FFC1                  inc rcx
+   304 0000017B EBDE                    jmp .loop
+   305                                 
+   306                                 .end
+   307 0000017D 4889CA                  mov rdx, rcx
+   308 00000180 C3                      ret
+   309                                 
+   310                                 
    311                                 
    312                                 
-   313                                 
-   314                                 
-   315                                 [global parse_int]
-   316                                 parse_int:
-   317 00000181 448A0F                  mov r9b, byte [rdi]
-   318 00000184 4180F92D                cmp r9b, '-'
-   319 00000188 75C4                    jne parse_uint
-   320                                 
-   321                                 
-   322 0000018A 48FFC7                  inc rdi
-   323 0000018D E8B9FFFFFF              call parse_uint
-   324 00000192 48F7D8                  neg rax
-   325 00000195 48FFC2                  inc rdx
-   326 00000198 C3                      ret
+   313                                 [global parse_int]
+   314                                 parse_int:
+   315 00000181 448A0F                  mov r9b, byte [rdi]
+   316 00000184 4180F92D                cmp r9b, '-'
+   317 00000188 75C4                    jne parse_uint
+   318                                 
+   319                                 
+   320 0000018A 48FFC7                  inc rdi
+   321 0000018D E8B9FFFFFF              call parse_uint
+   322 00000192 48F7D8                  neg rax
+   323 00000195 48FFC2                  inc rdx
+   324 00000198 C3                      ret
+   325                                 
+   326                                 
    327                                 
-   328                                 
-   329                                 
-   330                                 [global string_equals]
-   331                                 string_equals:
-   332 00000199 448A07                  mov r8b, byte [rdi]
-   333 0000019C 448A0E                  mov r9b, byte [rsi]
-   334                                 
-   335 0000019F 48FFC7                  inc rdi
-   336 000001A2 48FFC6                  inc rsi
-   337                                 
-   338                                 
-   339 000001A5 4538C8                  cmp r8b, r9b
-   340 000001A8 750B                    jne .fail
-   341                                 
-   342                                 
-   343 000001AA 4584C0                  test r8b, r8b
-   344 000001AD 75E8                    jnz string_equals
-   345                                 
-   346                                 
-   347 000001AF 48C7C001000000          mov rax, 1
-   348 000001B6 C3                      ret
-   349                                 
-   350                                 .fail
-   351 000001B7 4831C0                  xor rax, rax
-   352 000001BA C3                      ret
+   328                                 [global string_equals]
+   329                                 string_equals:
+   330 00000199 448A07                  mov r8b, byte [rdi]
+   331 0000019C 448A0E                  mov r9b, byte [rsi]
+   332                                 
+   333 0000019F 48FFC7                  inc rdi
+   334 000001A2 48FFC6                  inc rsi
+   335                                 
+   336                                 
+   337 000001A5 4538C8                  cmp r8b, r9b
+   338 000001A8 750B                    jne .fail
+   339                                 
+   340                                 
+   341 000001AA 4584C0                  test r8b, r8b
+   342 000001AD 75E8                    jnz string_equals
+   343                                 
+   344                                 
+   345 000001AF 48C7C001000000          mov rax, 1
+   346 000001B6 C3                      ret
+   347                                 
+   348                                 .fail
+   349 000001B7 4831C0                  xor rax, rax
+   350 000001BA C3                      ret
+   351                                 
+   352                                 
    353                                 
    354                                 
-   355                                 
-   356                                 
-   357                                 [global string_copy]
-   358                                 string_copy:
-   359                                 
-   360 000001BB 57                      push rdi
-   361 000001BC 56                      push rsi
-   362 000001BD 52                      push rdx
+   355                                 [global string_copy]
+   356                                 string_copy:
+   357                                 
+   358 000001BB 57                      push rdi
+   359 000001BC 56                      push rsi
+   360 000001BD 52                      push rdx
+   361                                 
+   362 000001BE E844FEFFFF              call strlen
    363                                 
-   364 000001BE E844FEFFFF              call strlen
-   365                                 
-   366 000001C3 5A                      pop rdx
-   367 000001C4 5E                      pop rsi
-   368 000001C5 5F                      pop rdi
-   369                                 
-   370 000001C6 4839D0                  cmp rax, rdx
-   371 000001C9 7315                    jae .fail
-   372                                 
-   373 000001CB 4D31C0                  xor r8, r8
-   374                                 .loop
-   375 000001CE 468A0C07                mov r9b, byte [rdi + r8]
-   376 000001D2 46880C06                mov byte [rsi + r8], r9b
-   377 000001D6 49FFC0                  inc r8
-   378 000001D9 4584C9                  test r9b, r9b
-   379 000001DC 75EE                    jnz .loop
-   380                                 
-   381                                 
-   382 000001DE 4889F0                  mov rax, rsi
-   383 000001E1 C3                      ret
-   384                                 
-   385                                 .fail
-   386 000001E2 4831C0                  xor rax, rax
-   387 000001E5 C3                      ret
+   364 000001C3 5A                      pop rdx
+   365 000001C4 5E                      pop rsi
+   366 000001C5 5F                      pop rdi
+   367                                 
+   368 000001C6 4839D0                  cmp rax, rdx
+   369 000001C9 7315                    jae .fail
+   370                                 
+   371 000001CB 4D31C0                  xor r8, r8
+   372                                 .loop
+   373 000001CE 468A0C07                mov r9b, byte [rdi + r8]
+   374 000001D2 46880C06                mov byte [rsi + r8], r9b
+   375 000001D6 49FFC0                  inc r8
+   376 000001D9 4584C9                  test r9b, r9b
+   377 000001DC 75EE                    jnz .loop
+   378                                 
+   379                                 
+   380 000001DE 4889F0                  mov rax, rsi
+   381 000001E1 C3                      ret
+   382                                 
+   383                                 .fail
+   384 000001E2 4831C0                  xor rax, rax
+   385 000001E5 C3                      ret
