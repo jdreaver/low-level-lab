@@ -11,6 +11,7 @@ extern read_char
 extern read_word
 extern parse_uint
 extern parse_int
+extern string_equals
 
 section .data
 test_string:
@@ -18,6 +19,9 @@ test_string:
 
 strlen_failed_msg:
         db	"strlen had incorrect return value!", 0xA, 0
+
+string_equal_failed_msg:
+        db	"string_equal had incorrect return value!", 0xA, 0
 
 read_char_prompt:
         db	"type a character to read: ", 0
@@ -30,6 +34,7 @@ test_uint:
 
 test_int:
         db	"-0456132", 0
+
 
 section .text
 
@@ -119,6 +124,19 @@ _start:
         call	print_int
         call	print_newline
 
+        ; Call string equal
+        mov	rdi, test_string
+        mov	rsi, test_string
+        call	string_equals
+        test	rax, rax
+        jz	.string_equal_failed
+
+        mov	rdi, test_string
+        mov	rsi, test_uint
+        call	string_equals
+        test	rax, rax
+        jnz	.string_equal_failed
+
         ; Call exit()
         mov	rax, 0
         call	exit
@@ -126,6 +144,14 @@ _start:
 .strlen_failed:
         ; Print failure message
         mov	rdi, strlen_failed_msg
+        call	print_string
+
+        mov	rax, 1
+        call	exit
+
+.string_equal_failed:
+        ; Print failure message
+        mov	rdi, string_equal_failed_msg
         call	print_string
 
         mov	rax, 1

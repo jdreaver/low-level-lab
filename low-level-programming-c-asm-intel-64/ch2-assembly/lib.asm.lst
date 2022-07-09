@@ -314,7 +314,7 @@
    314                                 
    315                                 [global parse_int]
    316                                 parse_int:
-   317 00000181 4C8B0F                  mov r9, [rdi]
+   317 00000181 448A0F                  mov r9b, byte [rdi]
    318 00000184 4180F92D                cmp r9b, '-'
    319 00000188 75C4                    jne parse_uint
    320                                 
@@ -324,3 +324,29 @@
    324 00000192 48F7D8                  neg rax
    325 00000195 48FFC2                  inc rdx
    326 00000198 C3                      ret
+   327                                 
+   328                                 
+   329                                 
+   330                                 [global string_equals]
+   331                                 string_equals:
+   332 00000199 448A07                  mov r8b, byte [rdi]
+   333 0000019C 448A0E                  mov r9b, byte [rsi]
+   334                                 
+   335 0000019F 48FFC7                  inc rdi
+   336 000001A2 48FFC6                  inc rsi
+   337                                 
+   338                                 
+   339 000001A5 4538C8                  cmp r8b, r9b
+   340 000001A8 750B                    jne .fail
+   341                                 
+   342                                 
+   343 000001AA 4584C0                  test r8b, r8b
+   344 000001AD 75E8                    jnz string_equals
+   345                                 
+   346                                 
+   347 000001AF 48C7C001000000          mov rax, 1
+   348 000001B6 C3                      ret
+   349                                 
+   350                                 .fail
+   351 000001B7 4831C0                  xor rax, rax
+   352 000001BA C3                      ret

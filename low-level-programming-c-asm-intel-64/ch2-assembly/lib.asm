@@ -323,3 +323,29 @@ parse_int:
         neg	rax
         inc	rdx             ; Account for '-'
         ret
+
+; Accepts two pointers to strings and compares them. Returns 1 if they are
+; equal, otherwise 0.
+global string_equals
+string_equals:
+        mov	r8b, byte [rdi]
+        mov	r9b, byte [rsi]
+
+        inc	rdi
+        inc	rsi
+
+        ; Check if not equal
+        cmp	r8b, r9b
+        jne	.fail
+
+        ; They are equal. If one is null we will return, otherwise loop
+        test	r8b, r8b
+        jnz	string_equals
+
+        ; Success
+        mov	rax, 1
+        ret
+
+.fail
+        xor	rax, rax
+        ret
