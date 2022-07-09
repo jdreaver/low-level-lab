@@ -1,0 +1,61 @@
+     1                                 %line 1+1 mmap.asm
+     2                                 
+     3                                 
+     4                                 
+     5                                 
+     6                                 
+     7                                 %line 9+1 mmap.asm
+     8                                 
+     9                                 [section .data]
+    10                                 fname:
+    11 00000000 746573742E74787400      db "test.txt", 0
+    12                                 
+    13                                 [section .text]
+    14                                 
+    15                                 [global _start]
+    16                                 _start:
+    17                                 
+    18 00000000 48C7C002000000          mov rax, 2
+    19 00000007 48C7C7[00000000]        mov rdi, fname
+    20 0000000E 48C7C600000000          mov rsi, 0
+    21 00000015 48C7C200000000          mov rdx, 0
+    22 0000001C 0F05                    syscall
+    23                                 
+    24                                 
+    25 0000001E 4989C0                  mov r8, rax
+    26 00000021 48C7C009000000          mov rax, 9
+    27 00000028 48C7C700000000          mov rdi, 0
+    28 0000002F 48C7C600100000          mov rsi, 4096
+    29 00000036 48C7C201000000          mov rdx, 0x1
+    30 0000003D 49C7C202000000          mov r10, 0x2
+    31 00000044 49C7C100000000          mov r9, 0
+    32 0000004B 0F05                    syscall
+    33                                 
+    34                                 
+    35 0000004D 4889C7                  mov rdi, rax
+    36 00000050 E807000000              call print_string
+    37                                 
+    38                                 
+    39 00000055 48C7C03C000000          mov rax, 60
+    40 0000005C 4831D2                  xor rdx, rdx
+    41 0000005F 0F05                    syscall
+    42                                 
+    43                                 
+    44                                 print_string:
+    45 00000061 57                      push rdi
+    46 00000062 E810000000              call string_length
+    47 00000067 5E                      pop rsi
+    48 00000068 4889C2                  mov rdx, rax
+    49 0000006B 48C7C001000000          mov rax, 1
+    50 00000072 48C7C701000000          mov rdi, 1
+    51 00000079 0F05                    syscall
+    52 0000007B C3                      ret
+    53                                 string_length:
+    54 0000007C 4831C0                  xor rax, rax
+    55                                 .loop:
+    56 0000007F 803C0700                cmp byte [rdi+rax], 0
+    57 00000083 7403                    je .end
+    58 00000085 48FFC0                  inc rax
+    59 00000088 EBF3                    jmp .loop
+    60                                 .end:
+    61 0000008A C3                      ret
