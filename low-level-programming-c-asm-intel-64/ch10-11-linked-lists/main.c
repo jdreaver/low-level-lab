@@ -4,6 +4,11 @@
 
 #include "int_list.h"
 
+int square(int x)
+{
+	return x * x;
+}
+
 int main(int argc, char **argv)
 {
 	struct int_list *list = NULL;
@@ -28,6 +33,10 @@ int main(int argc, char **argv)
 	puts("");
 
 	printf("list sum: %d\n", int_list_sum(list));
+
+	printf("list squares: ");
+	int_list_map_mut(list, square);
+	int_list_print(list);
 
 	int_list_free(list);
 	return 0;

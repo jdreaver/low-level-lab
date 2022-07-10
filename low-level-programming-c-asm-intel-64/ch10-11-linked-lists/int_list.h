@@ -34,3 +34,14 @@ void int_list_print(struct int_list *list);
  * empty.
  */
 int int_list_sum(struct int_list *list);
+
+/*
+ * Iterates over each integer in the list and applies the given function.
+ */
+void int_list_foreach(struct int_list *list, void (*f)(int));
+
+/*
+ * Maps over the given list, replacing each value with the return value of the
+ * given function.
+ */
+void int_list_map_mut(struct int_list *list, int (*f)(int));

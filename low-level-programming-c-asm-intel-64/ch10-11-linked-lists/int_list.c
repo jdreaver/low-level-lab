@@ -31,14 +31,15 @@ struct int_list *int_list_add_front(int value, struct int_list *next)
 	return list;
 }
 
+static void _int_list_print_fn(int x)
+{
+	printf("%d -> ", x);
+}
+
 void int_list_print(struct int_list *list)
 {
-	while (list != NULL) {
-		printf("%d", list->value);
-		if (list->next)
-			printf(" -> ");
-		list = list->next;
-	}
+	int_list_foreach(list, _int_list_print_fn);
+	printf("NULL");
 }
 
 int int_list_sum(struct int_list *list)
@@ -49,4 +50,20 @@ int int_list_sum(struct int_list *list)
 		list = list->next;
 	}
 	return sum;
+}
+
+void int_list_foreach(struct int_list *list, void (*f)(int))
+{
+	while (list != NULL) {
+		f(list->value);
+		list = list-> next;
+	}
+}
+
+void int_list_map_mut(struct int_list *list, int (*f)(int))
+{
+	while (list != NULL) {
+		list->value = f(list->value);
+		list = list-> next;
+	}
 }
