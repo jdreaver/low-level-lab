@@ -1,15 +1,24 @@
-TARGETS = mmap
-OBJ_FILES = $(patsubst %,%.o,$(TARGETS))
+YASM_TARGETS = mmap
+YASM_OBJ_FILES = $(patsubst %,%.o,$(YASM_TARGETS))
+
+GAS_TARGETS = mmap-gas
+GAS_OBJ_FILES = $(patsubst %,%.o,$(GAS_TARGETS))
 
 .PHONY: all
-all: $(TARGETS)
+all: $(YASM_TARGETS) $(GAS_TARGETS)
 
-$(TARGETS): %: %.o
+$(YASM_TARGETS): %: %.o
 	ld -o $@ $^
 
-$(OBJ_FILES): %.o: %.asm
+$(YASM_OBJ_FILES): %.o: %.asm
 	yasm -f elf64 -g dwarf2 $? -l $?.lst -o $@
+
+$(GAS_TARGETS): %: %.o
+	gcc -nostdlib -o $@ $^
+
+$(GAS_OBJ_FILES): %.o: %.S
+	gcc -ggdb3 -c $? -o $@
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) $(OBJ_FILES) *.lst
+	rm -f $(YASM_TARGETS) $(YASM_OBJ_FILES) $(GAS_TARGETS) $(GAS_OBJ_FILES) *.lst
