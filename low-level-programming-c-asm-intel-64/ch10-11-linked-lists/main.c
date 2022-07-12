@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 	printf("list squares: ");
 	int_list_map_mut(list, square);
 	int_list_print(list);
+	puts("");
 
 	int_list_free(list);
 	return 0;
