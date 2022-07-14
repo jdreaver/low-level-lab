@@ -14,8 +14,6 @@ LDFLAGS = -no-pie
 # http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
 CPPFLAGS+=-MMD -MP
 
-COMPILE_COMMANDS = compile_commands.json
-
 .PHONY: all
 all: $(TARGET)
 
@@ -25,7 +23,8 @@ $(TARGET): $(OBJS)
 $(OBJS): %.o: %.c # N.B. other deps specified because of -MMD -MP flags
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
-$(COMPILE_COMMANDS):
+.PHONY: compile_commands
+compile_commands:
 	$(MAKE) clean
 	bear -- $(MAKE)
 
