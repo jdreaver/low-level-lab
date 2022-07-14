@@ -6,7 +6,7 @@ INCLUDES = $(wildcard *.h)
 
 CC = gcc
 LD = gcc
-CFLAGS = -Wall -Wextra -pedantic -no-pie -g3 -ggdb3 -DDEBUG
+CFLAGS = -Wall -Wextra -pedantic -no-pie -g3 -ggdb3 -DDEBUG -O0
 LDFLAGS = -no-pie
 
 # Automatically generate dependencies. -MMD generates non-system header
