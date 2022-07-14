@@ -27,6 +27,12 @@ struct image *image_create(size_t width, size_t height, uint8_t bits_per_pixel, 
 	return image;
 }
 
+void image_destroy(struct image *image)
+{
+	free(image->bytes);
+	free(image);
+}
+
 void image_rotate(struct image *input)
 {
 	// Make a copy of input bytes to make things easier

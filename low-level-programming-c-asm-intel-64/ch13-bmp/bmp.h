@@ -59,3 +59,8 @@ struct bmp_file *bmp_file_from_bytes(void *bytes, size_t len);
  * bytes.
  */
 void bmp_file_free(struct bmp_file *file);
+
+/**
+ * Rotates a BMP file by 90 degrees in place.
+ */
+void bmp_file_rotate(struct bmp_file *file);

@@ -1,6 +1,7 @@
 #include "bmp.h"
 #include "image.h"
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
 
@@ -55,7 +56,32 @@ static struct image *bmp_to_image(struct bmp_file *input)
 
 	// Need to copy bytes without padding. BMP pads rows so they are a
 	// multiple of 4 bytes.
-	uint8_t *bytes = input->pixel_bytes;
+	assert(bits_per_pixel % 8 == 0);
+	size_t bytes_per_pixel = bits_per_pixel / 8;
+	size_t num_bytes = sizeof(uint8_t) * width * height * bytes_per_pixel;
+	uint8_t *bytes = malloc(num_bytes);
+	for (size_t i = 0; i < height; i++) {
+		for (size_t j = 0; j < width * bytes_per_pixel; j++) {
+			bytes[i * width + j] = input->pixel_bytes[i * width + j];
+		}
+	}
+
 	struct image *image = image_create(width, height, bits_per_pixel, bytes);
 	return image;
+}
+
+void bmp_file_rotate(struct bmp_file *file)
+{
+	// Create an image and rotate it
+	struct image *image = bmp_to_image(file);
+	image_rotate(image);
+
+	// Copy bytes back to image
+	//
+	// TODO: Can't do this in-place, since the number of bytes needed for
+	// pixel data can change due to padding.
+	assert(image->bits_per_pixel % 8 == 0);
+	size_t bytes_per_pixel = image->bits_per_pixel / 8;
+
+	image_destroy(image);
 }
