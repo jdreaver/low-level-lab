@@ -7,7 +7,7 @@ TEST_INPUTS = $(wildcard tests/*.in)
 
 CC = gcc
 LD = gcc
-CFLAGS = -Wall -Wextra -pedantic -no-pie -g3 -ggdb3 -DDEBUG -O0
+CFLAGS = -Wall -Wextra -pedantic -no-pie -g3 -ggdb3 -DDEBUG
 LDFLAGS = -no-pie
 
 .PHONY: all

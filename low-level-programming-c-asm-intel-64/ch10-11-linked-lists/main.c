@@ -9,7 +9,7 @@ int square(int x)
 	return x * x;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
 	struct int_list *list = NULL;
 

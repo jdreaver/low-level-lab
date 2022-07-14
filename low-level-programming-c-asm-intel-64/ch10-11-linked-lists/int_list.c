@@ -8,7 +8,7 @@ struct int_list *int_list_create(int value)
 {
 	struct int_list *list = malloc(sizeof(struct int_list));
 	if (list == NULL) {
-		fprintf(stderr, "%s:%d: %s: Fatal: failed to allocation new \n", __FILE__, __LINE__, __FUNCTION__);
+		fprintf(stderr, "%s:%d: %s: Fatal: failed to allocation new \n", __FILE__, __LINE__, __func__);
 		abort();
 	}
 	list->value = value;
