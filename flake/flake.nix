@@ -25,6 +25,7 @@
           gdb
           ddd # Nice GUI debugger
           valgrind
+          bear # Generates compile_commands.json
 
           # ASM
           nasm
