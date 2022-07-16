@@ -50,8 +50,8 @@ void approx_counter_increment(struct approx_counter *counter, int core_id)
 	if (counter->cpu_counters[core_id] >= counter->sync_threshold) {
 		pthread_mutex_lock_or_fail(&counter->global_mutex);
 		counter->global_counter += counter->cpu_counters[core_id];
-		counter->cpu_counters[core_id] = 0;
 		pthread_mutex_unlock_or_fail(&counter->global_mutex);
+		counter->cpu_counters[core_id] = 0;
 	}
 
 	pthread_mutex_unlock_or_fail(&mutex);
