@@ -41,8 +41,8 @@ struct approx_counter *approx_counter_create(int num_cpus, uint64_t sync_thresho
 
 void approx_counter_increment(struct approx_counter *counter, int core_id)
 {
-	pthread_mutex_t mutex = counter->cpu_mutexes[core_id];
-	pthread_mutex_lock_or_fail(&mutex);
+	pthread_mutex_t *mutex = &counter->cpu_mutexes[core_id];
+	pthread_mutex_lock_or_fail(mutex);
 	counter->cpu_counters[core_id] += 1;
 
 	// Sync to global counter
@@ -53,7 +53,7 @@ void approx_counter_increment(struct approx_counter *counter, int core_id)
 		counter->cpu_counters[core_id] = 0;
 	}
 
-	pthread_mutex_unlock_or_fail(&mutex);
+	pthread_mutex_unlock_or_fail(mutex);
 }
 
 uint64_t approx_counter_get(struct approx_counter *counter)
