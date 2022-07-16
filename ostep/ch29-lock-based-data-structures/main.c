@@ -1,3 +1,4 @@
+#include "approx_counter.h"
 #include "atomic_counter.h"
 #include "nonatomic_counter.h"
 
@@ -34,9 +35,25 @@ static void *atomic_thread_handler(void *arg)
 	return NULL;
 }
 
+struct approx_thread_args {
+	struct approx_counter *counter;
+	uint64_t count_max;
+};
+
+static void *approx_thread_handler(void *arg)
+{
+	struct approx_thread_args *thread_args = (struct approx_thread_args *) arg;
+	for (uint64_t i = 0; i < thread_args->count_max; i++)
+		approx_counter_increment(thread_args->counter);
+	return NULL;
+}
+
 int main()
 {
-	// TODO: Make these command line args.
+	// TODO: Have command line args to run a given type of counter with
+	// different parameters, and then orchestrate all of this with a
+	// top-level bash script.
+
 	uint16_t num_threads = 4;
 	uint64_t count_max = 1000000;
 
@@ -98,6 +115,33 @@ int main()
 	       count_max, atomic_counter_get(atomic_counter));
 
 	atomic_counter_destroy(atomic_counter);
+
+	// Approx counter
+	uint64_t sync_threshold = 1024;
+	struct approx_counter *approx_counter = approx_counter_create(sync_threshold);
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (size_t i = 0; i < num_threads; i++) {
+		struct approx_thread_args arg = {
+			.counter = approx_counter,
+			.count_max = count_max / num_threads,
+		};
+		if (pthread_create(&threads[i], NULL, approx_thread_handler, &arg)) {
+			fprintf(stderr, "error creating approx counter pthread\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	for (size_t i = 0; i < num_threads; i++)
+		pthread_join(threads[i], NULL);
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+	elapsed_millis = (finish.tv_sec - start.tv_sec);
+	elapsed_millis += (finish.tv_nsec - start.tv_nsec) / 1000000.0;
+
+	printf("approx_counter time spent (ms): %f\n", elapsed_millis);
+	printf("approx counter final value, expected: %" PRIu64
+	       ", got: %" PRIu64 "\n",
+	       count_max, approx_counter_get(approx_counter));
+
+	approx_counter_destroy(approx_counter);
 
 	free(threads);
 }
