@@ -55,7 +55,7 @@ int main()
 	// top-level bash script.
 
 	uint16_t num_threads = 4;
-	uint64_t count_max = 1000000;
+	uint64_t count_max = 100000000;
 
 	struct timespec start, finish;
 	double elapsed_millis;
@@ -80,7 +80,7 @@ int main()
 	for (size_t i = 0; i < num_threads; i++)
 		pthread_join(threads[i], NULL);
 	clock_gettime(CLOCK_MONOTONIC, &finish);
-	elapsed_millis = (finish.tv_sec - start.tv_sec);
+	elapsed_millis = (finish.tv_sec - start.tv_sec) * 1000.0;
 	elapsed_millis += (finish.tv_nsec - start.tv_nsec) / 1000000.0;
 
 	printf("nonatomic_counter time spent (ms): %f\n", elapsed_millis);
@@ -106,7 +106,7 @@ int main()
 	for (size_t i = 0; i < num_threads; i++)
 		pthread_join(threads[i], NULL);
 	clock_gettime(CLOCK_MONOTONIC, &finish);
-	elapsed_millis = (finish.tv_sec - start.tv_sec);
+	elapsed_millis = (finish.tv_sec - start.tv_sec) * 1000.0;
 	elapsed_millis += (finish.tv_nsec - start.tv_nsec) / 1000000.0;
 
 	printf("atomic_counter time spent (ms): %f\n", elapsed_millis);
@@ -133,7 +133,7 @@ int main()
 	for (size_t i = 0; i < num_threads; i++)
 		pthread_join(threads[i], NULL);
 	clock_gettime(CLOCK_MONOTONIC, &finish);
-	elapsed_millis = (finish.tv_sec - start.tv_sec);
+	elapsed_millis = (finish.tv_sec - start.tv_sec) * 1000.0;
 	elapsed_millis += (finish.tv_nsec - start.tv_nsec) / 1000000.0;
 
 	printf("approx_counter time spent (ms): %f\n", elapsed_millis);
