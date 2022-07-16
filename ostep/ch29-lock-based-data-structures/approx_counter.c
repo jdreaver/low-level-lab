@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/sysinfo.h>
 
 struct approx_counter {
 	pthread_mutex_t global_mutex;
@@ -19,14 +18,14 @@ struct approx_counter {
 	uint64_t sync_threshold;
 };
 
-struct approx_counter *approx_counter_create(uint64_t sync_threshold)
+struct approx_counter *approx_counter_create(int num_cpus, uint64_t sync_threshold)
 {
 	struct approx_counter *counter = malloc(sizeof(*counter));
 
 	pthread_mutex_init_or_fail(&counter->global_mutex);
 	counter->global_counter = 0;
 
-	counter->num_cpus = get_nprocs();
+	counter->num_cpus = num_cpus;
 	counter->cpu_mutexes = malloc(sizeof(*counter->cpu_mutexes) * counter->num_cpus);
 	counter->cpu_counters = malloc(sizeof(*counter->cpu_counters) * counter->num_cpus);
 

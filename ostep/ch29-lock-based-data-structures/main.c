@@ -147,7 +147,7 @@ int main()
 
 	// Approx counter
 	uint64_t sync_threshold = 1024;
-	struct approx_counter *approx_counter = approx_counter_create(sync_threshold);
+	struct approx_counter *approx_counter = approx_counter_create(num_threads, sync_threshold);
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
 		struct approx_thread_args arg = {

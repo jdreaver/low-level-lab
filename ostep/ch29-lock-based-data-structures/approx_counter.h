@@ -9,7 +9,7 @@
  */
 struct approx_counter;
 
-struct approx_counter *approx_counter_create(uint64_t sync_threshold);
+struct approx_counter *approx_counter_create(int num_cpus, uint64_t sync_threshold);
 void approx_counter_increment(struct approx_counter *counter, int core_id);
 
 /**
