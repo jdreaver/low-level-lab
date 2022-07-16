@@ -1,5 +1,7 @@
 #include "atomic_counter.h"
 
+#include "mutex_utils.h"
+
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,25 +16,15 @@ struct atomic_counter *atomic_counter_create()
 {
 	struct atomic_counter *counter = malloc(sizeof(*counter));
 	counter->count = 0;
-	if (pthread_mutex_init(&counter->mutex, NULL)) {
-		fprintf(stderr, "error creating mutex in %s at %s:%d\n", __func__, __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
-	}
+	pthread_mutex_init_or_fail(&counter->mutex);
 	return counter;
 }
 
 void atomic_counter_increment(struct atomic_counter *counter)
 {
-	if (pthread_mutex_lock(&counter->mutex)) {
-		fprintf(stderr, "error locking mutex in %s at %s:%d\n", __func__, __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
-	}
+	pthread_mutex_lock_or_fail(&counter->mutex);
 	counter->count += 1;
-	if (pthread_mutex_unlock(&counter->mutex)) {
-		fprintf(stderr, "error unlocking mutex in %s at %s:%d\n", __func__, __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
-	}
-
+	pthread_mutex_unlock_or_fail(&counter->mutex);
 }
 
 uint64_t atomic_counter_get(struct atomic_counter *counter)
