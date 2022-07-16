@@ -1,11 +1,8 @@
-#define _GNU_SOURCE // Needed for sched_getcpu
-
 #include "approx_counter.h"
 
 #include "mutex_utils.h"
 
 #include <pthread.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,27 +40,21 @@ struct approx_counter *approx_counter_create(uint64_t sync_threshold)
 	return counter;
 }
 
-void approx_counter_increment(struct approx_counter *counter)
+void approx_counter_increment(struct approx_counter *counter, int core_id)
 {
-	int cpu = sched_getcpu();
-	if (cpu > counter->num_cpus) {
-		fprintf(stderr, "cpu %d exceeds num_cpus %d in %s at %s:%d\n", cpu, counter->num_cpus, __func__, __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
-
-	}
-
-	pthread_mutex_lock_or_fail(&counter->cpu_mutexes[cpu]);
-	counter->cpu_counters[cpu] += 1;
+	pthread_mutex_t mutex = counter->cpu_mutexes[core_id];
+	pthread_mutex_lock_or_fail(&mutex);
+	counter->cpu_counters[core_id] += 1;
 
 	// Sync to global counter
-	if (counter->cpu_counters[cpu] >= counter->sync_threshold) {
+	if (counter->cpu_counters[core_id] >= counter->sync_threshold) {
 		pthread_mutex_lock_or_fail(&counter->global_mutex);
-		counter->global_counter += counter->cpu_counters[cpu];
-		counter->cpu_counters[cpu] = 0;
+		counter->global_counter += counter->cpu_counters[core_id];
+		counter->cpu_counters[core_id] = 0;
 		pthread_mutex_unlock_or_fail(&counter->global_mutex);
 	}
 
-	pthread_mutex_unlock_or_fail(&counter->cpu_mutexes[cpu]);
+	pthread_mutex_unlock_or_fail(&mutex);
 }
 
 uint64_t approx_counter_get(struct approx_counter *counter)

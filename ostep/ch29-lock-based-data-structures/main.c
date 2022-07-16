@@ -1,3 +1,5 @@
+#define _GNU_SOURCE // Needed for sys/sysinfo.h stuff
+
 #include "approx_counter.h"
 #include "atomic_counter.h"
 #include "nonatomic_counter.h"
@@ -7,9 +9,29 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/sysinfo.h>
 #include <time.h>
 
+void stick_this_thread_to_core(int core_id) {
+	int num_cores = get_nprocs();
+	if (core_id < 0 || core_id >= num_cores) {
+		fprintf(stderr, "core_id %d exceeds num_cores %d in %s at %s:%d\n", core_id, num_cores, __func__, __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
+
+	cpu_set_t cpuset;
+	CPU_ZERO(&cpuset);
+	CPU_SET(core_id, &cpuset);
+
+	pthread_t current_thread = pthread_self();
+	if (pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset)) {
+		fprintf(stderr, "pthread_set_affinity_np failed in %s at %s:%d\n", __func__, __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
+}
+
 struct nonatomic_thread_args {
+	int core_id;
 	struct nonatomic_counter *counter;
 	uint64_t count_max;
 };
@@ -17,12 +39,14 @@ struct nonatomic_thread_args {
 static void *nonatomic_thread_handler(void *arg)
 {
 	struct nonatomic_thread_args *thread_args = (struct nonatomic_thread_args *) arg;
+	stick_this_thread_to_core(thread_args->core_id);
 	for (uint64_t i = 0; i < thread_args->count_max; i++)
 		nonatomic_counter_increment(thread_args->counter);
 	return NULL;
 }
 
 struct atomic_thread_args {
+	int core_id;
 	struct atomic_counter *counter;
 	uint64_t count_max;
 };
@@ -30,12 +54,14 @@ struct atomic_thread_args {
 static void *atomic_thread_handler(void *arg)
 {
 	struct atomic_thread_args *thread_args = (struct atomic_thread_args *) arg;
+	stick_this_thread_to_core(thread_args->core_id);
 	for (uint64_t i = 0; i < thread_args->count_max; i++)
 		atomic_counter_increment(thread_args->counter);
 	return NULL;
 }
 
 struct approx_thread_args {
+	int core_id;
 	struct approx_counter *counter;
 	uint64_t count_max;
 };
@@ -43,8 +69,9 @@ struct approx_thread_args {
 static void *approx_thread_handler(void *arg)
 {
 	struct approx_thread_args *thread_args = (struct approx_thread_args *) arg;
+	stick_this_thread_to_core(thread_args->core_id);
 	for (uint64_t i = 0; i < thread_args->count_max; i++)
-		approx_counter_increment(thread_args->counter);
+		approx_counter_increment(thread_args->counter, thread_args->core_id);
 	return NULL;
 }
 
@@ -69,6 +96,7 @@ int main()
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
 		struct nonatomic_thread_args arg = {
+			.core_id = i,
 			.counter = nonatomic_counter,
 			.count_max = count_max / num_threads,
 		};
@@ -95,6 +123,7 @@ int main()
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
 		struct atomic_thread_args arg = {
+			.core_id = i,
 			.counter = atomic_counter,
 			.count_max = count_max / num_threads,
 		};
@@ -122,6 +151,7 @@ int main()
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
 		struct approx_thread_args arg = {
+			.core_id = i,
 			.counter = approx_counter,
 			.count_max = count_max / num_threads,
 		};

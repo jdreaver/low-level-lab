@@ -10,7 +10,7 @@
 struct approx_counter;
 
 struct approx_counter *approx_counter_create(uint64_t sync_threshold);
-void approx_counter_increment(struct approx_counter *counter);
+void approx_counter_increment(struct approx_counter *counter, int core_id);
 
 /**
  * Gets value of global counter and all CPU counters.
