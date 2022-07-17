@@ -81,7 +81,7 @@ int main()
 	// different parameters, and then orchestrate all of this with a
 	// top-level bash script.
 
-	uint16_t num_threads = 4;
+	uint16_t num_threads = 8;
 	uint64_t count_max = 100000000;
 
 	struct timespec start, finish;
