@@ -7,6 +7,10 @@ INCLUDES = $(wildcard *.h)
 CC = gcc
 LD = gcc
 CFLAGS = -Wall -Wextra -pedantic
+# Enabling link-time optimization speeds up the nonatomic_counter _massively_.
+# GCC basically inlines everything and precomputes what the counter should be,
+# so we even get an accurate count most of the time.
+# CFLAGS += -flto
 LDFLAGS = -no-pie -pthread
 
 # Run like "make DEBUG=0 ..." to disable debugging
