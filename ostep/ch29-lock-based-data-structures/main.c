@@ -93,14 +93,14 @@ int main()
 	// Non-atomic counter. This is here just to show that without locks the
 	// threads step on one another and we get an inaccurate count.
 	struct nonatomic_counter *nonatomic_counter = nonatomic_counter_create();
+	struct nonatomic_thread_args *nonatomic_args = malloc(sizeof(*nonatomic_args) * num_threads);
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
-		struct nonatomic_thread_args arg = {
-			.core_id = i,
-			.counter = nonatomic_counter,
-			.count_max = count_max / num_threads,
-		};
-		if (pthread_create(&threads[i], NULL, nonatomic_thread_handler, &arg)) {
+		nonatomic_args[i].core_id = i;
+		nonatomic_args[i].counter = nonatomic_counter;
+		nonatomic_args[i].count_max = count_max / num_threads;
+
+		if (pthread_create(&threads[i], NULL, nonatomic_thread_handler, &nonatomic_args[i])) {
 			fprintf(stderr, "error creating nonatomic counter pthread\n");
 			exit(EXIT_FAILURE);
 		}
@@ -117,17 +117,18 @@ int main()
 	       count_max, nonatomic_counter_get(nonatomic_counter));
 
 	nonatomic_counter_destroy(nonatomic_counter);
+	free(nonatomic_args);
 
 	// Atomic counter
 	struct atomic_counter *atomic_counter = atomic_counter_create();
+	struct atomic_thread_args *atomic_args = malloc(sizeof(*atomic_args) * num_threads);
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
-		struct atomic_thread_args arg = {
-			.core_id = i,
-			.counter = atomic_counter,
-			.count_max = count_max / num_threads,
-		};
-		if (pthread_create(&threads[i], NULL, atomic_thread_handler, &arg)) {
+		atomic_args[i].core_id = i;
+		atomic_args[i].counter = atomic_counter;
+		atomic_args[i].count_max = count_max / num_threads;
+
+		if (pthread_create(&threads[i], NULL, atomic_thread_handler, &atomic_args[i])) {
 			fprintf(stderr, "error creating atomic counter pthread\n");
 			exit(EXIT_FAILURE);
 		}
@@ -144,18 +145,19 @@ int main()
 	       count_max, atomic_counter_get(atomic_counter));
 
 	atomic_counter_destroy(atomic_counter);
+	free(atomic_args);
 
 	// Approx counter
 	uint64_t sync_threshold = 1024;
 	struct approx_counter *approx_counter = approx_counter_create(num_threads, sync_threshold);
+	struct approx_thread_args *approx_args = malloc(sizeof(*approx_args) * num_threads);
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (size_t i = 0; i < num_threads; i++) {
-		struct approx_thread_args arg = {
-			.core_id = i,
-			.counter = approx_counter,
-			.count_max = count_max / num_threads,
-		};
-		if (pthread_create(&threads[i], NULL, approx_thread_handler, &arg)) {
+		approx_args[i].core_id = i;
+		approx_args[i].counter = approx_counter;
+		approx_args[i].count_max = count_max / num_threads;
+
+		if (pthread_create(&threads[i], NULL, approx_thread_handler, &approx_args[i])) {
 			fprintf(stderr, "error creating approx counter pthread\n");
 			exit(EXIT_FAILURE);
 		}
@@ -172,6 +174,7 @@ int main()
 	       count_max, approx_counter_get(approx_counter));
 
 	approx_counter_destroy(approx_counter);
+	free(approx_args);
 
 	free(threads);
 }
