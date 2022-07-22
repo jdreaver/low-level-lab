@@ -6,6 +6,20 @@
   outputs = { self, nixpkgs-unstable }:
     let
       pkgs = import nixpkgs-unstable { system = "x86_64-linux"; config = { allowUnfree = true; }; };
+
+      # This is something we might use if we wanted to cross-compile easier via
+      # nix. References:
+      # - https://nixos.wiki/wiki/Cross_Compiling
+      # - https://nixos.org/manual/nixpkgs/stable/#chap-cross
+      # - https://discourse.nixos.org/t/cross-compilation-with-nix-shell-and-cmake/2611
+      # - https://discourse.nixos.org/t/use-buildinputs-or-nativebuildinputs-for-nix-shell/8464
+      # - https://discourse.nixos.org/t/how-do-i-get-a-shell-nix-with-cross-compiler-and-qemu/7658
+      #
+      # aarch64-multiplatform-pkgs = import nixpkgs-unstable {
+      #   system = "x86_64-linux";
+      #   config = { allowUnfree = true; };
+      #   crossSystem = pkgs.lib.systems.examples.aarch64-multiplatform;
+      # };
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
         nativeBuildInputs = with pkgs; [
@@ -26,6 +40,9 @@
           ddd # Nice GUI debugger
           valgrind
           bear # Generates compile_commands.json
+
+          # Cross-compilation to ARM
+          pkgsCross.aarch64-multiplatform.buildPackages.gcc
 
           # ASM
           nasm
