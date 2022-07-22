@@ -8,7 +8,7 @@
       pkgs = import nixpkgs-unstable { system = "x86_64-linux"; config = { allowUnfree = true; }; };
     in {
       devShells.x86_64-linux.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
+        nativeBuildInputs = with pkgs; [
           # Java, to run nand2tetris tools
           jre
 
