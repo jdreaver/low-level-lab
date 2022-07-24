@@ -17,6 +17,9 @@ LDFLAGS = -no-pie -pthread
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
   CFLAGS += -g3 -ggdb3 -DDEBUG -O0
+  # N.B. This undefines the _FORTIFY_SOURCE macro, which triggers a warning deep
+  # in some header file because we are using -O0
+  CFLAGS += -U_FORTIFY_SOURCE
 
   # N.B. fsanitize options need to be present in both compile flags and linker
   # flags
