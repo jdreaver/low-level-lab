@@ -16,9 +16,18 @@ LDFLAGS = -no-pie -pthread
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
 ifeq ($(DEBUG), 1)
-  CFLAGS+=-g3 -ggdb3 -DDEBUG -O0
+  CFLAGS += -g3 -ggdb3 -DDEBUG -O0
+
+  # N.B. fsanitize options need to be present in both compile flags and linker
+  # flags
+  CFLAGS += -fsanitize=address,leak,undefined -fsanitize-undefined-trap-on-error
+  LDFLAGS += -fsanitize=address,leak,undefined -fsanitize-undefined-trap-on-error
+
+  # thread sanitizer is fun, but can't be combined with some other sanitizers
+  # CFLAGS += -fsanitize=thread
+  # LDFLAGS += -fsanitize=thread
 else
-  CFLAGS+=-O2
+  CFLAGS += -O2
 endif
 
 # Automatically generate dependencies. -MMD generates non-system header
