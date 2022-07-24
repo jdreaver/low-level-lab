@@ -2,3 +2,4 @@
 *.d
 /.ccls-cache/
 /mystat
+/myls

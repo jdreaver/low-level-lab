@@ -1,4 +1,4 @@
-TARGETS = mystat
+TARGETS = mystat myls
 SRC = $(wildcard *.c)
 OBJS = $(patsubst %.c,%.o,$(SRC))
 DEPS = $(patsubst %.c,%.d,$(SRC))
@@ -6,12 +6,8 @@ INCLUDES = $(wildcard *.h)
 
 CC = gcc
 LD = gcc
-CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
-# Enabling link-time optimization speeds up the nonatomic_counter _massively_.
-# GCC basically inlines everything and precomputes what the counter should be,
-# so we even get an accurate count most of the time.
-# CFLAGS += -flto
-LDFLAGS = -no-pie -pthread
+CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer -flto
+LDFLAGS =
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
