@@ -4,6 +4,8 @@
  * https://github.com/coreutils/coreutils/blob/master/src/stat.c
  */
 
+#include "file_utils.h"
+
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -57,16 +59,7 @@ int main(int argc, char **argv)
 	printf("Links: %" PRIuMAX "\n", (uintmax_t)stat_buf.st_nlink);
 
 	printf("Access: (%04o/", stat_buf.st_mode & 0777);
-	printf((S_ISDIR(stat_buf.st_mode)) ? "d" : "-");
-	printf((stat_buf.st_mode & S_IRUSR) ? "r" : "-");
-	printf((stat_buf.st_mode & S_IWUSR) ? "w" : "-");
-	printf((stat_buf.st_mode & S_IXUSR) ? "x" : "-");
-	printf((stat_buf.st_mode & S_IRGRP) ? "r" : "-");
-	printf((stat_buf.st_mode & S_IWGRP) ? "w" : "-");
-	printf((stat_buf.st_mode & S_IXGRP) ? "x" : "-");
-	printf((stat_buf.st_mode & S_IROTH) ? "r" : "-");
-	printf((stat_buf.st_mode & S_IWOTH) ? "w" : "-");
-	printf((stat_buf.st_mode & S_IXOTH) ? "x" : "-");
+	print_file_permissions(stat_buf);
 	printf(")\n");
 
 	// TODO: Keep running stat to get more!

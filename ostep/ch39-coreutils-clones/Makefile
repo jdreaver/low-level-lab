@@ -38,7 +38,7 @@ CPPFLAGS+=-MMD -MP
 .PHONY: all
 all: $(TARGETS)
 
-$(TARGETS): %: %.o
+$(TARGETS): %: %.o file_utils.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(OBJS): %.o: %.c # N.B. other deps specified because of -MMD -MP flags
