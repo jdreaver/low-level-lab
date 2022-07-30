@@ -17,6 +17,8 @@ etc. In particular, here are some things I've done in hre:
   - https://www.oreilly.com/library/view/low-level-programming-c/9781484224021/
   - Source code, solutions, projects, etc
     https://github.com/Apress/low-level-programming
+- Raspberry Pi Assembly Language Programming: ARM Processor Coding
+  https://www.oreilly.com/library/view/raspberry-pi-assembly/9781484252871/
 
 ## Resources
 - Intel 64 cheatsheet

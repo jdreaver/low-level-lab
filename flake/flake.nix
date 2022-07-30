@@ -48,11 +48,14 @@
           ddd # Nice GUI debugger
           valgrind
           bear # Generates compile_commands.json
-          glibc.static # For -static
+          #glibc.static # For -static
 
           # Cross-compilation to ARM
           pkgsCross.aarch64-multiplatform.buildPackages.gcc
-          pkgsCross.aarch64-multiplatform.glibc.static
+          #pkgsCross.aarch64-multiplatform.glibc.static
+
+          pkgsCross.armv7l-hf-multiplatform.buildPackages.gcc
+          pkgsCross.armv7l-hf-multiplatform.glibc.static
 
           # ASM
           nasm
