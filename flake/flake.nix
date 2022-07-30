@@ -20,8 +20,8 @@
       #   config = { allowUnfree = true; };
       #   crossSystem = pkgs.lib.systems.examples.aarch64-multiplatform;
       # };
-    in {
-      devShells.x86_64-linux.default = pkgs.mkShell {
+
+      mkShell = args: pkgs.mkShell ({
         # Disable default hardening flags. These are very confusing when doing
         # development and they break builds of packages/systems that don't
         # expect these flags to be on. Automatically enables stuff like
@@ -29,7 +29,9 @@
         # - https://nixos.org/manual/nixpkgs/stable/#sec-hardening-in-nixpkgs
         # - https://nixos.wiki/wiki/C#Hardening_flags
         hardeningDisable = ["all"];
-
+      } // args);
+    in {
+      devShells.x86_64-linux.default = mkShell {
         nativeBuildInputs = with pkgs; [
           # Java, to run nand2tetris tools
           jre
@@ -48,14 +50,12 @@
           ddd # Nice GUI debugger
           valgrind
           bear # Generates compile_commands.json
-          #glibc.static # For -static
+          glibc.static # For -static
 
-          # Cross-compilation to ARM
-          pkgsCross.aarch64-multiplatform.buildPackages.gcc
-          #pkgsCross.aarch64-multiplatform.glibc.static
-
-          pkgsCross.armv7l-hf-multiplatform.buildPackages.gcc
-          pkgsCross.armv7l-hf-multiplatform.glibc.static
+          # Cross-compilation to ARM (glibc static conflicts with native
+          # glibc.static once ld runs because of weird nix wrapper scripts)
+          # pkgsCross.aarch64-multiplatform.buildPackages.gcc
+          # pkgsCross.aarch64-multiplatform.glibc.static
 
           # ASM
           nasm
@@ -76,6 +76,20 @@
           # Kernel tools
           coccinelle
           sparse
+        ];
+      };
+
+      devShells.x86_64-linux.armv7-cross-compile = mkShell {
+        nativeBuildInputs = with pkgs; [
+          # C
+          gcc
+          gcc.man
+          gdb
+          bear # Generates compile_commands.json
+
+          # Cross compilation packages
+          pkgsCross.armv7l-hf-multiplatform.buildPackages.gcc
+          pkgsCross.armv7l-hf-multiplatform.glibc.static
         ];
       };
     };
