@@ -1,0 +1,5 @@
+/.ccls-cache/
+*.o
+*.hex
+/blink
+/compile_commands.json

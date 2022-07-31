@@ -92,5 +92,21 @@
           pkgsCross.armv7l-hf-multiplatform.glibc.static
         ];
       };
+
+      devShells.x86_64-linux.avr-cross-compile = mkShell {
+        nativeBuildInputs = with pkgs; [
+          # C
+          gcc
+          gcc.man
+          gdb
+          bear # Generates compile_commands.json
+
+          # Cross compilation packages
+          avrdude # To upload to board
+          pkgsCross.avr.buildPackages.gcc
+          pkgsCross.avr.avrlibc
+        ];
+      };
+
     };
 }
