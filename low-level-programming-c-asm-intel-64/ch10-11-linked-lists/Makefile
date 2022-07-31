@@ -16,8 +16,6 @@ LDFLAGS = -no-pie
 # http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
 CPPFLAGS+=-MMD -MP
 
-COMPILE_COMMANDS = compile_commands.json
-
 .PHONY: all
 all: $(TARGET)
 
@@ -31,9 +29,20 @@ $(OBJS): %.o: %.c # N.B. other deps specified because of -MMD -MP flags
 test: $(TARGET)
 	@./run-tests.sh
 
-$(COMPILE_COMMANDS):
+.PHONY: compile_commands
+compile_commands:
 	$(MAKE) clean
 	bear -- $(MAKE)
+  # We need to tell bear to exclude compiler wrappers, or we'll have duplicate,
+  # incorrect entries in compile_commands.json. See:
+  # - https://github.com/rizsotto/Bear/wiki/Troubleshooting#the-output-has-duplicate-entries
+  # - https://github.com/NixOS/nixpkgs/issues/20056
+  # - https://github.com/rizsotto/Bear/issues/321
+  #
+  # An alternative solution is to use the config file to pass in the compiler
+  # wrapper under compilation.compilers_to_exclude.
+	jq 'map(select(.arguments[0] | contains("wrapper") | not))' compile_commands.json > tmp_compile_commands.json
+	mv tmp_compile_commands.json compile_commands.json
 
 .PHONY: clean
 clean:
