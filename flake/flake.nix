@@ -107,5 +107,18 @@
         ];
       };
 
+      devShells.x86_64-linux.stm32 = mkShell {
+        nativeBuildInputs = with pkgs; [
+          # C
+          gcc
+          gcc.man
+          gdb
+          bear # Generates compile_commands.json
+
+          # Cross compilation packages
+          stlink # To flash to board
+          pkgsCross.arm-embedded.buildPackages.gcc
+        ];
+      };
     };
 }

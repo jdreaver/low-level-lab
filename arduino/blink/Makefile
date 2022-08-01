@@ -7,7 +7,8 @@ CC = $(CROSS_COMPILE)gcc
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
 MMCU = -mmcu=atmega2560
-CFLAGS = -Os -DF_CPU=16000000UL $(MMCU)
+CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
+CFLAGS += -Os -DF_CPU=16000000UL $(MMCU)
 LDFLAGS = $(MMCU)
 
 .PHONY: all
