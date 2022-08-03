@@ -21,22 +21,22 @@
 // Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
 // peripheral clock enable register (RCC_AHB1ENR) in the Reference Manual. AHB1
 // is offset 0x30 from RCC, and GPIOA is bit 0 in register.
-#define RCC_AHB1ENR         *(volatile uint32_t *)(RCC_BASE   + 0x30)
-#define RCC_AHB1ENR_GPIOAEN (1 << 0)
+#define RCC_AHB1ENR         *(volatile uint32_t *)(RCC_BASE + 0x30)
+#define RCC_AHB1ENR_GPIOAEN (1UL << 0)
 
 // MODER is offset of 0x0 from register base. MODER5 is bits 10/11 (see 8.4.1
 // GPIO port mode register (GPIOx_MODER) (x = A..E and H) on page 158 of
 // Reference Manual). Need to set bits 10/11 to 01 for output mode.
 #define GPIOA_MODER         *(volatile uint32_t *)(GPIOA_BASE + 0x00)
-#define GPIO_MODER_MODER5_0 (1 << 10)
+#define GPIO_MODER_MODER5_0 (1UL << 10)
 
 // ODR is offset 0x14 from GPIO base, and we want pin 5, which is the 5th bit.
 // See 8.4.6 GPIO port output data register (GPIOx_ODR) (x = A..E and H) on page
 // 160 of reference manual.
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
-#define GPIO_ODR_OD5  (1UL<<5)
+#define GPIO_ODR_OD5  (1UL << 5)
 
-void main(void)
+int main(void)
 {
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
