@@ -1,14 +1,16 @@
 # Adapts this tutorial, kinda
+# (https://jeremyherbert.net/get/stm32f4_getting_started) and
+# (https://freeelectron.ro/bare-metal-stm32-led-blink/) and
 # (https://blog.podkalicki.com/how-to-compile-and-burn-the-code-to-stm32-chip-on-linux-ubuntu/)
 
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
+LD = $(CROSS_COMPILE)ld
+AS = $(CROSS_COMPILE)as
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
 CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
-# CFLAGS += -mlittle-endian -mthumb -mthumb-interwork # Not necessary?
-CFLAGS += -mcpu=cortex-m4 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-LDFLAGS = -nostdlib
+CFLAGS += -mthumb -mcpu=cortex-m4 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
 
 .PHONY: all
 all: blink.bin
@@ -16,11 +18,14 @@ all: blink.bin
 blink.bin: blink.elf
 	$(OBJCOPY) -O binary $< $@
 
-blink.elf: blink.o
-	$(CC) $(LDFLAGS) -o $@ $<
+blink.elf: blink.o crt.o STM32F401RETx_FLASH.ld
+	$(LD) -T STM32F401RETx_FLASH.ld -o $@ blink.o crt.o
 
 blink.o: blink.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+crt.o: crt.S
+	$(AS) -o $@ $<
 
 .PHONY: compile_commands
 compile_commands:
@@ -44,3 +49,7 @@ clean:
 .PHONY: flash
 flash: blink.bin
 	sudo st-flash write blink.bin 0x8000000
+
+.PHONY: erase
+erase:
+	sudo st-flash erase
