@@ -1,7 +1,8 @@
-# Adapts this tutorial, kinda
-# (https://jeremyherbert.net/get/stm32f4_getting_started) and
-# (https://freeelectron.ro/bare-metal-stm32-led-blink/) and
-# (https://blog.podkalicki.com/how-to-compile-and-burn-the-code-to-stm32-chip-on-linux-ubuntu/)
+# Adapts these tutorials:
+# - http://pandafruits.com/stm32_primer/stm32_primer_minimal.php
+# - https://jeremyherbert.net/get/stm32f4_getting_started
+# - https://freeelectron.ro/bare-metal-stm32-led-blink/
+# - https://blog.podkalicki.com/how-to-compile-and-burn-the-code-to-stm32-chip-on-linux-ubuntu/
 
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
@@ -18,14 +19,14 @@ all: blink.bin
 blink.bin: blink.elf
 	$(OBJCOPY) -O binary $< $@
 
-blink.elf: blink.o crt.o STM32F401RETx_FLASH.ld
-	$(LD) -T STM32F401RETx_FLASH.ld -o $@ blink.o crt.o
+blink.elf: blink.o linker.ld
+	$(LD) -T linker.ld -o $@ blink.o
 
 blink.o: blink.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-crt.o: crt.S
-	$(AS) -o $@ $<
+# crt.o: crt.S
+# 	$(AS) -o $@ $<
 
 .PHONY: compile_commands
 compile_commands:

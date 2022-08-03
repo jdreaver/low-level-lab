@@ -1,5 +1,10 @@
 #include <stdint.h>
 
+/* work out end of RAM address as initial stack pointer */
+#define SRAM_BASE       0x20000000
+#define SRAM_SIZE       96*1024     // STM32F401RE has 96 Kbye of RAM
+#define SRAM_END        (SRAM_BASE + SRAM_SIZE)
+
 // From User Manual section 6.4 LEDs: "User LD2: the green LED is a user LED
 // connected to ARDUINO® signal D13 corresponding to STM32 I/O PA5 (pin 21) or
 // PB13 (pin 34) depending on the STM32 target. Refer to Table 11 to Table 23
@@ -36,13 +41,13 @@
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
 
-int main(void)
+void Reset_Handler(void)
 {
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
-	// Enable PA5 (pin 5 of GPIOA), which controls the LED. (All of
-	// GPIOA_MODER is set to 0 on reset, so we just need to set our one
-	// bit.)
+	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
+	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
+	// one bit to set MODER5 to 01.)
 	GPIOA_MODER |= GPIO_MODER_MODER5_0;
 
 	GPIOA_ODR |= GPIO_ODR_OD5;
@@ -53,3 +58,10 @@ int main(void)
 		for (int i = 0; i < 500000; i++); // arbitrary delay
 	}
 }
+
+/* vector table */
+unsigned long *vector_table[] __attribute__((section(".vector_table"))) =
+{
+    (unsigned long *)SRAM_END, // initial stack pointer
+    (unsigned long *)Reset_Handler,
+};
