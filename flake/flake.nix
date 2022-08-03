@@ -118,6 +118,7 @@
           # Cross compilation packages
           stlink # To flash to board
           pkgsCross.arm-embedded.buildPackages.gcc
+          pkgsCross.arm-embedded.buildPackages.gdb
         ];
       };
     };

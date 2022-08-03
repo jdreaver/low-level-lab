@@ -10,7 +10,7 @@ LD = $(CROSS_COMPILE)ld
 AS = $(CROSS_COMPILE)as
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
-CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
+CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer -g3 -ggdb3 -O0
 CFLAGS += -mthumb -mcpu=cortex-m4 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
 
 .PHONY: all
