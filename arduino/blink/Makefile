@@ -8,12 +8,13 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 
 MMCU = -mmcu=atmega2560
 CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
-CFLAGS += -Os -DF_CPU=16000000UL $(MMCU)
+CFLAGS += -Os $(MMCU)
 LDFLAGS = $(MMCU)
 
 .PHONY: all
 all: blink.hex
 
+# TODO: Do we need -R .eeprom? What about -j .text -j .data?
 blink.hex: blink
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
@@ -50,6 +51,6 @@ clean:
 # I added the -D option (Disable auto erase for flash memory) after seeing an
 # error without it and looking at the verbose Upload output from the Arduino IDE
 # and noticing they use it.
-.PHONY: upload
-upload: blink.hex
+.PHONY: flash
+flash: blink.hex
 	 avrdude -D -F -V -c wiring -p atmega2560 -P /dev/ttyACM0 -b 115200 -U flash:w:blink.hex
