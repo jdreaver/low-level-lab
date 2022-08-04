@@ -32,10 +32,28 @@
 #define TIM2_BASE             (APB1PERIPH_BASE + 0x0000UL)
 #define TIM2_CR1              *(volatile uint32_t *)(TIM2_BASE + 0x00)
 #define TIM_CR1_CEN           (1UL << 0)
+#define TIM2_DIER             *(volatile uint32_t *)(TIM2_BASE + 0x0C)
+#define TIM_DIER_UIE          (1UL << 0)
 #define TIM2_SR               *(volatile uint32_t *)(TIM2_BASE + 0x10)
 #define TIM_SR_UIF            (1UL << 0)
+// TIM2_CNT useful for debugging
+#define TIM2_CNT              *(volatile uint32_t *)(TIM2_BASE + 0x24)
 #define TIM2_PSC              *(volatile uint32_t *)(TIM2_BASE + 0x28)
 #define TIM2_ARR              *(volatile uint32_t *)(TIM2_BASE + 0x2C)
+
+// NVIC (Nested Vector Interrupt Controller). This is actually defined at the
+// Cortex M4 level, not the STM32 level, so we need to look at the STM32 Cortex
+// M4 Manual. These definitions were taken from core_cm4.h.
+#define SCS_BASE            (0xE000E000UL)                           /*!< System Control Space Base Address */
+#define NVIC_BASE           (SCS_BASE + 0x0100UL)                    /*!< NVIC Base Address */
+#define NVIC_ISER(i)        *(volatile uint32_t *)(NVIC_BASE + 0x000UL + (i))
+#define TIM2_IRQn           28
+
+// Cribbed from core_cm4.h.
+static void NVIC_EnableIRQ(uint32_t IRQn)
+{
+    NVIC_ISER(IRQn >> 5UL) = (1UL << ((IRQn) & 0x1FUL));
+}
 
 // Need to enable the APB1 peripheral clock. See Section 6.3.11 RCC APB1
 // peripheral clock enable register (RCC_APB1ENR) in the Reference Manual. APB1
@@ -87,11 +105,19 @@ void Reset_Handler(void)
 	// value adds one.
 	TIM2_PSC = 10000 - 1;
 
-	// Enable TIM2 counter (should be done after reset counter set)
+	// Enable the hardware interrupt.
+	TIM2_DIER |= TIM_DIER_UIE;
+
+	// Enable TIM2 interrupt line
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	// Enable TIM2 counter (should be done after reset counter set and interrupt enabled)
 	TIM2_CR1 |= TIM_CR1_CEN;
 
-	//GPIOA_ODR |= GPIO_ODR_OD5;
-	//GPIOA_ODR &= ~GPIO_ODR_OD5;
+	// While loop is useful if debugging w/ GDB because we can immediately
+	// have a stack frame and backtrace, so we can e.g. query for variable
+	// values.
+	// while (1);
 }
 
 void TIM2_IRQHandler(void)
