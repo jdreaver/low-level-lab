@@ -37,6 +37,11 @@ finally found some that work:
 - https://jeremyherbert.net/get/stm32f4_getting_started
   - Quite old, and also a good GPIO explanation, but uses the ST-provided header
     files and library, so I didn't like it.
+- https://www.youtube.com/c/FastbitEmbeddedBrainAcademy/playlists
+  - Superb Youtube channel explaining low level bits of STM32 in detail. I
+    actually found this after I got my `blink` working, but it would have
+    explained everything if I saw it first. (This person also has some great
+    [Udemy courses](https://www.udemy.com/user/kiran-nayak-2/) too.)
 
 The key bit I was missing was the vector table. The vector table must start at
 0x08000000, the first 4 byte entry is the location of the initial stack pointer,
