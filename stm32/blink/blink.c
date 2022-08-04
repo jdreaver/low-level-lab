@@ -60,11 +60,3 @@ void Reset_Handler(void)
 		for (uint32_t i = 0; i < loop_length; i++); // arbitrary delay
 	}
 }
-
-/* Vector table. This needs to be stored at 0x00000004, which with the default
-   BOOT pin configuration is aliased to flash memory at 0x08000004. Note that
-   the first element (stack pointer location) is set in the linker script. */
-unsigned long *vector_table[] __attribute__((section(".vector_table"))) =
-{
-    (unsigned long *)Reset_Handler,
-};

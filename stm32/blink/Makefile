@@ -4,6 +4,12 @@
 # - https://freeelectron.ro/bare-metal-stm32-led-blink/
 # - https://blog.podkalicki.com/how-to-compile-and-burn-the-code-to-stm32-chip-on-linux-ubuntu/
 
+TARGETS = blink blink_timer
+OBJS = $(patsubst %,%.o,$(TARGETS))
+ELFS = $(patsubst %,%.elf,$(TARGETS))
+BINS = $(patsubst %,%.bin,$(TARGETS))
+FLASH_TARGET ?= blink
+
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
@@ -25,15 +31,15 @@ CFLAGS += -mcpu=cortex-m4
 LDFLAGS = -Map=blink.map
 
 .PHONY: all
-all: blink.bin
+all: $(BINS)
 
-blink.bin: blink.elf
+$(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-blink.elf: blink.o linker.ld
+$(ELFS): %.elf: %.o vector_table.o linker.ld
 	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 
-blink.o: blink.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 .PHONY: compile_commands
@@ -56,8 +62,8 @@ clean:
 	rm -f *.o *.bin *.elf *.map compile_commands.json
 
 .PHONY: flash
-flash: blink.bin
-	sudo st-flash write blink.bin 0x8000000
+flash: $(FLASH_TARGET).bin
+	sudo st-flash write $? 0x8000000
 
 .PHONY: erase
 erase:
