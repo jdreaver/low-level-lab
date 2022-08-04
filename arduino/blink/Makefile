@@ -9,7 +9,8 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 MMCU = -mmcu=atmega2560
 CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
 CFLAGS += -Os $(MMCU)
-LDFLAGS = $(MMCU)
+
+LDFLAGS = $(MMCU) -Wl,-Map=blink.map
 
 .PHONY: all
 all: blink.hex
@@ -41,7 +42,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.hex blink
+	rm -f *.o *.hex *.map blink
 
 # N.B. avrdude man page and random internet posts suggest stk500v2 (which is
 # also called wiring):

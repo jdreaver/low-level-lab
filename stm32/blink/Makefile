@@ -13,6 +13,8 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer -g3 -ggdb3 -O0
 CFLAGS += -mthumb -mcpu=cortex-m4 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
 
+LDFLAGS = -Map=blink.map
+
 .PHONY: all
 all: blink.bin
 
@@ -20,7 +22,7 @@ blink.bin: blink.elf
 	$(OBJCOPY) -O binary $< $@
 
 blink.elf: blink.o linker.ld
-	$(LD) -T linker.ld -o $@ blink.o
+	$(LD) $(LDFLAGS) -T linker.ld -o $@ blink.o
 
 blink.o: blink.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -45,7 +47,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.bin *.elf
+	rm -f *.o *.bin *.elf *.map
 
 .PHONY: flash
 flash: blink.bin
