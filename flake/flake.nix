@@ -103,6 +103,7 @@
           # Cross compilation packages
           avrdude # To upload to board
           pkgsCross.avr.buildPackages.gcc
+          pkgsCross.avr.buildPackages.gdb
           pkgsCross.avr.avrlibc
         ];
       };
