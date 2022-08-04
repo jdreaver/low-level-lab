@@ -1,10 +1,5 @@
 #include <stdint.h>
 
-/* work out end of RAM address as initial stack pointer */
-#define SRAM_BASE       0x20000000
-#define SRAM_SIZE       96*1024     // STM32F401RE has 96 Kbye of RAM
-#define SRAM_END        (SRAM_BASE + SRAM_SIZE)
-
 // From User Manual section 6.4 LEDs: "User LD2: the green LED is a user LED
 // connected to ARDUINO® signal D13 corresponding to STM32 I/O PA5 (pin 21) or
 // PB13 (pin 34) depending on the STM32 target. Refer to Table 11 to Table 23
@@ -41,6 +36,10 @@
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
 
+// This could be a #define if we really wanted, but I like having some data here
+// to test the linker script.
+const uint32_t loop_length = 500000;
+
 void Reset_Handler(void)
 {
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -52,16 +51,20 @@ void Reset_Handler(void)
 
 	GPIOA_ODR |= GPIO_ODR_OD5;
 	while (1) {
+		// Turn LED on
 		GPIOA_ODR |= GPIO_ODR_OD5;
-		for (int i = 0; i < 500000; i++); // arbitrary delay
+		for (uint32_t i = 0; i < loop_length; i++); // arbitrary delay
+
+		// Turn LED off
 		GPIOA_ODR &= ~GPIO_ODR_OD5;
-		for (int i = 0; i < 500000; i++); // arbitrary delay
+		for (uint32_t i = 0; i < loop_length; i++); // arbitrary delay
 	}
 }
 
-/* vector table */
+/* Vector table. This needs to be stored at 0x00000004, which with the default
+   BOOT pin configuration is aliased to flash memory at 0x08000004. Note that
+   the first element (stack pointer location) is set in the linker script. */
 unsigned long *vector_table[] __attribute__((section(".vector_table"))) =
 {
-    (unsigned long *)SRAM_END, // initial stack pointer
     (unsigned long *)Reset_Handler,
 };

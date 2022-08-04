@@ -7,19 +7,28 @@ CC = $(CROSS_COMPILE)gcc
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
 MMCU = -mmcu=atmega2560
-CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer
-CFLAGS += -Os $(MMCU)
 
-LDFLAGS = $(MMCU) -Wl,-Map=blink.map
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -pedantic
+CFLAGS += -Wshadow
+CFLAGS += -fanalyzer
+CFLAGS += -Os
+CFLAGS += $(MMCU)
+
+LDFLAGS = $(MMCU)
+# Linker map files are incredibly useful to debug the linker script and ensure
+# sections are getting loaded where you think they are.
+LDFLAGS += -Wl,-Map=blink.map
 
 .PHONY: all
 all: blink.hex
 
 # TODO: Do we need -R .eeprom? What about -j .text -j .data?
-blink.hex: blink
+blink.hex: blink.elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
-blink: blink.o
+blink.elf: blink.o
 	$(CC) $(LDFLAGS) -o $@ $<
 
 blink.o: blink.c
@@ -42,7 +51,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.hex *.map blink
+	rm -f *.o *.hex *.map *.elf compile_commands.json
 
 # N.B. avrdude man page and random internet posts suggest stk500v2 (which is
 # also called wiring):

@@ -10,9 +10,18 @@ LD = $(CROSS_COMPILE)ld
 AS = $(CROSS_COMPILE)as
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
-CFLAGS = -Wall -Wextra -pedantic -Wshadow -fanalyzer -g3 -ggdb3 -O0
-CFLAGS += -mthumb -mcpu=cortex-m4 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -pedantic
+CFLAGS += -Wshadow
+CFLAGS += -fanalyzer
+CFLAGS += -g3 -ggdb3 -O0
+CFLAGS += -mthumb
+# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+CFLAGS += -mcpu=cortex-m4
 
+# Linker map files are incredibly useful to debug the linker script and ensure
+# sections are getting loaded where you think they are.
 LDFLAGS = -Map=blink.map
 
 .PHONY: all
@@ -22,13 +31,10 @@ blink.bin: blink.elf
 	$(OBJCOPY) -O binary $< $@
 
 blink.elf: blink.o linker.ld
-	$(LD) $(LDFLAGS) -T linker.ld -o $@ blink.o
+	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 
 blink.o: blink.c
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-# crt.o: crt.S
-# 	$(AS) -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $^
 
 .PHONY: compile_commands
 compile_commands:
@@ -47,7 +53,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.bin *.elf *.map
+	rm -f *.o *.bin *.elf *.map compile_commands.json
 
 .PHONY: flash
 flash: blink.bin
