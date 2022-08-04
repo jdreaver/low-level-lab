@@ -28,7 +28,7 @@ CFLAGS += -mcpu=cortex-m4
 
 # Linker map files are incredibly useful to debug the linker script and ensure
 # sections are getting loaded where you think they are.
-LDFLAGS = -Map=blink.map
+LDFLAGS = -Map=$@.map
 
 .PHONY: all
 all: $(BINS)
