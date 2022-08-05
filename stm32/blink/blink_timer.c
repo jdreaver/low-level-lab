@@ -34,8 +34,8 @@
 // We set the prescalar value to 16000, which takes our 16 MHz clock down to
 // 1000 Hz ticks. This also lets us express the blink interval in integer
 // milliseconds.
-#define PRESCALER_VALUE    (16000 - 1)
-#define BLINK_INTERVAL_MS  500
+#define PRESCALER_VALUE         (16000 - 1)
+#define SLOW_BLINK_INTERVAL_MS  500
 
 // TIM2 (general purpose timer)
 #define APB1PERIPH_BASE       (PERIPH_BASE + 0x00000000UL)
@@ -46,6 +46,8 @@
 #define TIM_DIER_UIE          (1UL << 0)
 #define TIM2_SR               *(volatile uint32_t *)(TIM2_BASE + 0x10)
 #define TIM_SR_UIF            (1UL << 0)
+#define TIM2_EGR              *(volatile uint32_t *)(TIM2_BASE + 0x14)
+#define TIM_EGR_UG            (1UL << 0)
 // TIM2_CNT useful for debugging
 #define TIM2_CNT              *(volatile uint32_t *)(TIM2_BASE + 0x24)
 #define TIM2_PSC              *(volatile uint32_t *)(TIM2_BASE + 0x28)
@@ -71,6 +73,10 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define RCC_APB1ENR        *(volatile uint32_t *)(RCC_BASE + 0x40)
 #define RCC_APB1ENR_TIM2EN (1UL << 0)
 
+// Reset APB1
+#define RCC_APB1RSTR         *(volatile uint32_t *)(RCC_BASE + 0x20)
+#define RCC_APB1RSTR_TIM2RST (1UL << 0)
+
 // Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
 // peripheral clock enable register (RCC_AHB1ENR) in the Reference Manual. AHB1
 // is offset 0x30 from RCC, and GPIOA is bit 0 in register.
@@ -89,6 +95,33 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
 
+void set_TIM2_timeout(uint32_t ms)
+{
+	// Disable time counter
+	TIM2_CR1 &= ~(TIM_CR1_CEN);
+
+	// Next, reset the peripheral
+	RCC_APB1RSTR |=  (RCC_APB1RSTR_TIM2RST);
+	RCC_APB1RSTR &= ~(RCC_APB1RSTR_TIM2RST);
+
+	// Set TIM2 ARR. This is what the counter will count up to before it
+	// triggers the interrupt. This value is actually 32 bits for TIM2 (and
+	// TIM5). The "- 1" is because the counter starts at zero.
+	TIM2_ARR = ms - 1;
+
+	// Set TIM2 prescaler (computed above)
+	TIM2_PSC = PRESCALER_VALUE;
+
+	// Send an update event to reset the timer and apply settings.
+	TIM2_EGR  |= TIM_EGR_UG;
+
+	// Enable the hardware interrupt.
+	TIM2_DIER |= TIM_DIER_UIE;
+
+	// Enable TIM2 counter (should be done at the very end)
+	TIM2_CR1 |= TIM_CR1_CEN;
+}
+
 void Reset_Handler(void)
 {
 	// Enable GPIOA clock.
@@ -102,23 +135,10 @@ void Reset_Handler(void)
 	// Enable TIM2 clock
 	RCC_APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-	// Set TIM2 ARR. This is what the counter will count up to before it
-	// triggers the interrupt. This value is actually 32 bits for TIM2 (and
-	// TIM5). The "- 1" is because the counter starts at zero.
-	TIM2_ARR = BLINK_INTERVAL_MS - 1;
-
-	// Set TIM2 prescaler. Must be <= 65536. -1 is needed because prescale
-	// value adds one.
-	TIM2_PSC = PRESCALER_VALUE;
-
-	// Enable the hardware interrupt.
-	TIM2_DIER |= TIM_DIER_UIE;
-
 	// Enable TIM2 interrupt line
 	NVIC_EnableIRQ(TIM2_IRQn);
 
-	// Enable TIM2 counter (should be done after reset counter set and interrupt enabled)
-	TIM2_CR1 |= TIM_CR1_CEN;
+	set_TIM2_timeout(SLOW_BLINK_INTERVAL_MS);
 
 	// While loop is useful if debugging w/ GDB because we can immediately
 	// have a stack frame and backtrace, so we can e.g. query for variable
