@@ -1,5 +1,10 @@
-// Reset_Handler is mandatory
-extern void Reset_Handler(void);
+// start is mandatory (basically main, but we don't call it main so linters don't get confused)
+extern void start(void);
+
+void Reset_Handler(void)
+{
+	start();
+}
 
 // Default handler does nothing;
 void default_handler(void) {}

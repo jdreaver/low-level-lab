@@ -151,7 +151,7 @@ void reset_TIM2()
 	TIM2_CR1 |= TIM_CR1_CEN;
 }
 
-void Reset_Handler(void)
+void start(void)
 {
 	// Enable GPIOA clock for LED
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;

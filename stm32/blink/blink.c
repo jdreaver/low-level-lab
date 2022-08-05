@@ -40,7 +40,7 @@
 // to test the linker script.
 const uint32_t loop_length = 500000;
 
-void Reset_Handler(void)
+void start(void)
 {
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
