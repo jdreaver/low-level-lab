@@ -22,10 +22,20 @@
 // SW sets to HSI.
 //
 // Also, by default, the HPRE bits 7:4 are set to 0000, which means don't
-// prescale the system clock. Therefore, the default system clock frequence is
+// prescale the system clock. Therefore, the default system clock frequency is
 // just the default HSI frequence, which is 16 MHz.
 #define HSI_VALUE    ((uint32_t)16000000) /*!< Value of the Internal oscillator in Hz*/
 #define SystemCoreClock HSI_VALUE
+
+// Set up prescaler values. Note that the TIMx_PSC registers are 16 bit values,
+// so the prescaler values need to be in between 1 and 65536. Also note that the
+// chip adds 1 to TIMx_PSC to avoid divide by zero.
+//
+// We set the prescalar value to 16000, which takes our 16 MHz clock down to
+// 1000 Hz ticks. This also lets us express the blink interval in integer
+// milliseconds.
+#define PRESCALER_VALUE    (16000 - 1)
+#define BLINK_INTERVAL_MS  500
 
 // TIM2 (general purpose timer)
 #define APB1PERIPH_BASE       (PERIPH_BASE + 0x00000000UL)
@@ -79,10 +89,6 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
 
-// This could be a #define if we really wanted, but I like having some data here
-// to test the linker script.
-const uint32_t loop_length = 200000;
-
 void Reset_Handler(void)
 {
 	// Enable GPIOA clock.
@@ -98,12 +104,12 @@ void Reset_Handler(void)
 
 	// Set TIM2 ARR. This is what the counter will count up to before it
 	// triggers the interrupt. This value is actually 32 bits for TIM2 (and
-	// TIM5).
-	TIM2_ARR = SystemCoreClock / 10000 - 1;
+	// TIM5). The "- 1" is because the counter starts at zero.
+	TIM2_ARR = BLINK_INTERVAL_MS - 1;
 
 	// Set TIM2 prescaler. Must be <= 65536. -1 is needed because prescale
 	// value adds one.
-	TIM2_PSC = 10000 - 1;
+	TIM2_PSC = PRESCALER_VALUE;
 
 	// Enable the hardware interrupt.
 	TIM2_DIER |= TIM_DIER_UIE;

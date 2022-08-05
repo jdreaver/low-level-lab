@@ -65,6 +65,7 @@ clean:
 .PHONY: flash
 flash: $(FLASH_TARGET).bin
 	sudo st-flash write $? 0x8000000
+	sudo st-flash reset
 
 .PHONY: erase
 erase:
