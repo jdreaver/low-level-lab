@@ -2,7 +2,6 @@
 # - http://pandafruits.com/stm32_primer/stm32_primer_minimal.php
 # - https://jeremyherbert.net/get/stm32f4_getting_started
 # - https://freeelectron.ro/bare-metal-stm32-led-blink/
-# - https://blog.podkalicki.com/how-to-compile-and-burn-the-code-to-stm32-chip-on-linux-ubuntu/
 # - (for timer) https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/
 
 TARGETS = blink blink_timer
