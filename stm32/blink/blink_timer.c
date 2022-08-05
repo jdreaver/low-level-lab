@@ -61,7 +61,7 @@ static volatile bool clock_fast = false;
 // M4 Manual. These definitions were taken from core_cm4.h.
 #define SCS_BASE            (0xE000E000UL)                           /*!< System Control Space Base Address */
 #define NVIC_BASE           (SCS_BASE + 0x0100UL)                    /*!< NVIC Base Address */
-#define NVIC_ISER(i)        *(volatile uint32_t *)(NVIC_BASE + 0x000UL + (i))
+#define NVIC_ISER(i)        *(volatile uint32_t *)(NVIC_BASE + 0x000UL + (i)) // TODO: Check here
 #define TIM2_IRQn           28
 
 // Cribbed from core_cm4.h.
@@ -82,7 +82,7 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 
 // Enable APB2 for SYSCFG
 #define RCC_APB2ENR          *(volatile uint32_t *)(RCC_BASE + 0x44)
-#define RCC_APB2ENR_SYSCFGEN (1UL << 0)
+#define RCC_APB2ENR_SYSCFGEN (1UL << 14)
 
 // Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
 // peripheral clock enable register (RCC_AHB1ENR) in the Reference Manual. AHB1
@@ -109,8 +109,8 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define APB2PERIPH_BASE       (PERIPH_BASE + 0x00010000UL)
 #define SYSCFG_BASE           (APB2PERIPH_BASE + 0x3800UL)
 #define SYSCFG_EXTICR4        *(volatile uint32_t *)(SYSCFG_BASE + 0x14)
-#define SYSCFG_EXTI13_MASK    (0b1111 << 4)
-#define SYSCFG_EXTI13_PC      (0b0010 << 4)
+#define SYSCFG_EXTICR4_EXTI13_MASK    (0b1111 << 4)
+#define SYSCFG_EXTICR4_EXTI13_PC      (0b0010 << 4)
 
 #define EXTI_BASE             (APB2PERIPH_BASE + 0x3C00UL)
 #define EXTI_IMR              *(volatile uint32_t *)(EXTI_BASE + 0x00)
@@ -167,8 +167,8 @@ void start(void)
 
 	// Set SYSCFG to connect the button EXTI line to GPIOC (button is on pin
 	// 2, which is PC13).
-	SYSCFG_EXTICR4 &= ~(SYSCFG_EXTI13_MASK);
-	SYSCFG_EXTICR4 |= ~(SYSCFG_EXTI13_PC);
+	SYSCFG_EXTICR4 &= ~(SYSCFG_EXTICR4_EXTI13_MASK);
+	SYSCFG_EXTICR4 |=  (SYSCFG_EXTICR4_EXTI13_PC);
 
 	// Setup the button's EXTI line as an interrupt.
 	EXTI_IMR  |=  (1 << BUTTON_PIN);
@@ -176,6 +176,9 @@ void start(void)
 	EXTI_RTSR &= ~(1 << BUTTON_PIN);
 	// Enable the 'falling edge' trigger (button press).
 	EXTI_FTSR |=  (1 << BUTTON_PIN);
+
+	// Enable EXTI15_10 interrupt line
+	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 	// Enable TIM2 clock
 	RCC_APB1ENR |= RCC_APB1ENR_TIM2EN;
