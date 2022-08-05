@@ -209,7 +209,7 @@ void EXTI15_10_IRQHandler(void) {
 		EXTI_PR |= (1 << BUTTON_PIN);
 
 		// Toggle the clock speed variable and reset clock
-		//clock_fast = !clock_fast;
-		//reset_TIM2();
+		clock_fast = !clock_fast;
+		reset_TIM2();
 	}
 }
