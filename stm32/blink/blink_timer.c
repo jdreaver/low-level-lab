@@ -61,7 +61,7 @@ static volatile bool clock_fast = false;
 // M4 Manual. These definitions were taken from core_cm4.h.
 #define SCS_BASE            (0xE000E000UL)                           /*!< System Control Space Base Address */
 #define NVIC_BASE           (SCS_BASE + 0x0100UL)                    /*!< NVIC Base Address */
-#define NVIC_ISER(i)        *(volatile uint32_t *)(NVIC_BASE + 0x000UL + (i)) // TODO: Check here
+#define NVIC_ISER(i)        *(volatile uint32_t *)(NVIC_BASE + 0x000UL + ((i) * 4))
 #define TIM2_IRQn           28
 
 // Cribbed from core_cm4.h.
@@ -89,6 +89,7 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 // is offset 0x30 from RCC, and GPIOA is bit 0 in register.
 #define RCC_AHB1ENR         *(volatile uint32_t *)(RCC_BASE + 0x30)
 #define RCC_AHB1ENR_GPIOAEN (1UL << 0)
+#define RCC_AHB1ENR_GPIOCEN (1UL << 2)
 
 // MODER is offset of 0x0 from register base. MODER5 is bits 10/11 (see 8.4.1
 // GPIO port mode register (GPIOx_MODER) (x = A..E and H) on page 158 of
@@ -101,6 +102,12 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 // 160 of reference manual.
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
+
+// GPIOC stuff so we can debug button values (button is on PC15)
+#define GPIOC_BASE      (AHB1PERIPH_BASE + 0x0800UL)
+#define GPIOC_MODER     *(volatile uint32_t *)(GPIOC_BASE + 0x00)
+#define GPIOC_IDR       *(volatile uint32_t *)(GPIOC_BASE + 0x10)
+#define GPIO_IDR_IDR13  (1UL << 13)
 
 // EXTI for button is configured in SYSCFG. User button (blue button) on
 // STM32F401RE is located in PC13, so we configure EXTI13, which is on EXTICR4
@@ -156,10 +163,16 @@ void start(void)
 	// Enable GPIOA clock for LED
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
+	// Enable GPIOC clock for button
+	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+
 	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
 	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
 	// one bit to set MODER5 to 01.)
 	GPIOA_MODER |= GPIO_MODER_MODER5_0;
+
+	// N.B. GPIOC13 is configured correctly by default. MODER defaults to 00
+	// (input), and PUPDR defaults to no pull-up/pull-down.
 
 	// Enable SYSCFG, which is in APB2, so we can configure EXTI (extended
 	// interrupts) so we can listen to the User button on the board.
