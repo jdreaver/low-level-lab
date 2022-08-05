@@ -45,6 +45,8 @@ finally found some that work:
     actually found this after I got my `blink` working, but it would have
     explained everything if I saw it first. (This person also has some great
     [Udemy courses](https://www.udemy.com/user/kiran-nayak-2/) too.)
+- [The most thoroughly commented linker script
+  (probably)](https://blog.thea.codes/the-most-thoroughly-commented-linker-script/)
 
 The key bit I was missing was the vector table. The vector table must start at
 0x08000000, the first 4 byte entry is the location of the initial stack pointer,
