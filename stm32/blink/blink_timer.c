@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 
 // From User Manual section 6.4 LEDs: "User LD2: the green LED is a user LED
@@ -35,7 +36,9 @@
 // 1000 Hz ticks. This also lets us express the blink interval in integer
 // milliseconds.
 #define PRESCALER_VALUE         (16000 - 1)
+#define FAST_BLINK_INTERVAL_MS  100
 #define SLOW_BLINK_INTERVAL_MS  500
+static volatile bool clock_fast = false;
 
 // TIM2 (general purpose timer)
 #define APB1PERIPH_BASE       (PERIPH_BASE + 0x00000000UL)
@@ -77,6 +80,10 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define RCC_APB1RSTR         *(volatile uint32_t *)(RCC_BASE + 0x20)
 #define RCC_APB1RSTR_TIM2RST (1UL << 0)
 
+// Enable APB2 for SYSCFG
+#define RCC_APB2ENR          *(volatile uint32_t *)(RCC_BASE + 0x44)
+#define RCC_APB2ENR_SYSCFGEN (1UL << 0)
+
 // Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
 // peripheral clock enable register (RCC_AHB1ENR) in the Reference Manual. AHB1
 // is offset 0x30 from RCC, and GPIOA is bit 0 in register.
@@ -95,7 +102,25 @@ static void NVIC_EnableIRQ(uint32_t IRQn)
 #define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14)
 #define GPIO_ODR_OD5  (1UL << 5)
 
-void set_TIM2_timeout(uint32_t ms)
+// EXTI for button is configured in SYSCFG. User button (blue button) on
+// STM32F401RE is located in PC13, so we configure EXTI13, which is on EXTICR4
+// (for pins 12 through 15). Note that the 4 EXTI13 bits are bits 4-7 of
+// EXTICR4.
+#define APB2PERIPH_BASE       (PERIPH_BASE + 0x00010000UL)
+#define SYSCFG_BASE           (APB2PERIPH_BASE + 0x3800UL)
+#define SYSCFG_EXTICR4        *(volatile uint32_t *)(SYSCFG_BASE + 0x14)
+#define SYSCFG_EXTI13_MASK    (0b1111 << 4)
+#define SYSCFG_EXTI13_PC      (0b0010 << 4)
+
+#define EXTI_BASE             (APB2PERIPH_BASE + 0x3C00UL)
+#define EXTI_IMR              *(volatile uint32_t *)(EXTI_BASE + 0x00)
+#define EXTI_RTSR             *(volatile uint32_t *)(EXTI_BASE + 0x08)
+#define EXTI_FTSR             *(volatile uint32_t *)(EXTI_BASE + 0x0C)
+#define EXTI_PR               *(volatile uint32_t *)(EXTI_BASE + 0x14)
+#define BUTTON_PIN            13
+#define EXTI15_10_IRQn        40
+
+void reset_TIM2()
 {
 	// Disable time counter
 	TIM2_CR1 &= ~(TIM_CR1_CEN);
@@ -107,7 +132,11 @@ void set_TIM2_timeout(uint32_t ms)
 	// Set TIM2 ARR. This is what the counter will count up to before it
 	// triggers the interrupt. This value is actually 32 bits for TIM2 (and
 	// TIM5). The "- 1" is because the counter starts at zero.
-	TIM2_ARR = ms - 1;
+	if (clock_fast) {
+		TIM2_ARR = FAST_BLINK_INTERVAL_MS;
+	} else {
+		TIM2_ARR = SLOW_BLINK_INTERVAL_MS;
+	}
 
 	// Set TIM2 prescaler (computed above)
 	TIM2_PSC = PRESCALER_VALUE;
@@ -124,7 +153,7 @@ void set_TIM2_timeout(uint32_t ms)
 
 void Reset_Handler(void)
 {
-	// Enable GPIOA clock.
+	// Enable GPIOA clock for LED
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
 	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
@@ -132,13 +161,29 @@ void Reset_Handler(void)
 	// one bit to set MODER5 to 01.)
 	GPIOA_MODER |= GPIO_MODER_MODER5_0;
 
+	// Enable SYSCFG, which is in APB2, so we can configure EXTI (extended
+	// interrupts) so we can listen to the User button on the board.
+	RCC_APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+	// Set SYSCFG to connect the button EXTI line to GPIOC (button is on pin
+	// 2, which is PC13).
+	SYSCFG_EXTICR4 &= ~(SYSCFG_EXTI13_MASK);
+	SYSCFG_EXTICR4 |= ~(SYSCFG_EXTI13_PC);
+
+	// Setup the button's EXTI line as an interrupt.
+	EXTI_IMR  |=  (1 << BUTTON_PIN);
+	// Disable the 'rising edge' trigger (button release).
+	EXTI_RTSR &= ~(1 << BUTTON_PIN);
+	// Enable the 'falling edge' trigger (button press).
+	EXTI_FTSR |=  (1 << BUTTON_PIN);
+
 	// Enable TIM2 clock
 	RCC_APB1ENR |= RCC_APB1ENR_TIM2EN;
 
 	// Enable TIM2 interrupt line
 	NVIC_EnableIRQ(TIM2_IRQn);
 
-	set_TIM2_timeout(SLOW_BLINK_INTERVAL_MS);
+	reset_TIM2();
 
 	// While loop is useful if debugging w/ GDB because we can immediately
 	// have a stack frame and backtrace, so we can e.g. query for variable
@@ -156,4 +201,15 @@ void TIM2_IRQHandler(void)
             // Toggle LED pin
 	    GPIOA_ODR ^= GPIO_ODR_OD5;
         }
+}
+
+void EXTI15_10_IRQHandler(void) {
+	if (EXTI_PR & (1 << BUTTON_PIN)) {
+		// Clear the EXTI status flag.
+		EXTI_PR |= (1 << BUTTON_PIN);
+
+		// Toggle the clock speed variable and reset clock
+		//clock_fast = !clock_fast;
+		//reset_TIM2();
+	}
 }

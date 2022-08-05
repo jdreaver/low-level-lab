@@ -21,6 +21,9 @@ library. I looked far and wide for a simple explanation of how to run a very
 simple program on my STM32 board, and after reading probably 30 tutorials, I
 finally found some that work:
 
+- https://vivonomicon.com/category/stm32_baremetal_examples/
+  - Best explanations by far of bare metal STM32 programming. (Make sure to
+    click Older Posts button at the bottom)
 - https://www.st.com/en/evaluation-tools/nucleo-f401re.html
   - Great overall explanation of the basics. Split over 3 parts.
 - http://pandafruits.com/stm32_primer/stm32_primer_minimal.php

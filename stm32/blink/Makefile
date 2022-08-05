@@ -19,7 +19,6 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
-CFLAGS += -pedantic
 CFLAGS += -Wshadow
 CFLAGS += -fanalyzer
 CFLAGS += -g3 -ggdb3 -O0
