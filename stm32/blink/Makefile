@@ -46,11 +46,13 @@ ifeq ($(LINK_WITH_GCC), 1)
   LDFLAGS += --specs=nosys.specs
   LDFLAGS += -lgcc
   LDFLAGS += -lc
+  LDFLAGS += -nostartfiles
   # Linker map files are incredibly useful to debug the linker script and ensure
   # sections are getting loaded where you think they are.
   LDFLAGS += -Wl,-Map=$@.map
 else
   LD = $(CROSS_COMPILE)ld
+  LDFLAGS += -nostartfiles
   LDFLAGS += -Map=$@.map
 endif
 

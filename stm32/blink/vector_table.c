@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <string.h>
 
-extern int main(void);
+// start() is provided by the user. It is kind of like main()
+extern int start(void);
 
 // Variables from linker script
 extern uint8_t _sdata;
@@ -21,8 +22,8 @@ void Reset_Handler(void)
 	uint32_t bss_size = &_ebss - &_sbss;
  	memset(&_sbss, 0x00, bss_size);
 
-	// Run user main function
-	main();
+	// Run user start function
+	start();
 }
 
 // Default handler does nothing;
