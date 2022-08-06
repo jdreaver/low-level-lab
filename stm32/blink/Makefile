@@ -11,7 +11,7 @@ BINS = $(patsubst %,%.bin,$(TARGETS))
 FLASH_TARGET ?= blink
 
 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-MCU = cortex-m4
+MCPU = cortex-m4
 
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
@@ -24,7 +24,8 @@ CFLAGS += -Wextra
 CFLAGS += -Wshadow
 CFLAGS += -fanalyzer
 CFLAGS += -mthumb
-CFLAGS += -mcpu=$(MCU)
+CFLAGS += -mthumb-interwork
+CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
 
 # Run like "make DEBUG=0 ..." to disable debugging
@@ -40,7 +41,8 @@ LINK_WITH_GCC ?= 1
 ifeq ($(LINK_WITH_GCC), 1)
   LD = $(CC)
   LDFLAGS += -mthumb
-  LDFLAGS += -mcpu=$(MCU)
+  LDFLAGS += -mthumb-interwork
+  LDFLAGS += -mcpu=$(MCPU)
   LDFLAGS += --specs=nosys.specs
   LDFLAGS += -lgcc
   LDFLAGS += -lc

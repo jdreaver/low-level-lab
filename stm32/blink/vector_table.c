@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 
 extern int main(void);
 
@@ -13,18 +14,12 @@ extern uint8_t _ebss;
 void Reset_Handler(void)
 {
 	// Copy pre-initialized data into .data section in RAM
-	uint8_t *src = &_sidata;
-	uint8_t *dest = &_sdata;
 	uint32_t data_size = &_edata - &_sdata;
-	for (uint32_t i = 0; i < data_size; i++) {
-		*(dest + i) = *(src + i);
-	}
+	memcpy(&_sdata, &_sidata, data_size);
 
 	// Zero out bss
 	uint32_t bss_size = &_ebss - &_sbss;
-	for (uint32_t i = 0; i < bss_size; i++) {
-		*(&_sbss + i) = 0;
-	}
+ 	memset(&_sbss, 0x00, bss_size);
 
 	// Run user main function
 	main();
