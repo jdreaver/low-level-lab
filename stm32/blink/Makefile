@@ -27,6 +27,7 @@ CFLAGS += -mthumb
 CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
+CFLAGS += -I../vendor
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
