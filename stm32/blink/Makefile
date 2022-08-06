@@ -17,6 +17,7 @@ CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 AS = $(CROSS_COMPILE)as
 OBJCOPY = $(CROSS_COMPILE)objcopy
+SIZE = $(CROSS_COMPILE)size
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
@@ -49,6 +50,7 @@ $(BINS): %.bin: %.elf
 
 $(ELFS): %.elf: %.o vector_table.o linker.ld
 	$(CC) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
+	$(SIZE) $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
