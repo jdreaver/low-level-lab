@@ -12,6 +12,19 @@ board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
 - https://www.st.com/en/microcontrollers-microprocessors/stm32f401re.html#documentation
   STMF401RE docs (datasheet, reference manual, programming manual, etc)
 
+## Debugging
+
+1. Make sure to compile with `-g3 -ggdb3 -O0` and all that jazz
+2. Flash program to board
+3. In a terminal, run `sudo st-util`. This sets up a gdb server on port 4242
+4. Run `gdb <target>.elf` (make sure you use the `.elf` file so we have debug
+   info!)
+5. Run `target extended-remote :4242`. You should connect and either pop into
+   some infinite loop, or perhaps some handler.
+6. Add a breakpoint somewhere, and run `continue` to get to it. Alternatively,
+   you can add a breakpoint to the reset handler, run `continue`, and then press
+   the reset button on the board to get to the reset handler.
+
 ## Tutorials, Getting Started
 
 All of the official STM32 guides encourage you to use a super bloated IDE called
