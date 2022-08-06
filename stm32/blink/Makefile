@@ -10,6 +10,9 @@ ELFS = $(patsubst %,%.elf,$(TARGETS))
 BINS = $(patsubst %,%.bin,$(TARGETS))
 FLASH_TARGET ?= blink
 
+# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+MCU = cortex-m4
+
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)ld
@@ -21,8 +24,7 @@ CFLAGS += -Wextra
 CFLAGS += -Wshadow
 CFLAGS += -fanalyzer
 CFLAGS += -mthumb
-# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-CFLAGS += -mcpu=cortex-m4
+CFLAGS += -mcpu=$(MCU)
 CFLAGS += -ffreestanding
 
 # Run like "make DEBUG=0 ..." to disable debugging
@@ -33,6 +35,7 @@ else
   CFLAGS += -Os
 endif
 
+LDFLAGS += -mcpu=$(MCU)
 # Linker map files are incredibly useful to debug the linker script and ensure
 # sections are getting loaded where you think they are.
 LDFLAGS = -Map=$@.map
