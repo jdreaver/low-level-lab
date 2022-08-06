@@ -1,6 +1,6 @@
 #include <stdbool.h>
 
-#include "stm32f401xe.h"
+#include "stm32f4xx.h"
 
 // Set up prescaler values. Note that the TIMx_PSC registers are 16 bit values,
 // so the prescaler values need to be in between 1 and 65536. Also note that the

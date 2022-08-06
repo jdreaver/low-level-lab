@@ -26,6 +26,8 @@ CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
 CFLAGS += -I./vendor
+# This tells the vendored header file stm32f4xx.h which board we are using.
+CFLAGS += -DSTM32F401xE
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1

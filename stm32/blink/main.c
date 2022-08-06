@@ -1,4 +1,4 @@
-#include "stm32f401xe.h"
+#include "stm32f4xx.h"
 
 // This could be a #define if we really wanted, but I like having some data here
 // to test the linker script.
