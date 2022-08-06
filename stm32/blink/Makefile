@@ -15,7 +15,6 @@ MCU = cortex-m4
 
 CROSS_COMPILE = arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
-LD = $(CROSS_COMPILE)ld
 AS = $(CROSS_COMPILE)as
 OBJCOPY = $(CROSS_COMPILE)objcopy
 
@@ -35,10 +34,12 @@ else
   CFLAGS += -Os
 endif
 
+LDFLAGS += -mthumb
 LDFLAGS += -mcpu=$(MCU)
+LDFLAGS += -nostartfiles
 # Linker map files are incredibly useful to debug the linker script and ensure
 # sections are getting loaded where you think they are.
-LDFLAGS = -Map=$@.map
+LDFLAGS += -Wl,-Map=$@.map
 
 .PHONY: all
 all: $(BINS)
@@ -47,7 +48,7 @@ $(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
 $(ELFS): %.elf: %.o vector_table.o linker.ld
-	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
+	$(CC) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
