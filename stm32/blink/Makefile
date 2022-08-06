@@ -56,6 +56,11 @@ else
   LDFLAGS += -Map=$@.map
 endif
 
+# Automatically generate dependencies. -MMD generates non-system header
+# dependencies. -MP creates an empty rule for generating each dependency. See
+# http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
+CPPFLAGS+=-MMD -MP
+
 .PHONY: all
 all: $(BINS)
 
@@ -67,7 +72,7 @@ $(ELFS): %.elf: %.o vector_table.o linker.ld
 	$(SIZE) $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
 
 .PHONY: compile_commands
 compile_commands:
@@ -86,7 +91,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.bin *.elf *.map compile_commands.json
+	rm -f *.o *.bin *.elf *.map *.d compile_commands.json
 
 .PHONY: flash
 flash: $(FLASH_TARGET).bin
@@ -96,3 +101,8 @@ flash: $(FLASH_TARGET).bin
 .PHONY: erase
 erase:
 	sudo st-flash erase
+
+# Include all of the dependency files generated from -MD and -MP. Purposely at
+# the bottom of this Makefile so these don't supersede the default target on
+# accident.
+-include $(DEPS)
