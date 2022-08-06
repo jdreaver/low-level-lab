@@ -89,7 +89,6 @@ table.
 ## TODO
 
 - Organize shared code better
-  - Move vector_table stuff and other headers into a `common/` directory
   - Consider using or nuking `startup_stm32f401xe.s` and
     `STM32F401RETx_FLASH.ld` (they could be useful as reference. Maybe we should
     just add links to them in my implementation?)

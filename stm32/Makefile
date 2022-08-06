@@ -5,10 +5,8 @@
 # - (for timer) https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/
 
 TARGETS = blink blink_timer
-OBJS = $(patsubst %,%.o,$(TARGETS))
-ELFS = $(patsubst %,%.elf,$(TARGETS))
-BINS = $(patsubst %,%.bin,$(TARGETS))
-FLASH_TARGET ?= blink
+BINS = $(addsuffix /main.bin,$(TARGETS))
+ELFS = $(patsubst %.bin,%.elf,$(BINS))
 
 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
 MCPU = cortex-m4
@@ -27,7 +25,7 @@ CFLAGS += -mthumb
 CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
-CFLAGS += -I../vendor
+CFLAGS += -I./vendor
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
@@ -68,7 +66,7 @@ all: $(BINS)
 $(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-$(ELFS): %.elf: %.o vector_table.o linker.ld
+$(ELFS): %.elf: %.o common/vector_table.o common/linker.ld
 	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 	$(SIZE) $@
 
@@ -92,10 +90,17 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f *.o *.bin *.elf *.map *.d compile_commands.json
+	find . -type f \( -name '*.o' -o -name '*.d' -o -name '*.elf' -o -name '*.map' -o -name '*.bin' \) -delete
+	rm -f compile_commands.json
+
+ifeq ($(MAKECMDGOALS),flash)
+ifeq ($(FLASH_TARGET),)
+  $(error "FLASH_TARGET is empty!")
+endif
+endif
 
 .PHONY: flash
-flash: $(FLASH_TARGET).bin
+flash: $(FLASH_TARGET)/main.bin
 	sudo st-flash write $? 0x8000000
 	sudo st-flash reset
 
