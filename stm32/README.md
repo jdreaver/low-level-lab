@@ -61,8 +61,11 @@ table.
 
 ## TODO
 
-- Organize shared code better. Consider using headers provided by ST, or somehow
-  generating headers.
+- Organize shared code better
+  - Move vector_table stuff and other headers into a `common/` directory
+  - Consider using or nuking `startup_stm32f401xe.s` and
+    `STM32F401RETx_FLASH.ld` (they could be useful as reference. Maybe we should
+    just add links to them in my implementation?)
 - Consider using CMake
 - Make program that counts up every second, displays count on digital display,
   and resets if button is pressed
