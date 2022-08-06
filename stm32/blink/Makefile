@@ -25,7 +25,7 @@ CFLAGS += -Wshadow
 CFLAGS += -fanalyzer
 CFLAGS += -mthumb
 CFLAGS += -mcpu=$(MCU)
-CFLAGS += -ffreestanding
+CFLAGS += --specs=nosys.specs
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
@@ -37,7 +37,10 @@ endif
 
 LDFLAGS += -mthumb
 LDFLAGS += -mcpu=$(MCU)
-LDFLAGS += -nostartfiles
+LDFLAGS += --specs=nosys.specs
+LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -lgcc
+LDFLAGS += -lc
 # Linker map files are incredibly useful to debug the linker script and ensure
 # sections are getting loaded where you think they are.
 LDFLAGS += -Wl,-Map=$@.map

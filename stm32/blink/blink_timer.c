@@ -158,7 +158,7 @@ void reset_TIM2()
 	TIM2_CR1 |= TIM_CR1_CEN;
 }
 
-void start(void)
+int main(void)
 {
 	// Enable GPIOA clock for LED
 	RCC_AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -205,6 +205,8 @@ void start(void)
 	// have a stack frame and backtrace, so we can e.g. query for variable
 	// values.
 	// while (1);
+
+	return 0;
 }
 
 void TIM2_IRQHandler(void)

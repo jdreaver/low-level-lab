@@ -1,7 +1,6 @@
 #include <stdint.h>
 
-// start is mandatory (basically main, but we don't call it main so linters don't get confused)
-extern void start(void);
+extern int main(void);
 
 // Variables from linker script
 extern uint8_t _sdata;
@@ -27,8 +26,8 @@ void Reset_Handler(void)
 		*(&_sbss + i) = 0;
 	}
 
-	// Run user start function
-	start();
+	// Run user main function
+	main();
 }
 
 // Default handler does nothing;
