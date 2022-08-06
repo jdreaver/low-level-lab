@@ -53,10 +53,14 @@ void start(void)
 	while (1) {
 		// Turn LED on
 		GPIOA_ODR |= GPIO_ODR_OD5;
-		for (uint32_t i = 0; i < loop_length; i++); // arbitrary delay
+		for (uint32_t i = 0; i < loop_length; i++) {
+			asm("nop");
+		}
 
 		// Turn LED off
 		GPIOA_ODR &= ~GPIO_ODR_OD5;
-		for (uint32_t i = 0; i < loop_length; i++); // arbitrary delay
+		for (uint32_t i = 0; i < loop_length; i++) {
+			asm("nop");
+		}
 	}
 }

@@ -20,10 +20,18 @@ CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Wshadow
 CFLAGS += -fanalyzer
-CFLAGS += -g3 -ggdb3 -O0
 CFLAGS += -mthumb
 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
 CFLAGS += -mcpu=cortex-m4
+CFLAGS += -ffreestanding
+
+# Run like "make DEBUG=0 ..." to disable debugging
+DEBUG ?= 1
+ifeq ($(DEBUG), 1)
+  CFLAGS += -g3 -ggdb3 -O0
+else
+  CFLAGS += -Os
+endif
 
 # Linker map files are incredibly useful to debug the linker script and ensure
 # sections are getting loaded where you think they are.
