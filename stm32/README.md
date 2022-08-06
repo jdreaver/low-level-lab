@@ -25,6 +25,20 @@ board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
    you can add a breakpoint to the reset handler, run `continue`, and then press
    the reset button on the board to get to the reset handler.
 
+## Vendored headers
+
+Both ARM and ST Micro provide header files. ARM provides them for Cortex, and ST
+provides them for specific boards. These headers are very useful so I don't have
+to look up register locations every time I want to use a register, and that's
+about all I use them for. They are located at:
+
+- https://github.com/ARM-software/CMSIS_5
+- https://github.com/STMicroelectronics/STM32CubeF4 (for STM32F4xxx boards)
+
+I have a script to download these at `vendor/update-vendor-headers.sh`. I avoid
+the HAL like the plague because it looks stupid complex. I also provide my own
+boot files and linker scripts for more control.
+
 ## Tutorials, Getting Started
 
 All of the official STM32 guides encourage you to use a super bloated IDE called
