@@ -30,6 +30,7 @@ void start(void)
 	// 158 of Reference Manual). Need to set bits 10/11 to 01 for output
 	// mode.
 	GPIOA->MODER |= GPIO_MODER_MODER5_0;
+	GPIOA->MODER &= ~(GPIO_MODER_MODER5_1);
 
 	// (Information needed if we weren't using stm32f401xe.h header files)
 	// ODR is offset 0x14 from GPIO base, and we want pin 5, which is the

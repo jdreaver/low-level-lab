@@ -61,6 +61,7 @@ void start(void)
 	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
 	// one bit to set MODER5 to 01.)
 	GPIOA->MODER |= GPIO_MODER_MODER5_0;
+	GPIOA->MODER &= ~(GPIO_MODER_MODER5_1);
 
 	// N.B. GPIOC13 is configured correctly by default. MODER defaults to 00
 	// (input), and PUPDR defaults to no pull-up/pull-down.
