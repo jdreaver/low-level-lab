@@ -35,15 +35,22 @@ else
   CFLAGS += -Os
 endif
 
-LDFLAGS += -mthumb
-LDFLAGS += -mcpu=$(MCU)
-LDFLAGS += --specs=nosys.specs
-LDFLAGS += -Wl,--gc-sections
-LDFLAGS += -lgcc
-LDFLAGS += -lc
-# Linker map files are incredibly useful to debug the linker script and ensure
-# sections are getting loaded where you think they are.
-LDFLAGS += -Wl,-Map=$@.map
+# Linking with GCC requires more flags
+LINK_WITH_GCC ?= 1
+ifeq ($(LINK_WITH_GCC), 1)
+  LD = $(CC)
+  LDFLAGS += -mthumb
+  LDFLAGS += -mcpu=$(MCU)
+  LDFLAGS += --specs=nosys.specs
+  LDFLAGS += -lgcc
+  LDFLAGS += -lc
+  # Linker map files are incredibly useful to debug the linker script and ensure
+  # sections are getting loaded where you think they are.
+  LDFLAGS += -Wl,-Map=$@.map
+else
+  LD = $(CROSS_COMPILE)ld
+  LDFLAGS += -Map=$@.map
+endif
 
 .PHONY: all
 all: $(BINS)
@@ -52,7 +59,7 @@ $(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
 $(ELFS): %.elf: %.o vector_table.o linker.ld
-	$(CC) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
+	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 	$(SIZE) $@
 
 %.o: %.c
