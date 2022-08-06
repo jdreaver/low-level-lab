@@ -31,9 +31,9 @@ void reset_TIM2()
 	// triggers the interrupt. This value is actually 32 bits for TIM2 (and
 	// TIM5). The "- 1" is because the counter starts at zero.
 	if (clock_fast) {
-		TIM2->ARR = FAST_BLINK_INTERVAL_MS;
+		TIM2->ARR = FAST_BLINK_INTERVAL_MS - 1;
 	} else {
-		TIM2->ARR = SLOW_BLINK_INTERVAL_MS;
+		TIM2->ARR = SLOW_BLINK_INTERVAL_MS - 1;
 	}
 
 	// Set TIM2 prescaler (computed above)
