@@ -15,7 +15,7 @@ void Reset_Handler(void)
 	// Copy pre-initialized data into .data section in RAM
 	uint8_t *src = &_sidata;
 	uint8_t *dest = &_sdata;
-	uint32_t data_size = _edata - _sdata;
+	uint32_t data_size = &_edata - &_sdata;
 	for (uint32_t i = 0; i < data_size; i++) {
 		*(dest + i) = *(src + i);
 	}
