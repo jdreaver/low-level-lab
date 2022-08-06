@@ -94,12 +94,10 @@ void I2C3_ER_IRQHandler(void) __attribute__((weak, alias("default_handler")));
 void FPU_IRQHandler(void) __attribute__((weak, alias("default_handler")));
 void SPI4_IRQHandler(void) __attribute__((weak, alias("default_handler")));
 
-typedef void (*interrupt_handler)(void);
-
 // Vector table. This needs to be stored at 0x00000004, which with the default
 // BOOT pin configuration is aliased to flash memory at 0x08000004. Note that
 // the first element (stack pointer location) is set in the linker script.
-interrupt_handler vector_table[] __attribute__((section(".vector_table"))) =
+void (* vector_table[])(void) __attribute__((section(".vector_table"))) =
 {
     Reset_Handler,
     NMI_Handler,
