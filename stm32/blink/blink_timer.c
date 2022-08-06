@@ -99,8 +99,6 @@ int start(void)
 	// have a stack frame and backtrace, so we can e.g. query for variable
 	// values.
 	// while (1);
-
-	return 0;
 }
 
 void TIM2_IRQHandler(void)
