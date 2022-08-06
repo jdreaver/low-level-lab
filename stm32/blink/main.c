@@ -36,7 +36,7 @@ void start(void)
 	// ODR is offset 0x14 from GPIO base, and we want pin 5, which is the
 	// 5th bit. See 8.4.6 GPIO port output data register (GPIOx_ODR) (x =
 	// A..E and H) on page 160 of reference manual.
-	GPIOA->ODR |= GPIO_ODR_OD5;
+
 	while (1) {
 		// Turn LED on
 		GPIOA->ODR |= GPIO_ODR_OD5;
