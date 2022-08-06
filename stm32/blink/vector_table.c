@@ -2,7 +2,7 @@
 #include <string.h>
 
 // start() is provided by the user. It is kind of like main()
-extern int start(void);
+extern void start(void);
 
 // Variables from linker script
 extern uint8_t _sdata;

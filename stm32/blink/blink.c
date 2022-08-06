@@ -4,7 +4,7 @@
 // to test the linker script.
 const uint32_t loop_length = 500000;
 
-int start(void)
+void start(void)
 {
 	// Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
         // peripheral clock enable register (RCC_AHB1ENR) in the Reference
