@@ -58,3 +58,17 @@ etc thinking the names were special, but in reality the location of the pointer
 to those functions is special, and it is why the assembly solutions had `.word
 0x20001000`, etc or had linker scripts that specifically set up the vector
 table.
+
+## TODO
+
+- Organize shared code better. Consider using headers provided by ST, or somehow
+  generating headers.
+- Consider using CMake
+- Make program that counts up every second, displays count on digital display,
+  and resets if button is pressed
+- Get serial USART working
+  - [&#8220;Bare Metal&#8221; STM32 Programming (Part 10): UART
+    Communication](https://vivonomicon.com/2020/06/28/bare-metal-stm32-programming-part-10-uart-communication/)
+  - [GitHub - WRansohoff/STM32_UART_Examples: A few simple example projects
+    demonstrating how to use some core features of STM32 UART
+    peripherals.](https://github.com/WRansohoff/STM32_UART_Examples)
