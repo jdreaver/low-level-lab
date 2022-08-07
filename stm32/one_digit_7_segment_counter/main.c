@@ -1,5 +1,15 @@
-/**
- * Example taken from https://create.arduino.cc/projecthub/stannano/one-digit-7-segment-led-display-70b1a0
+/** Single digit 7 segment display
+ *
+ * This program operates in two modes:
+ * 1. Glyph mode: cycles through the numbers 0-9 and the lower right dot on the
+ *    display
+ * 2. Cycle mode: cycles through the segments on the display
+ *
+ * Pressing the user button resets the current counter and also changes the
+ * display mode.
+ *
+ * Example inspired from
+ * https://create.arduino.cc/projecthub/stannano/one-digit-7-segment-led-display-70b1a0
  *
  * My Elegoo kit came with a 5161AH. Data sheet here:
  * - http://www.xlitx.com/datasheet/5161AH.pdf
@@ -62,6 +72,14 @@
 
 static volatile uint8_t counter = 0;
 
+// Two different modes to operate in
+enum visual_mode {
+	VISUAL_MODE_GLYPHS,
+	VISUAL_MODE_CYCLE,
+};
+
+volatile enum visual_mode current_mode = VISUAL_MODE_GLYPHS;
+
 // Simple tuple to hold ports so we can flip them
 struct gpio_odr_port {
 	GPIO_TypeDef *gpio_odr_reg;
@@ -95,11 +113,11 @@ bool glyphs[11][8] = {
 	{ 1, 0, 0, 0, 0, 0, 0, 0 }, // 10
 };
 
-void show_glyph(uint8_t num)
+void show_glyph(bool glyph[8])
 {
 	for (uint8_t segment = 0; segment < 8; segment++) {
 		struct gpio_odr_port port = gpio_odr_ports[segment];
-		if (glyphs[num][segment]) {
+		if (glyph[segment]) {
 			port.gpio_odr_reg->ODR |= port.odr_mask;
 		} else {
 			port.gpio_odr_reg->ODR &= ~(port.odr_mask);
@@ -192,10 +210,18 @@ void TIM2_IRQHandler(void)
 {
         // Check the update flag. It'll be set every time the timer overflows
         if(TIM2->SR & TIM_SR_UIF) {
-		show_glyph(counter);
-
-		// Increment counter
-		counter = (counter + 1) % 11;
+		if (current_mode == VISUAL_MODE_GLYPHS) {
+			show_glyph(glyphs[counter]);
+			counter = (counter + 1) % 11;
+		} else {
+			bool glyph[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+			for (uint8_t segment = 0; segment < 8; segment++) {
+				if (segment == counter)
+					glyph[segment] = 1;
+			}
+			show_glyph(glyph);
+			counter = (counter + 1) % 8;
+		}
 
 		// Reset the flag, so that we can catch the next tick
 		TIM2->SR &= ~(TIM_SR_UIF);
@@ -206,6 +232,16 @@ void EXTI15_10_IRQHandler(void) {
 	if (EXTI->PR & (1 << BUTTON_PIN)) {
 		// Clear the EXTI status flag.
 		EXTI->PR |= (1 << BUTTON_PIN);
+
+		// Change glyph mode
+		switch (current_mode) {
+		case VISUAL_MODE_GLYPHS:
+			current_mode = VISUAL_MODE_CYCLE;
+			break;
+		case VISUAL_MODE_CYCLE:
+			current_mode = VISUAL_MODE_GLYPHS;
+			break;
+		}
 
 		// Reset counter
 		counter = 0;
