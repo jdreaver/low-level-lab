@@ -29,6 +29,7 @@ CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
 CFLAGS += -I./vendor
+CFLAGS += -I./common
 # This tells the vendored header file stm32f4xx.h which board we are using.
 CFLAGS += -DSTM32F401xE
 
@@ -60,6 +61,12 @@ else
   LDFLAGS += -Map=$@.map
 endif
 
+# TODO: Not all programs need all of these object files. Figure out per-target
+# object dependencies or some kind of link-time optimization to remove unused
+# symbols.
+LIB_OBJS += common/vector_table.o
+LIB_OBJS += common/user_button.o
+
 # Automatically generate dependencies. -MMD generates non-system header
 # dependencies. -MP creates an empty rule for generating each dependency. See
 # http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
@@ -71,7 +78,7 @@ all: $(BINS)
 $(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-$(ELFS): %.elf: %.o common/vector_table.o common/linker.ld
+$(ELFS): %.elf: %.o common/linker.ld $(LIB_OBJS)
 	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
 	$(SIZE) $@
 

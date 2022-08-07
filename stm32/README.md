@@ -88,10 +88,8 @@ table.
 
 ## TODO
 
-- Organize shared code better
-  - Consider using or nuking `startup_stm32f401xe.s` and
-    `STM32F401RETx_FLASH.ld` (they could be useful as reference. Maybe we should
-    just add links to them in my implementation?)
+- Scale `make` better
+  - Figure out per-target object file dependencies. Does a static library help?
 - Consider using CMake
 - Get serial USART working
   - [&#8220;Bare Metal&#8221; STM32 Programming (Part 10): UART

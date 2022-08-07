@@ -1,4 +1,5 @@
-/** Single digit 7 segment display
+/**
+ * Single digit 7 segment display counter.
  *
  * This program operates in two modes:
  * 1. Glyph mode: cycles through the numbers 0-9 and the lower right dot on the
@@ -54,6 +55,8 @@
  *       2        . (the bottom right dot thing)
  *
 **/
+
+#include "user_button.h"
 
 #include "stm32f4xx.h"
 
@@ -125,45 +128,9 @@ void show_glyph(bool glyph[8])
 	}
 }
 
-// User button (blue button) on STM32F401RE is located in PC13, which is pin 13,
-// so we configure EXTI13, which is on EXTICR4 (for pins 12 through 15).
-#define BUTTON_PIN 13
-
-// TODO: Move this to a library file
-void enable_user_button(void)
-{
-	// Enable GPIOC clock for button
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-
-	// Enable SYSCFG, which is in APB2, so we can configure EXTI (extended
-	// interrupts) so we can listen to the User button on the board.
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-
-	// N.B. GPIOC13 is configured correctly by default. MODER defaults to 00
-	// (input), and PUPDR defaults to no pull-up/pull-down.
-
-	// Set SYSCFG to connect the button EXTI line to GPIOC (button is on pin
-	// 2, which is PC13).
-	//
-	// TODO: Abstract selecting the correct EXTICR[] index based on pin
-	// number.
-	SYSCFG->EXTICR[3] &= ~(SYSCFG_EXTICR4_EXTI13_Msk);
-	SYSCFG->EXTICR[3] |=  (SYSCFG_EXTICR4_EXTI13_PC);
-
-	// Setup the button's EXTI line as an interrupt.
-	EXTI->IMR  |=  (1 << BUTTON_PIN);
-	// Disable the 'rising edge' trigger (button release).
-	EXTI->RTSR &= ~(1 << BUTTON_PIN);
-	// Enable the 'falling edge' trigger (button press).
-	EXTI->FTSR |=  (1 << BUTTON_PIN);
-
-	// Enable EXTI15_10 interrupt line for button
-	NVIC_EnableIRQ(EXTI15_10_IRQn);
-}
-
 void start(void)
 {
-	enable_user_button();
+	user_button_enable();
 
 	// Enable TIM2 clock and interrupt line
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -229,9 +196,9 @@ void TIM2_IRQHandler(void)
 }
 
 void EXTI15_10_IRQHandler(void) {
-	if (EXTI->PR & (1 << BUTTON_PIN)) {
+	if (EXTI->PR & (1 << USER_BUTTON_PIN)) {
 		// Clear the EXTI status flag.
-		EXTI->PR |= (1 << BUTTON_PIN);
+		EXTI->PR |= (1 << USER_BUTTON_PIN);
 
 		// Change glyph mode
 		switch (current_mode) {
