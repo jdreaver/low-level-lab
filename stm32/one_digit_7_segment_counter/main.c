@@ -124,10 +124,6 @@ void start(void)
 {
 	user_button_enable();
 
-	// Enable TIM2 clock and interrupt line
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-	NVIC_EnableIRQ(TIM2_IRQn);
-
 	// All of our pins are on GPIOA and GPIOB
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
