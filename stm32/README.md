@@ -88,7 +88,10 @@ table.
 
 ## TODO
 
-- Use LCD https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
+- Use LCD
+  - https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
+  - https://github.com/Matiasus/HD44780
+  - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
   - Scale `make` better
     - Figure out per-target object file dependencies. Does a static library help?
