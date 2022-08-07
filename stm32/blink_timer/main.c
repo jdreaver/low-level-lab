@@ -1,6 +1,7 @@
 #include "tim2.h"
 #include "usart2.h"
 #include "user_button.h"
+#include "user_led.h"
 
 #include "stm32f4xx.h"
 
@@ -29,18 +30,10 @@ void reset_tim2()
 void start(void)
 {
 	user_button_enable();
+	user_led_enable();
 	usart2_enable();
 
-	// Enable GPIOA clock for LED
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
-	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
-	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
-	// one bit to set MODER5 to 01.)
-	GPIOA->MODER |= GPIO_MODER_MODER5_0;
-	GPIOA->MODER &= ~(GPIO_MODER_MODER5_1);
-
-	// N.B. Set up clock after GPIOA so we see output on first tick.
+	// N.B. Set up clock after LED so we see output on first tick.
 	tim2_enable();
 	reset_tim2();
 
@@ -59,8 +52,7 @@ void TIM2_IRQHandler(void)
 		// Reset the flag, so that we can catch the next overflow
 		TIM2->SR &= ~TIM_SR_UIF;
 
-		// Toggle LED pin
-		GPIOA->ODR ^= GPIO_ODR_OD5;
+		user_led_toggle();
         }
 }
 
