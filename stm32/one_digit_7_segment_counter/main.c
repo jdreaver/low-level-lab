@@ -32,7 +32,7 @@
  * - 0: CN5 0 (PA9)
  * - 0: CN5 2 (PB6)
  *
- * The numbers above correspond to:
+ * The numbers above correspond to the segments:
  *
  *    ___5___
  *   |       |
