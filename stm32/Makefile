@@ -4,7 +4,10 @@
 # - https://freeelectron.ro/bare-metal-stm32-led-blink/
 # - (for timer) https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/
 
-TARGETS = blink blink_timer
+TARGETS += blink
+TARGETS += blink_timer
+TARGETS += one_digit_7_segment_counter
+
 BINS = $(addsuffix /main.bin,$(TARGETS))
 ELFS = $(patsubst %.bin,%.elf,$(BINS))
 
