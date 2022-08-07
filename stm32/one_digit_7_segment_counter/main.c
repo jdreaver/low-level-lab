@@ -201,5 +201,8 @@ void EXTI15_10_IRQHandler(void) {
 
 		// Reset counter
 		counter = 0;
+
+		// Restart timer for more immediate feedback
+		tim2_set_timeout_ms(HALF_SECOND_COUNTER);
 	}
 }
