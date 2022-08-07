@@ -59,5 +59,5 @@ void tim2_set_timeout_ms(uint32_t timeout_ms)
 }
 
 #else
-  #error "Unknown board. Can't define USER_BUTTON_PIN."
+  #error "Unknown board. Can't set up tim2.h"
 #endif

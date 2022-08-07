@@ -93,7 +93,7 @@ table.
   - https://github.com/Matiasus/HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
-  - Scale `make` better
+  - Consider not using header-only library files.
     - Figure out per-target object file dependencies. Does a static library help?
   - Consider using CMake. I'm mostly interested in segregated build/debug targets,
     support for tests without headache, and targets depending on flags (I wonder

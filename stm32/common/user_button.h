@@ -21,7 +21,7 @@
 // so we configure EXTI13, which is on EXTICR4 (for pins 12 through 15).
 #define USER_BUTTON_PIN 13
 
-static void user_button_enable(void)
+void user_button_enable(void)
 {
 	// Enable GPIOC clock for button
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
@@ -53,5 +53,5 @@ static void user_button_enable(void)
 }
 
 #else
-  #error "Unknown board. Can't define USER_BUTTON_PIN."
+  #error "Unknown board. Can't set up user_button.h"
 #endif

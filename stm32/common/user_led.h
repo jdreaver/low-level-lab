@@ -10,7 +10,7 @@
 
 #include "stm32f4xx.h"
 
-static void user_led_enable(void)
+void user_led_enable(void)
 {
 	// Need to enable the AHB1 peripheral clock. See Section 6.3.9 RCC AHB1
         // peripheral clock enable register (RCC_AHB1ENR) in the Reference
@@ -44,18 +44,18 @@ static void user_led_enable(void)
 	// A..E and H) on page 160 of reference manual.
 }
 
-static void user_led_turn_on(void)
+void user_led_turn_on(void)
 {
 	GPIOA->ODR |= GPIO_ODR_OD5;
 }
 
-static void user_led_turn_off(void)
+void user_led_turn_off(void)
 {
 	GPIOA->ODR &= ~(GPIO_ODR_OD5);
 }
 
 
-static void user_led_toggle(void)
+void user_led_toggle(void)
 {
 	GPIOA->ODR ^= GPIO_ODR_OD5;
 }

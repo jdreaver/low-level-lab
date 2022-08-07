@@ -21,7 +21,7 @@
 #define BAUD_RATE 9600
 #define DEFAULT_HSI_CLOCK_HZ 16000000UL
 
-static void usart2_enable(void)
+void usart2_enable(void)
 {
 	// Pins PA3 and PA2 are the USART pins on STM32F401RE. We need to enable
 	// GPIOA and set the MODER for PA2/PA3 to Alternate Function Mode (10).
@@ -54,7 +54,7 @@ static void usart2_enable(void)
 	USART2->CR1 |= (USART_CR1_RE | USART_CR1_TE | USART_CR1_UE);
 }
 
-static int usart2_write(__attribute__((unused)) int handle, char* data, int size) {
+int usart2_write(__attribute__((unused)) int handle, char* data, int size) {
 	int count = size;
 	while(count--) {
 		while(!(USART2->SR & USART_SR_TXE)) {};
@@ -64,5 +64,5 @@ static int usart2_write(__attribute__((unused)) int handle, char* data, int size
 }
 
 #else
-  #error "Unknown board. Can't define USER_BUTTON_PIN."
+  #error "Unknown board. Can't set up usart2.h"
 #endif
