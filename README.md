@@ -3,6 +3,7 @@
 This repo is where I mess around with C, Rust, machine code, hardware designs,
 etc. In particular, here are some things I've done in hre:
 
+- STM32 and Arduino bare metal code
 - Solutions for https://www.nand2tetris.org/
 - Projects related to https://csapp.cs.cmu.edu/
 - General C, Rust, and assembly nonsense

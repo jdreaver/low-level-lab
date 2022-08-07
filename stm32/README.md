@@ -88,12 +88,23 @@ table.
 
 ## TODO
 
-- Scale `make` better
-  - Figure out per-target object file dependencies. Does a static library help?
-- Consider using CMake
 - Get serial USART working
   - [&#8220;Bare Metal&#8221; STM32 Programming (Part 10): UART
     Communication](https://vivonomicon.com/2020/06/28/bare-metal-stm32-programming-part-10-uart-communication/)
   - [GitHub - WRansohoff/STM32_UART_Examples: A few simple example projects
     demonstrating how to use some core features of STM32 UART
     peripherals.](https://github.com/WRansohoff/STM32_UART_Examples)
+- Use LCD https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
+- Build system
+  - Scale `make` better
+    - Figure out per-target object file dependencies. Does a static library help?
+  - Consider using CMake. I'm mostly interested in segregated build/debug targets,
+    support for tests without headache, and targets depending on flags (I wonder
+    if all of this is possible with CMake)
+    - https://cliutils.gitlab.io/modern-cmake/
+    - [How to CMake good](https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s)
+    - https://crascit.com/professional-cmake/ ($30)
+  - Consider bazel with https://github.com/hedronvision/bazel-compile-commands-extractor
+- Try out Rust for STM32 (this blog post might be old but it is good inspiration
+  <https://vivonomicon.com/2019/05/23/hello-rust-blinking-leds-in-a-new-language/>)
+  - Also https://docs.rust-embedded.org/book/intro/index.html
