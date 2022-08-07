@@ -49,26 +49,18 @@ void reset_TIM2()
 	TIM2->CR1 |= TIM_CR1_CEN;
 }
 
-void start(void)
+// TODO: Move this to a library file
+void enable_user_button(void)
 {
-	// Enable GPIOA clock for LED
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
 	// Enable GPIOC clock for button
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-
-	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
-	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
-	// one bit to set MODER5 to 01.)
-	GPIOA->MODER |= GPIO_MODER_MODER5_0;
-	GPIOA->MODER &= ~(GPIO_MODER_MODER5_1);
-
-	// N.B. GPIOC13 is configured correctly by default. MODER defaults to 00
-	// (input), and PUPDR defaults to no pull-up/pull-down.
 
 	// Enable SYSCFG, which is in APB2, so we can configure EXTI (extended
 	// interrupts) so we can listen to the User button on the board.
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+	// N.B. GPIOC13 is configured correctly by default. MODER defaults to 00
+	// (input), and PUPDR defaults to no pull-up/pull-down.
 
 	// Set SYSCFG to connect the button EXTI line to GPIOC (button is on pin
 	// 2, which is PC13).
@@ -85,8 +77,22 @@ void start(void)
 	// Enable the 'falling edge' trigger (button press).
 	EXTI->FTSR |=  (1 << BUTTON_PIN);
 
-	// Enable EXTI15_10 interrupt line
+	// Enable EXTI15_10 interrupt line for button
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
+}
+
+void start(void)
+{
+	enable_user_button();
+
+	// Enable GPIOA clock for LED
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+	// Enable PA5 (pin 5 of GPIOA) as an output bit, which controls the LED.
+	// (All of GPIOA_MODER is set to 0 on reset, so we just need to set our
+	// one bit to set MODER5 to 01.)
+	GPIOA->MODER |= GPIO_MODER_MODER5_0;
+	GPIOA->MODER &= ~(GPIO_MODER_MODER5_1);
 
 	// Enable TIM2 clock
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
