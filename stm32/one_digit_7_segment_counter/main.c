@@ -151,13 +151,6 @@ void start(void)
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	NVIC_EnableIRQ(TIM2_IRQn);
 
-	// Set up TIM2 for 1Hz interrupts
-	TIM2->ARR = ONE_SECOND_COUNTER - 1;
-	TIM2->PSC = PRESCALER_VALUE;
-	TIM2->EGR |= TIM_EGR_UG; // Tell clock to update. Is this even needed?
-	TIM2->DIER |= TIM_DIER_UIE; // Enable hardware interrupt
-	TIM2->CR1 |= TIM_CR1_CEN; // Enable counter (must be done at end)
-
 	// All of our pins are on GPIOA and GPIOB
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
@@ -187,8 +180,12 @@ void start(void)
 	GPIOB->MODER |= GPIO_MODER_MODER6_0;
 	GPIOB->MODER &= ~(GPIO_MODER_MODER6_1);
 
-	// Kick us off
-	show_glyph(0);
+	// Set up TIM2 for 1Hz interrupts
+	TIM2->ARR = ONE_SECOND_COUNTER - 1;
+	TIM2->PSC = PRESCALER_VALUE;
+	TIM2->EGR |= TIM_EGR_UG; // Tell clock to update. Is this even needed?
+	TIM2->DIER |= TIM_DIER_UIE; // Enable hardware interrupt
+	TIM2->CR1 |= TIM_CR1_CEN; // Enable counter (must be done at end)
 }
 
 void TIM2_IRQHandler(void)
