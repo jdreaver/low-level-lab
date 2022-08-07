@@ -17,9 +17,12 @@ SIZE := $(CROSS_COMPILE)size
 
 CFLAGS :=
 CFLAGS += -Wall
+CFLAGS += -Werror
 CFLAGS += -Wextra
 CFLAGS += -Wshadow
+CFLAGS += -Wstack-usage=255 # Warn if stack is too large (in bytes)
 CFLAGS += -fanalyzer
+# CFLAGS += -save-temps=obj # Leave behind intermediate artifacts. Super useful for debugging.
 CFLAGS += -mthumb
 CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
