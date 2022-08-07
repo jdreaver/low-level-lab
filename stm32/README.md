@@ -91,6 +91,7 @@ table.
 - Use LCD
   - https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
   - https://github.com/Matiasus/HD44780
+  - https://github.com/murar8/stm32-HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
   - Consider not using header-only library files.
