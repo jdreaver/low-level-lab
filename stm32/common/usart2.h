@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "stm32f4xx.h"
-
 #ifdef STM32F401xE
+
+#include "stm32f4xx.h"
 
 // Default system clock is HSI clock source, which is 16MHz
 #define BAUD_RATE 9600

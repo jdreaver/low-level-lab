@@ -56,22 +56,14 @@
  *
 **/
 
+#include "tim2.h"
 #include "user_button.h"
 
 #include "stm32f4xx.h"
 
 #include <stdbool.h>
 
-// Set up prescaler values so we have a 1ms tick. Note that the TIMx_PSC
-// registers are 16 bit values, so the prescaler values need to be in between 1
-// and 65536. Also note that the chip adds 1 to TIMx_PSC to avoid divide by
-// zero.
-//
-// We set the prescalar value to 16000, which takes our 16 MHz clock down to
-// 1000 Hz ticks. This also lets us express the blink interval in integer
-// milliseconds.
-#define PRESCALER_VALUE         (16000 - 1)
-#define ONE_SECOND_COUNTER      500
+#define HALF_SECOND_COUNTER 500
 
 static volatile uint8_t counter = 0;
 
@@ -165,12 +157,9 @@ void start(void)
 	GPIOB->MODER |= GPIO_MODER_MODER6_0;
 	GPIOB->MODER &= ~(GPIO_MODER_MODER6_1);
 
-	// Set up TIM2 for 1Hz interrupts
-	TIM2->ARR = ONE_SECOND_COUNTER - 1;
-	TIM2->PSC = PRESCALER_VALUE;
-	TIM2->EGR |= TIM_EGR_UG; // Tell clock to update. Is this even needed?
-	TIM2->DIER |= TIM_DIER_UIE; // Enable hardware interrupt
-	TIM2->CR1 |= TIM_CR1_CEN; // Enable counter (must be done at end)
+	// N.B. Set up timer after GPIO so we see output immediately
+	tim2_enable();
+	tim2_set_timeout_ms(HALF_SECOND_COUNTER);
 }
 
 void TIM2_IRQHandler(void)

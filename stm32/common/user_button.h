@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "stm32f4xx.h"
-
 #ifdef STM32F401xE
+
+#include "stm32f4xx.h"
 
 // User button (blue button) on STM32F401RE is located in PC13, which is pin 13,
 // so we configure EXTI13, which is on EXTICR4 (for pins 12 through 15).
