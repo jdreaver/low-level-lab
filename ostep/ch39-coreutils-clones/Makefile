@@ -57,7 +57,7 @@ compile_commands:
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) $(OBJS) $(DEPS) $(COMPILE_COMMANDS)
+	rm -f $(TARGETS) $(OBJS) $(DEPS) compile_commands.json
 
 # Include all of the dependency files generated from -MD and -MP. Purposely at
 # the bottom of this Makefile so these don't supersede the default target on
