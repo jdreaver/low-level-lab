@@ -27,6 +27,7 @@ CFLAGS += -mthumb
 CFLAGS += -mthumb-interwork
 CFLAGS += -mcpu=$(MCPU)
 CFLAGS += --specs=nosys.specs
+CFLAGS += -ffunction-sections -fdata-sections # Generate sections so we can -gc-sections them in linker
 CFLAGS += -I./vendor
 CFLAGS += -I./common
 # This tells the vendored header file stm32f4xx.h which board we are using.
@@ -48,6 +49,7 @@ ifeq ($(LINK_WITH_GCC), 1)
   LDFLAGS += -mthumb-interwork
   LDFLAGS += -mcpu=$(MCPU)
   LDFLAGS += --specs=nosys.specs
+  LDFLAGS += -Wl,--gc-sections # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
   LDFLAGS += -lgcc
   LDFLAGS += -lc
   LDFLAGS += -nostartfiles
