@@ -4,22 +4,24 @@
 # - https://freeelectron.ro/bare-metal-stm32-led-blink/
 # - (for timer) https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/
 
+TARGETS :=
 TARGETS += blink
 TARGETS += blink_timer
 TARGETS += one_digit_7_segment_counter
 
-BINS = $(addsuffix /main.bin,$(TARGETS))
-ELFS = $(patsubst %.bin,%.elf,$(BINS))
+BINS := $(addsuffix /main.bin,$(TARGETS))
+ELFS := $(patsubst %.bin,%.elf,$(BINS))
 
 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-MCPU = cortex-m4
+MCPU := cortex-m4
 
-CROSS_COMPILE = arm-none-eabi-
-CC = $(CROSS_COMPILE)gcc
-AS = $(CROSS_COMPILE)as
-OBJCOPY = $(CROSS_COMPILE)objcopy
-SIZE = $(CROSS_COMPILE)size
+CROSS_COMPILE := arm-none-eabi-
+CC := $(CROSS_COMPILE)gcc
+AS := $(CROSS_COMPILE)as
+OBJCOPY := $(CROSS_COMPILE)objcopy
+SIZE := $(CROSS_COMPILE)size
 
+CFLAGS :=
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Wshadow
@@ -44,7 +46,7 @@ endif
 # Linking with GCC requires more flags
 LINK_WITH_GCC ?= 1
 ifeq ($(LINK_WITH_GCC), 1)
-  LD = $(CC)
+  LD := $(CC)
   LDFLAGS += -mthumb
   LDFLAGS += -mthumb-interwork
   LDFLAGS += -mcpu=$(MCPU)
@@ -56,7 +58,7 @@ ifeq ($(LINK_WITH_GCC), 1)
   # sections are getting loaded where you think they are.
   LDFLAGS += -Wl,-Map=$@.map
 else
-  LD = $(CROSS_COMPILE)ld
+  LD := $(CROSS_COMPILE)ld
   LDFLAGS += -nostartfiles
   LDFLAGS += -Map=$@.map
 endif
@@ -64,6 +66,7 @@ endif
 # TODO: Not all programs need all of these object files. Figure out per-target
 # object dependencies or some kind of link-time optimization to remove unused
 # symbols.
+LIB_OBJS :=
 LIB_OBJS += common/vector_table.o
 LIB_OBJS += common/user_button.o
 
