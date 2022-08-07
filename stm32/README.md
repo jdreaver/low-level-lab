@@ -88,12 +88,6 @@ table.
 
 ## TODO
 
-- Get serial USART working
-  - [&#8220;Bare Metal&#8221; STM32 Programming (Part 10): UART
-    Communication](https://vivonomicon.com/2020/06/28/bare-metal-stm32-programming-part-10-uart-communication/)
-  - [GitHub - WRansohoff/STM32_UART_Examples: A few simple example projects
-    demonstrating how to use some core features of STM32 UART
-    peripherals.](https://github.com/WRansohoff/STM32_UART_Examples)
 - Use LCD https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
 - Build system
   - Scale `make` better
