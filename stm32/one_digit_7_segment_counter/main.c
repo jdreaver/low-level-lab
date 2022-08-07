@@ -58,9 +58,54 @@
 // 1000 Hz ticks. This also lets us express the blink interval in integer
 // milliseconds.
 #define PRESCALER_VALUE         (16000 - 1)
-#define ONE_SECOND_COUNTER      1000
+#define ONE_SECOND_COUNTER      500
 
 static volatile uint8_t counter = 0;
+
+// Simple tuple to hold ports so we can flip them
+struct gpio_odr_port {
+	GPIO_TypeDef *gpio_odr_reg;
+	uint32_t odr_mask;
+};
+
+// Ordered pins corresponding to numbers in the comment for this file
+struct gpio_odr_port gpio_odr_ports[8] = {
+	{ GPIOA, GPIO_ODR_OD10 },
+	{ GPIOB, GPIO_ODR_OD3 },
+	{ GPIOB, GPIO_ODR_OD5 },
+	{ GPIOB, GPIO_ODR_OD4 },
+	{ GPIOB, GPIO_ODR_OD10 },
+	{ GPIOA, GPIO_ODR_OD8 },
+	{ GPIOA, GPIO_ODR_OD9 },
+	{ GPIOB, GPIO_ODR_OD6 },
+};
+
+// Segments to turn on for a given number (10 is the dot in the bottom right)
+bool glyphs[11][8] = {
+	{ 0, 1, 1, 1, 1, 1, 1, 0 }, // 0
+	{ 0, 1, 0, 0, 1, 0, 0, 0 }, // 1
+	{ 0, 0, 1, 1, 1, 1, 0, 1 }, // 2
+	{ 0, 1, 1, 0, 1, 1, 0, 1 }, // 3
+	{ 0, 1, 0, 0, 1, 0, 1, 1 }, // 4
+	{ 0, 1, 1, 0, 0, 1, 1, 1 }, // 5
+	{ 0, 1, 1, 1, 0, 1, 1, 1 }, // 6
+	{ 0, 1, 0, 0, 1, 1, 0, 0 }, // 7
+	{ 0, 1, 1, 1, 1, 1, 1, 1 }, // 8
+	{ 0, 1, 0, 0, 1, 1, 1, 1 }, // 9
+	{ 1, 0, 0, 0, 0, 0, 0, 0 }, // 10
+};
+
+void show_glyph(uint8_t num)
+{
+	for (uint8_t segment = 0; segment < 8; segment++) {
+		struct gpio_odr_port port = gpio_odr_ports[segment];
+		if (glyphs[num][segment]) {
+			port.gpio_odr_reg->ODR |= port.odr_mask;
+		} else {
+			port.gpio_odr_reg->ODR &= ~(port.odr_mask);
+		}
+	}
+}
 
 // User button (blue button) on STM32F401RE is located in PC13, which is pin 13,
 // so we configure EXTI13, which is on EXTICR4 (for pins 12 through 15).
@@ -142,65 +187,21 @@ void start(void)
 	GPIOB->MODER |= GPIO_MODER_MODER6_0;
 	GPIOB->MODER &= ~(GPIO_MODER_MODER6_1);
 
-	// Turn them all on just to test
-	GPIOA->ODR |= GPIO_ODR_OD10;
-	GPIOB->ODR |= GPIO_ODR_OD3;
-	GPIOB->ODR |= GPIO_ODR_OD5;
-	GPIOB->ODR |= GPIO_ODR_OD4;
-	GPIOB->ODR |= GPIO_ODR_OD10;
-	GPIOA->ODR |= GPIO_ODR_OD8;
-	GPIOA->ODR |= GPIO_ODR_OD9;
-	GPIOB->ODR |= GPIO_ODR_OD6;
+	// Kick us off
+	show_glyph(0);
 }
 
 void TIM2_IRQHandler(void)
 {
         // Check the update flag. It'll be set every time the timer overflows
         if(TIM2->SR & TIM_SR_UIF) {
-	    // Turn off all segments
-	    GPIOA->ODR &= ~(GPIO_ODR_OD10);
-	    GPIOB->ODR &= ~(GPIO_ODR_OD3);
-	    GPIOB->ODR &= ~(GPIO_ODR_OD5);
-	    GPIOB->ODR &= ~(GPIO_ODR_OD4);
-	    GPIOB->ODR &= ~(GPIO_ODR_OD10);
-	    GPIOA->ODR &= ~(GPIO_ODR_OD8);
-	    GPIOA->ODR &= ~(GPIO_ODR_OD9);
-	    GPIOB->ODR &= ~(GPIO_ODR_OD6);
+		show_glyph(counter);
 
-	    // Only turn on one segment
-	    switch (counter) {
-	    case 0:
-		    GPIOA->ODR |= GPIO_ODR_OD10;
-		    break;
-	    case 1:
-		    GPIOB->ODR |= GPIO_ODR_OD3;
-		    break;
-	    case 2:
-		    GPIOB->ODR |= GPIO_ODR_OD5;
-		    break;
-	    case 3:
-		    GPIOB->ODR |= GPIO_ODR_OD4;
-		    break;
-	    case 4:
-		    GPIOB->ODR |= GPIO_ODR_OD10;
-		    break;
-	    case 5:
-		    GPIOA->ODR |= GPIO_ODR_OD8;
-		    break;
-	    case 6:
-		    GPIOA->ODR |= GPIO_ODR_OD9;
-		    break;
-	    case 7:
-		    GPIOB->ODR |= GPIO_ODR_OD6;
-		    break;
-	    }
+		// Increment counter
+		counter = (counter + 1) % 11;
 
-	    // Increment counter
-	    counter = (counter + 1) % 8;
-
-            // Reset the flag, so that we can catch the next tick
-            TIM2->SR &= ~TIM_SR_UIF;
-
+		// Reset the flag, so that we can catch the next tick
+		TIM2->SR &= ~(TIM_SR_UIF);
         }
 }
 

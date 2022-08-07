@@ -93,8 +93,6 @@ table.
     `STM32F401RETx_FLASH.ld` (they could be useful as reference. Maybe we should
     just add links to them in my implementation?)
 - Consider using CMake
-- Make program that counts up every second, displays count on digital display,
-  and resets if button is pressed
 - Get serial USART working
   - [&#8220;Bare Metal&#8221; STM32 Programming (Part 10): UART
     Communication](https://vivonomicon.com/2020/06/28/bare-metal-stm32-programming-part-10-uart-communication/)
