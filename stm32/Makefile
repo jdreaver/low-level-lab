@@ -1,9 +1,3 @@
-# Adapts these tutorials:
-# - http://pandafruits.com/stm32_primer/stm32_primer_minimal.php
-# - https://jeremyherbert.net/get/stm32f4_getting_started
-# - https://freeelectron.ro/bare-metal-stm32-led-blink/
-# - (for timer) https://vivonomicon.com/2018/05/20/bare-metal-stm32-programming-part-5-timer-peripherals-and-the-system-clock/
-
 TARGETS :=
 TARGETS += blink
 TARGETS += blink_timer
@@ -68,7 +62,6 @@ endif
 # symbols.
 LIB_OBJS :=
 LIB_OBJS += common/vector_table.o
-LIB_OBJS += common/user_button.o
 
 # Automatically generate dependencies. -MMD generates non-system header
 # dependencies. -MP creates an empty rule for generating each dependency. See
