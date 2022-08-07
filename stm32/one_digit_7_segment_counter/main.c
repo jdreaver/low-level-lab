@@ -4,6 +4,45 @@
  * My Elegoo kit came with a 5161AH. Data sheet here:
  * - http://www.xlitx.com/datasheet/5161AH.pdf
  * - http://www.lanpade.com/7-segment-led-dot-matrix/5161ah.html
+ *
+ * Here is how the pins were lined up:
+ *
+ * 7 6 G 5 4
+ * | | | | |
+ * _ _ _ _ _
+ * |  __   |
+ * | |  |  |
+ * | |__|  | lined up on breadboard -> 7 6 5 4 3 2 1 0
+ * | |  |  |
+ * | |__|  |
+ * _ _ _ . _
+ * | | | | |
+ * 3 2 G 1 0
+ *
+ * where G is ground, and the pins are ordered from the bottom up on the Nucleo
+ * starting from the third CN9 pin (can't use the first two, PA3 and PA2,
+ * because they are there for debugging).
+ *
+ * - 0: CN9 2 (PA10)
+ * - 0: CN9 3 (PB3)
+ * - 0: CN9 4 (PB5)
+ * - 0: CN9 5 (PB4)
+ * - 0: CN9 6 (PB10)
+ * - 0: CN9 7 (PA8)
+ * - 0: CN5 0 (PA9)
+ * - 0: CN5 2 (PB6)
+ *
+ * The numbers above correspond to:
+ *
+ *    ___5___
+ *   |       |
+ * 6 |       | 4
+ *   |___7___|
+ *   |       |
+ * 3 |       | 1
+ *   |_______|    0
+ *       2        . (the bottom right dot thing)
+ *
 **/
 
 #include "stm32f4xx.h"
@@ -74,19 +113,7 @@ void start(void)
 	TIM2->DIER |= TIM_DIER_UIE; // Enable hardware interrupt
 	TIM2->CR1 |= TIM_CR1_CEN; // Enable counter (must be done at end)
 
-	// We are going to use 6 pins of connector CN9 and two pins from CN5
-	// (the first two pings of CN9, PA3 and PA2, are special and are used
-	// for some debugging function) which are all on GPIO A and B, so we
-	// need to enable those. In order, from bottom to top, they are:
-
-	// CN9 2. PA10
-	// CN9 3. PB3
-	// CN9 4. PB5
-	// CN9 5. PB4
-	// CN9 6. PB10
-	// CN9 7. PA8
-	// CN5 0. PA9
-	// CN5 2. PB6
+	// All of our pins are on GPIOA and GPIOB
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
