@@ -12,6 +12,8 @@ MCPU := cortex-m4
 CROSS_COMPILE := arm-none-eabi-
 CC := $(CROSS_COMPILE)gcc
 AS := $(CROSS_COMPILE)as
+AR := $(CROSS_COMPILE)ar
+RANLIB := $(CROSS_COMPILE)ranlib
 OBJCOPY := $(CROSS_COMPILE)objcopy
 SIZE := $(CROSS_COMPILE)size
 
@@ -62,15 +64,10 @@ else
   LDFLAGS += -Map=$@.map
 endif
 
-# TODO: Not all programs need all of these object files. Figure out per-target
-# object dependencies or some kind of link-time optimization to remove unused
-# symbols.
-LIB_OBJS :=
-LIB_OBJS += common/vector_table.o
-LIB_OBJS += common/tim2.o
-LIB_OBJS += common/usart2.o
-LIB_OBJS += common/user_button.o
-LIB_OBJS += common/user_led.o
+# Store common stuff in static archive
+LIB_SRC := $(wildcard common/*.c)
+LIB_OBJS := $(patsubst %.c,%.o,$(LIB_SRC))
+COMMON_LIB := common/libcommon.a
 
 # Automatically generate dependencies. -MMD generates non-system header
 # dependencies. -MP creates an empty rule for generating each dependency. See
@@ -83,9 +80,13 @@ all: $(BINS)
 $(BINS): %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-$(ELFS): %.elf: %.o common/linker.ld $(LIB_OBJS)
-	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^)
+$(ELFS): %.elf: %.o common/linker.ld $(COMMON_LIB)
+	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^) $(filter %.a,$^)
 	$(SIZE) $@
+
+$(COMMON_LIB): $(LIB_OBJS)
+	$(AR) rcu $@ $^
+	$(RANLIB) $@
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^

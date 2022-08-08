@@ -1,6 +1,7 @@
 /.ccls-cache/
 *.o
 *.d
+*.a
 *.elf
 *.bin
 *.map

@@ -94,10 +94,10 @@ table.
   - https://github.com/murar8/stm32-HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
-  - Figure out per-target object file dependencies. Does a static library help?
-  - Consider using CMake. I'm mostly interested in segregated build/debug targets,
-    support for tests without headache, and targets depending on flags (I wonder
-    if all of this is possible with CMake)
+  - Consider using CMake. I'm mostly interested in segregated build/debug
+    targets, different targets for different boards, support for tests without
+    headache, and targets depending on flags (I wonder if all of this is
+    possible with CMake)
     - MAKE SURE compile_commands.json WORKS, ESPECIALLY WITH NIX WRAPPERS
     - https://cliutils.gitlab.io/modern-cmake/
     - [How to CMake good](https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s)
