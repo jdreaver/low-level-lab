@@ -99,6 +99,7 @@ table.
   - Consider using CMake. I'm mostly interested in segregated build/debug targets,
     support for tests without headache, and targets depending on flags (I wonder
     if all of this is possible with CMake)
+    - MAKE SURE compile_commands.json WORKS, ESPECIALLY WITH NIX WRAPPERS
     - https://cliutils.gitlab.io/modern-cmake/
     - [How to CMake good](https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s)
     - https://crascit.com/professional-cmake/ ($30)

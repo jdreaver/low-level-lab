@@ -50,6 +50,7 @@
           ddd # Nice GUI debugger
           valgrind
           bear # Generates compile_commands.json
+          cmake
 
           # Cross-compilation to ARM (glibc static conflicts with native
           # glibc.static once ld runs because of weird nix wrapper scripts)
