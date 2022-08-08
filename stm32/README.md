@@ -94,6 +94,8 @@ table.
   - https://github.com/murar8/stm32-HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
+  - Consider having platform/board-dependent code in separate subdirectories
+    instead of wrapping in C preprocessor #ifdef
   - Consider using CMake. I'm mostly interested in segregated build/debug
     targets, different targets for different boards, support for tests without
     headache, and targets depending on flags (I wonder if all of this is
