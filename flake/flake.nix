@@ -116,6 +116,7 @@
           gcc.man
           gdb
           bear # Generates compile_commands.json
+          cmake
 
           # Cross compilation packages. N.B. We don't use e.g.
           # pkgsCross.arm-embedded.buildPackages.gcc. When I tried to use that

@@ -17,7 +17,7 @@ add_compile_options(-Wall -Wextra -pedantic -Wshadow -fanalyzer)
 add_library(file_utils STATIC file_utils.c)
 
 add_executable(mystat mystat.c)
-target_link_libraries(mystat file_utils)
+target_link_libraries(mystat PRIVATE file_utils)
 
 add_executable(myls myls.c)
-target_link_libraries(myls file_utils)
+target_link_libraries(myls PRIVATE file_utils)

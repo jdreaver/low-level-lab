@@ -100,6 +100,7 @@ table.
     targets, different targets for different boards, support for tests without
     headache, and targets depending on flags (I wonder if all of this is
     possible with CMake)
+    - Good stm32 example https://github.com/ObKo/stm32-cmake
     - MAKE SURE compile_commands.json WORKS, ESPECIALLY WITH NIX WRAPPERS
     - https://cliutils.gitlab.io/modern-cmake/
     - [How to CMake good](https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s)

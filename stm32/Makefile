@@ -7,6 +7,7 @@ BINS := $(addsuffix /main.bin,$(TARGETS))
 ELFS := $(patsubst %.bin,%.elf,$(BINS))
 
 # My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+BOARD := STM32F401xE
 MCPU := cortex-m4
 
 CROSS_COMPILE := arm-none-eabi-
@@ -33,7 +34,7 @@ CFLAGS += -ffunction-sections -fdata-sections # Generate sections so we can -gc-
 CFLAGS += -I./vendor
 CFLAGS += -I./common
 # This tells the vendored header file stm32f4xx.h which board we are using.
-CFLAGS += -DSTM32F401xE
+CFLAGS += -D$(BOARD)
 
 # Run like "make DEBUG=0 ..." to disable debugging
 DEBUG ?= 1
