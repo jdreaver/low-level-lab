@@ -67,6 +67,10 @@ endif
 # symbols.
 LIB_OBJS :=
 LIB_OBJS += common/vector_table.o
+LIB_OBJS += common/tim2.o
+LIB_OBJS += common/usart2.o
+LIB_OBJS += common/user_button.o
+LIB_OBJS += common/user_led.o
 
 # Automatically generate dependencies. -MMD generates non-system header
 # dependencies. -MP creates an empty rule for generating each dependency. See
