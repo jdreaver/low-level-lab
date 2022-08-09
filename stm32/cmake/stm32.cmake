@@ -4,9 +4,9 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-set(CMAKE_OBJCOPY NAMES arm-none-eabi-objcopy)
-set(CMAKE_OBJDUMP NAMES arm-none-eabi-objdump)
-set(CMAKE_SIZE NAMES arm-none-eabi-size)
+set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
+set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+set(CMAKE_SIZE arm-none-eabi-size)
 
 set(CMAKE_EXECUTABLE_SUFFIX_C .elf)
 

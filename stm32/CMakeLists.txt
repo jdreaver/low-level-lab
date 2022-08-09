@@ -18,9 +18,7 @@ add_custom_target(
 set(BOARD_NAME "STM32F401xE" CACHE STRING "Name of target board")
 set(MCPU "cortex-m4" CACHE STRING "Name of target CPU")
 
-# TODO: Is -D${BOARD_NAME supposed to be per-target?
 add_compile_options("-D${BOARD_NAME}")
-
 add_compile_options(-Wall)
 add_compile_options(-Werror)
 add_compile_options(-Wextra)
@@ -36,8 +34,6 @@ add_compile_options(--specs=nosys.specs)
 # Generate sections so we can -gc-sections them in linker
 add_compile_options(-ffunction-sections -fdata-sections)
 
-# TODO: Add linker script, and make sure changing linker script causes
-# recompilation.
 add_link_options(-mthumb)
 add_link_options(-mthumb-interwork)
 add_link_options(-mcpu=${MCPU})
@@ -55,5 +51,11 @@ add_subdirectory(common)
 add_subdirectory(vendor)
 target_link_libraries(common PRIVATE vendor)
 
+# TODO: DRY common executable stuff
 add_executable(blink blink/main.c)
 target_link_libraries(blink PRIVATE common common_interface vendor)
+# Add linker script
+cmake_path(SET LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/common/linker.ld")
+target_link_options(blink PRIVATE -T "${LINKER_SCRIPT}")
+set_target_properties(blink PROPERTIES LINK_DEPENDS "${LINKER_SCRIPT}")
+stm32_generate_binary_file(blink)
