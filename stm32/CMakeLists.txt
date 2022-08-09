@@ -13,6 +13,8 @@ add_custom_target(
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
+# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+#
 # TODO: This should probably be in the toolchain config somehow, including
 # setting -D${BOARD_NAME}
 set(BOARD_NAME "STM32F401xE" CACHE STRING "Name of target board")
@@ -38,6 +40,7 @@ add_compile_options(--specs=nosys.specs)
 # Generate sections so we can -gc-sections them in linker
 add_compile_options(-ffunction-sections -fdata-sections)
 # TODO: Set optimize level based on build type (Debug/Release)
+# add_compile_options(-g3 -ggdb3 -O0)
 add_compile_options(-Os)
 
 add_link_options(-mthumb)

@@ -1,116 +1,18 @@
-TARGETS :=
-TARGETS += blink
-TARGETS += blink_timer
-TARGETS += one_digit_7_segment_counter
+.PHONY: configure
+configure: ## Set up CMake build directories
+	cmake -S . -B build
 
-BINS := $(addsuffix /main.bin,$(TARGETS))
-ELFS := $(patsubst %.bin,%.elf,$(BINS))
-
-# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-BOARD := STM32F401xE
-MCPU := cortex-m4
-
-CROSS_COMPILE := arm-none-eabi-
-CC := $(CROSS_COMPILE)gcc
-AS := $(CROSS_COMPILE)as
-AR := $(CROSS_COMPILE)ar
-RANLIB := $(CROSS_COMPILE)ranlib
-OBJCOPY := $(CROSS_COMPILE)objcopy
-SIZE := $(CROSS_COMPILE)size
-
-CFLAGS :=
-CFLAGS += -Wall
-CFLAGS += -Werror
-CFLAGS += -Wextra
-CFLAGS += -Wshadow
-CFLAGS += -Wstack-usage=255 # Warn if stack is too large (in bytes)
-CFLAGS += -fanalyzer
-# CFLAGS += -save-temps=obj # Leave behind intermediate artifacts. Super useful for debugging.
-CFLAGS += -mthumb
-CFLAGS += -mthumb-interwork
-CFLAGS += -mcpu=$(MCPU)
-CFLAGS += --specs=nosys.specs
-CFLAGS += -ffunction-sections -fdata-sections # Generate sections so we can -gc-sections them in linker
-CFLAGS += -I./vendor
-CFLAGS += -I./common
-# This tells the vendored header file stm32f4xx.h which board we are using.
-CFLAGS += -D$(BOARD)
-
-# Run like "make DEBUG=0 ..." to disable debugging
-DEBUG ?= 1
-ifeq ($(DEBUG), 1)
-  CFLAGS += -g3 -ggdb3 -O0
-else
-  CFLAGS += -Os
-endif
-
-# Linking with GCC requires more flags
-LINK_WITH_GCC ?= 1
-ifeq ($(LINK_WITH_GCC), 1)
-  LD := $(CC)
-  LDFLAGS += -mthumb
-  LDFLAGS += -mthumb-interwork
-  LDFLAGS += -mcpu=$(MCPU)
-  LDFLAGS += --specs=nosys.specs
-  LDFLAGS += -Wl,--gc-sections # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
-  LDFLAGS += -lgcc
-  LDFLAGS += -lc
-  LDFLAGS += -nostartfiles
-  # Linker map files are incredibly useful to debug the linker script and ensure
-  # sections are getting loaded where you think they are.
-  LDFLAGS += -Wl,-Map=$@.map
-else
-  LD := $(CROSS_COMPILE)ld
-  LDFLAGS += -nostartfiles
-  LDFLAGS += -Map=$@.map
-endif
-
-# Store common stuff in static archive
-LIB_SRC := $(wildcard common/*.c)
-LIB_OBJS := $(patsubst %.c,%.o,$(LIB_SRC))
-COMMON_LIB := common/libcommon.a
-
-# Automatically generate dependencies. -MMD generates non-system header
-# dependencies. -MP creates an empty rule for generating each dependency. See
-# http://www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
-CPPFLAGS+=-MMD -MP
-
-.PHONY: all
-all: $(BINS)
-
-$(BINS): %.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
-
-$(ELFS): %.elf: %.o common/linker.ld $(COMMON_LIB)
-	$(LD) $(LDFLAGS) -T $(filter %.ld,$^) -o $@ $(filter %.o,$^) $(filter %.a,$^)
-	$(SIZE) $@
-
-$(COMMON_LIB): $(LIB_OBJS)
-	$(AR) rcu $@ $^
-	$(RANLIB) $@
-
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
-
-.PHONY: compile_commands
-compile_commands:
-	$(MAKE) clean
-	bear -- $(MAKE)
-  # We need to tell bear to exclude compiler wrappers, or we'll have duplicate,
-  # incorrect entries in compile_commands.json. See:
-  # - https://github.com/rizsotto/Bear/wiki/Troubleshooting#the-output-has-duplicate-entries
-  # - https://github.com/NixOS/nixpkgs/issues/20056
-  # - https://github.com/rizsotto/Bear/issues/321
-  #
-  # An alternative solution is to use the config file to pass in the compiler
-  # wrapper under compilation.compilers_to_exclude.
-	jq 'map(select(.arguments[0] | contains("wrapper") | not))' compile_commands.json > tmp_compile_commands.json
-	mv tmp_compile_commands.json compile_commands.json
+.PHONY: build
+build: ## Run cmake build (requires configuration first)
+	cmake --build build/
 
 .PHONY: clean
-clean:
-	find . -type f \( -name '*.o' -o -name '*.d' -o -name '*.elf' -o -name '*.map' -o -name '*.bin' \) -delete
-	rm -f compile_commands.json
+clean: ## Remove CMake build directories
+	rm -rf build/
+
+.PHONY: size
+size: ## Show size of all built .elf files
+	@find build/ -type f -name '*.elf' -exec arm-none-eabi-size {} +
 
 ifeq ($(MAKECMDGOALS),flash)
 ifeq ($(FLASH_TARGET),)
@@ -119,7 +21,7 @@ endif
 endif
 
 .PHONY: flash
-flash: $(FLASH_TARGET)/main.bin
+flash: $(FLASH_TARGET)
 	sudo st-flash write $? 0x8000000
 	sudo st-flash reset
 
@@ -127,7 +29,8 @@ flash: $(FLASH_TARGET)/main.bin
 erase:
 	sudo st-flash erase
 
-# Include all of the dependency files generated from -MD and -MP. Purposely at
-# the bottom of this Makefile so these don't supersede the default target on
-# accident.
--include $(DEPS)
+# Taken from https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+.DEFAULT_GOAL := help
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

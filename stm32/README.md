@@ -3,6 +3,11 @@
 Bits of code for STM32 microcontrollers. I bought an [STMF401RE Nucleo
 board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
 
+## Usage
+
+1. Configure/build CMake using `make configure` and `make build`
+2. Flash a target to a board plugged in via USB with `make FLASH_TARGET=build/path/to.bin flash`
+
 ## References
 
 - https://github.com/STMicroelectronics/STM32CubeF4 Official STM32 headers (ARM
@@ -117,6 +122,8 @@ table.
   - https://github.com/murar8/stm32-HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
+  - IMPORTANT: Create Debug build options
+  - (See TODOs in CMakeLists.txt files)
   - Consider having platform/board-dependent code in separate subdirectories
     instead of wrapping in C preprocessor #ifdef
 - Try out Rust for STM32 (this blog post might be old but it is good inspiration
