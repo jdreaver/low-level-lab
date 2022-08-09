@@ -39,6 +39,29 @@ I have a script to download these at `vendor/update-vendor-headers.sh`. I avoid
 the HAL like the plague because it looks stupid complex. I also provide my own
 boot files and linker scripts for more control.
 
+## CMake
+
+I used to have a _fairly_ simple Makefile, but I hit a few snags just using
+`make` that were cleanly solved by CMake:
+- I wanted to segregate release/debug builds without clobbering build files, but
+  didn't want to deal with refactoring my Makefile to support separate build
+  artifacts from source.
+- My `make clean` was error-prone because, again, I had build artifacts
+  alongside my source.
+- I clumped all my `CFLAGS` and `LDFLAGS` together for all targets by trial an
+  error. This wouldn't scale to multiple board.
+- I wanted to refactor how I did per-board header and source files, but didn't
+  want to deal with refactoring my Makefile to accommodate it.
+- I wanted to add unit tests somehow, but not deal with, again, segregating
+  builds and dealing with a more complex linking setup.
+
+Resources:
+- I read (Professional CMake)[https://crascit.com/professional-cmake/], which
+  helped a ton.
+- Good CMake example for stm32: <https://github.com/ObKo/stm32-cmake>. That repo
+  support tons of different boards, HAL, etc and is more complex than I need,
+  but it is good inspiration.
+
 ## Tutorials, Getting Started
 
 All of the official STM32 guides encourage you to use a super bloated IDE called
@@ -96,16 +119,6 @@ table.
 - Build system
   - Consider having platform/board-dependent code in separate subdirectories
     instead of wrapping in C preprocessor #ifdef
-  - Consider using CMake. I'm mostly interested in segregated build/debug
-    targets, different targets for different boards, support for tests without
-    headache, and targets depending on flags (I wonder if all of this is
-    possible with CMake)
-    - Good stm32 example https://github.com/ObKo/stm32-cmake
-    - MAKE SURE compile_commands.json WORKS, ESPECIALLY WITH NIX WRAPPERS
-    - https://cliutils.gitlab.io/modern-cmake/
-    - [How to CMake good](https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s)
-    - https://crascit.com/professional-cmake/ ($30)
-  - Consider bazel with https://github.com/hedronvision/bazel-compile-commands-extractor
 - Try out Rust for STM32 (this blog post might be old but it is good inspiration
   <https://vivonomicon.com/2019/05/23/hello-rust-blinking-leds-in-a-new-language/>)
   - Also https://docs.rust-embedded.org/book/intro/index.html
