@@ -1,12 +1,19 @@
+BUILD_CONFIGS ?= Release Debug
+BUILD_DIRS ?= $(addprefix build/,$(BUILD_CONFIGS))
+
 .PHONY: configure
-configure: clean ## Set up CMake build directories
-	cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
-	cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
+configure: clean $(BUILD_DIRS) ## Set up CMake build directories. Limit to one config w/ e.g. BUILD_CONFIGS=Release
+
+$(BUILD_DIRS): build/%:
+	cmake -S . -B $@ -DCMAKE_BUILD_TYPE=$(@F)
+
+BUILD_TARGETS := $(addprefix build_,$(BUILD_DIRS))
 
 .PHONY: build
-build: ## Run cmake build (requires configuration first)
-	cmake --build build/release
-	cmake --build build/debug
+build: $(BUILD_TARGETS) ## Run cmake build (might require "make configure" first). Limit to one config w/ e.g. BUILD_CONFIGS=Release
+
+$(BUILD_TARGETS): build_%: $(BUILD_DIRS)
+	cmake --build $* ${BUILD_ARGS}
 
 .PHONY: clean
 clean: ## Remove CMake build directories
