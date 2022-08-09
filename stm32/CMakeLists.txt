@@ -39,9 +39,8 @@ add_compile_options(-mcpu=${MCPU})
 add_compile_options(--specs=nosys.specs)
 # Generate sections so we can -gc-sections them in linker
 add_compile_options(-ffunction-sections -fdata-sections)
-# TODO: Set optimize level based on build type (Debug/Release)
-# add_compile_options(-g3 -ggdb3 -O0)
-add_compile_options(-Os)
+add_compile_options("$<$<CONFIG:Release>:-Os>")
+add_compile_options("$<$<CONFIG:Debug>:-g3;-ggdb3;-O0>")
 
 add_link_options(-mthumb)
 add_link_options(-mthumb-interwork)

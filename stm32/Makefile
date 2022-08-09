@@ -1,10 +1,12 @@
 .PHONY: configure
-configure: ## Set up CMake build directories
-	cmake -S . -B build
+configure: clean ## Set up CMake build directories
+	cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
+	cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
 
 .PHONY: build
 build: ## Run cmake build (requires configuration first)
-	cmake --build build/
+	cmake --build build/release
+	cmake --build build/debug
 
 .PHONY: clean
 clean: ## Remove CMake build directories
