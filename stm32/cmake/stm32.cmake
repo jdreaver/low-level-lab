@@ -15,6 +15,13 @@ set(CMAKE_EXECUTABLE_SUFFIX_C .elf)
 # reference to _exit"
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
+# Set compiler/linker flags relevant to stm32
+#
+# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
+set(BOARD_NAME "STM32F401xE" CACHE STRING "Name of target board")
+set(MCPU "cortex-m4" CACHE STRING "Name of target CPU")
+set(CMAKE_C_FLAGS_INIT "-D${BOARD_NAME} -mthumb -mthumb-interwork -mcpu=${MCPU}")
+
 function(stm32_generate_binary_file TARGET)
     add_custom_command(
         TARGET ${TARGET}

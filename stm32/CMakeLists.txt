@@ -13,14 +13,6 @@ add_custom_target(
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
-# My board is NUCLEO-F401RE, which has a Cortex-M4 processor
-#
-# TODO: This should probably be in the toolchain config somehow, including
-# setting -D${BOARD_NAME}
-set(BOARD_NAME "STM32F401xE" CACHE STRING "Name of target board")
-set(MCPU "cortex-m4" CACHE STRING "Name of target CPU")
-add_compile_options("-D${BOARD_NAME}")
-
 # TODO: Figure out how to propertly handle all of these flags. Some of them are
 # based on target (like -mcpu, -mthumb, -D${BOARD_NAME}, etc). Some are really
 # just for development and shouldn't be mandatory, optimization level should
@@ -33,18 +25,11 @@ add_compile_options(-Wstack-usage=255) # Warn if stack is too large (in bytes)
 add_compile_options(-fanalyzer)
 # Leave behind intermediate artifacts. Super useful for debugging.
 # add_compile_options(-save-temps=obj)
-add_compile_options(-mthumb)
-add_compile_options(-mthumb-interwork)
-add_compile_options(-mcpu=${MCPU})
-add_compile_options(--specs=nosys.specs)
 # Generate sections so we can -gc-sections them in linker
 add_compile_options(-ffunction-sections -fdata-sections)
 add_compile_options("$<$<CONFIG:Release>:-Os>")
 add_compile_options("$<$<CONFIG:Debug>:-g3;-ggdb3;-O0>")
 
-add_link_options(-mthumb)
-add_link_options(-mthumb-interwork)
-add_link_options(-mcpu=${MCPU})
 add_link_options(--specs=nosys.specs)
 add_link_options(-Wl,--gc-sections) # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
 add_link_options(-lgcc)

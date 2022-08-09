@@ -122,8 +122,8 @@ table.
   - https://github.com/murar8/stm32-HD44780
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
-  - IMPORTANT: Create Debug build options
   - (See TODOs in CMakeLists.txt files)
+  - Read Ch 29 CMake Presets to organize flags
   - Consider having platform/board-dependent code in separate subdirectories
     instead of wrapping in C preprocessor #ifdef
 - Try out Rust for STM32 (this blog post might be old but it is good inspiration
