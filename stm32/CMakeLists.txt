@@ -46,20 +46,4 @@ target_link_libraries(common PRIVATE vendor)
 
 cmake_path(SET LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/common/linker.ld")
 
-function(stm32_executable TARGET)
-  # Set executable as main.c file for target name
-  cmake_path(SET main_path "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/main.c")
-  add_executable(${TARGET} "${main_path}")
-  target_link_libraries(${TARGET} PRIVATE common common_interface vendor)
-
-  # Add linker script
-  target_link_options(${TARGET} PRIVATE -T "${LINKER_SCRIPT}")
-  set_target_properties(${TARGET} PROPERTIES LINK_DEPENDS "${LINKER_SCRIPT}")
-
-  stm32_generate_binary_file(${TARGET})
-  stm32_print_size_of_target(${TARGET})
-endfunction()
-
-stm32_executable(blink)
-stm32_executable(blink_timer)
-stm32_executable(one_digit_7_segment_counter)
+add_subdirectory(bin)

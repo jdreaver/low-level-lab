@@ -123,9 +123,6 @@ table.
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
   - (See TODOs in CMakeLists.txt files)
-  - Put binaries in a `bin/` folder like `bin/blink.c`, etc, and move build
-    definitions from top-level file into there (using `include_subdirectory`).
-    - How do we pass in the dependency on `vendor/` and `common/`?
   - Read about CMake modules and consider putting more function definitions in
     `cmake/`
   - Consider having platform/board-dependent code in separate subdirectories
