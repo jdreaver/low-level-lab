@@ -24,3 +24,11 @@ function(stm32_generate_binary_file TARGET)
         COMMENT "Generating binary file ${CMAKE_PROJECT_NAME}.bin"
     )
 endfunction()
+
+function(stm32_print_size_of_target TARGET)
+    add_custom_target(${TARGET}_elf_size
+        ALL COMMAND ${CMAKE_SIZE} ${TARGET}${CMAKE_EXECUTABLE_SUFFIX_C}
+        COMMENT "Target Sizes: "
+        DEPENDS ${TARGET}
+    )
+endfunction()
