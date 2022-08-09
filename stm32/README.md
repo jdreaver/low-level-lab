@@ -123,9 +123,15 @@ table.
   - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
   - (See TODOs in CMakeLists.txt files)
-  - Read Ch 29 CMake Presets to organize flags
+  - Put binaries in a `bin/` folder like `bin/blink.c`, etc, and move build
+    definitions from top-level file into there (using `include_subdirectory`).
+    - How do we pass in the dependency on `vendor/` and `common/`?
+  - Read about CMake modules and consider putting more function definitions in
+    `cmake/`
   - Consider having platform/board-dependent code in separate subdirectories
     instead of wrapping in C preprocessor #ifdef
+    - Instead of using `-D${BOARD_NAME}`, consider using flag
+      `-DBOARD_NAME=${BOARD_NAME}`
 - Try out Rust for STM32 (this blog post might be old but it is good inspiration
   <https://vivonomicon.com/2019/05/23/hello-rust-blinking-leds-in-a-new-language/>)
   - Also https://docs.rust-embedded.org/book/intro/index.html
