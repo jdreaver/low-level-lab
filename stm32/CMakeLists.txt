@@ -13,10 +13,8 @@ add_custom_target(
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
-# TODO: Figure out how to propertly handle all of these flags. Some of them are
-# based on target (like -mcpu, -mthumb, -D${BOARD_NAME}, etc). Some are really
-# just for development and shouldn't be mandatory, optimization level should
-# vary based on release type (Debug/Release), etc.
+# Set global compile options. (It could be argued that some of these should be
+# set in preset configs, but whatever, this is a private project)
 add_compile_options(-Wall)
 add_compile_options(-Werror)
 add_compile_options(-Wextra)
@@ -30,20 +28,9 @@ add_compile_options(-ffunction-sections -fdata-sections)
 add_compile_options("$<$<CONFIG:Release>:-Os>")
 add_compile_options("$<$<CONFIG:Debug>:-g3;-ggdb3;-O0>")
 
-add_link_options(--specs=nosys.specs)
-add_link_options(-Wl,--gc-sections) # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
-add_link_options(-lgcc)
-add_link_options(-lc)
-add_link_options(-nostartfiles)
-# TODO: Linker map files are incredibly useful to debug the linker script and ensure
-# sections are getting loaded where you think they are.
-# add_link_options(-Wl,-Map=$@.map)
-
 # Build libraries
 add_subdirectory(common)
 add_subdirectory(vendor)
 target_link_libraries(common PRIVATE vendor)
-
-cmake_path(SET LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/common/linker.ld")
 
 add_subdirectory(bin)
