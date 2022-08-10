@@ -16,44 +16,39 @@
  * - http://www.xlitx.com/datasheet/5161AH.pdf
  * - http://www.lanpade.com/7-segment-led-dot-matrix/5161ah.html
  *
- * Here is how the pins were lined up:
+ * Good pinout diagram
+ * (https://www.electronicsforu.com/resources/7-segment-display-pinout-understanding)
+ * copied here. Lower case letters correspond to segments and DP (decimal
+ * point), and GND is ground (note only one ground needs to be connected):
  *
- * 7 6 G 5 4
- * | | | | |
- * _ _ _ _ _
- * |  __   |
- * | |  |  |
- * | |__|  | lined up on breadboard -> 7 6 5 4 3 2 1 0
- * | |  |  |
- * | |__|  |
- * _ _ _ . _
- * | | | | |
- * 3 2 G 1 0
+ *   g f  GND  a b
+ *  _|_|___|___|_|__
+ * |                |
+ * |    ___a___     |
+ * |   |       |    |
+ * |  f|       |b   |
+ * |   |___g___|    |
+ * |   |       |    |
+ * |  e|       |c   |
+ * |   |_______|  DP|
+ * |       d      . |
+ * |________________|
+ *   | |   |   | |
+ *   e d  GND  c DP
  *
- * where G is ground, and the pins are ordered from the bottom up on the Nucleo
- * starting from the third CN9 pin (can't use the first two, PA3 and PA2,
- * because they are there for debugging).
  *
- * - 0: CN9 2 (PA10)
- * - 0: CN9 3 (PB3)
- * - 0: CN9 4 (PB5)
- * - 0: CN9 5 (PB4)
- * - 0: CN9 6 (PB10)
- * - 0: CN9 7 (PA8)
- * - 0: CN5 0 (PA9)
- * - 0: CN5 2 (PB6)
+ * Here is how I hooked the pins up. The pins are ordered from the top down on
+ * the Nucleo (note we can't use PA3 and PA2 because they are there for
+ * debugging). I chose PA and PB pins so we only needed two GPIO ports:
  *
- * The numbers above correspond to the segments:
- *
- *    ___5___
- *   |       |
- * 6 |       | 4
- *   |___7___|
- *   |       |
- * 3 |       | 1
- *   |_______|    0
- *       2        . (the bottom right dot thing)
- *
+ * - a: CN5 2 (PB6)
+ * - b: CN5 0 (PA9)
+ * - c: CN9 7 (PA8)
+ * - d: CN9 6 (PB10)
+ * - e: CN9 5 (PB4)
+ * - f: CN9 4 (PB5)
+ * - g: CN9 3 (PB3)
+ * - DP: CN9 2 (PA10)
 **/
 
 #include "tim2.h"
@@ -83,29 +78,29 @@ struct gpio_odr_port {
 
 // Ordered pins corresponding to numbers in the comment for this file
 struct gpio_odr_port gpio_odr_ports[8] = {
-	{ GPIOA, GPIO_ODR_OD10 },
-	{ GPIOB, GPIO_ODR_OD3 },
-	{ GPIOB, GPIO_ODR_OD5 },
-	{ GPIOB, GPIO_ODR_OD4 },
-	{ GPIOB, GPIO_ODR_OD10 },
-	{ GPIOA, GPIO_ODR_OD8 },
-	{ GPIOA, GPIO_ODR_OD9 },
 	{ GPIOB, GPIO_ODR_OD6 },
+	{ GPIOA, GPIO_ODR_OD9 },
+	{ GPIOA, GPIO_ODR_OD8 },
+	{ GPIOB, GPIO_ODR_OD10 },
+	{ GPIOB, GPIO_ODR_OD4 },
+	{ GPIOB, GPIO_ODR_OD5 },
+	{ GPIOB, GPIO_ODR_OD3 },
+	{ GPIOA, GPIO_ODR_OD10 },
 };
 
 // Segments to turn on for a given number (10 is the dot in the bottom right)
 bool glyphs[11][8] = {
-	{ 0, 1, 1, 1, 1, 1, 1, 0 }, // 0
-	{ 0, 1, 0, 0, 1, 0, 0, 0 }, // 1
-	{ 0, 0, 1, 1, 1, 1, 0, 1 }, // 2
-	{ 0, 1, 1, 0, 1, 1, 0, 1 }, // 3
-	{ 0, 1, 0, 0, 1, 0, 1, 1 }, // 4
-	{ 0, 1, 1, 0, 0, 1, 1, 1 }, // 5
-	{ 0, 1, 1, 1, 0, 1, 1, 1 }, // 6
-	{ 0, 1, 0, 0, 1, 1, 0, 0 }, // 7
-	{ 0, 1, 1, 1, 1, 1, 1, 1 }, // 8
-	{ 0, 1, 0, 0, 1, 1, 1, 1 }, // 9
-	{ 1, 0, 0, 0, 0, 0, 0, 0 }, // 10
+	{ 1, 1, 1, 1, 1, 1, 0, 0 }, // 0
+	{ 0, 1, 1, 0, 0, 0, 0, 0 }, // 1
+	{ 1, 1, 0, 1, 1, 0, 1, 0 }, // 2
+	{ 1, 1, 1, 1, 0, 0, 1, 0 }, // 3
+	{ 0, 1, 1, 0, 0, 1, 1, 0 }, // 4
+	{ 1, 0, 1, 1, 0, 1, 1, 0 }, // 5
+	{ 1, 0, 1, 1, 1, 1, 1, 0 }, // 6
+	{ 1, 1, 1, 0, 0, 0, 0, 0 }, // 7
+	{ 1, 1, 1, 1, 1, 1, 1, 0 }, // 8
+	{ 1, 1, 1, 0, 0, 1, 1, 0 }, // 9
+	{ 0, 0, 0, 0, 0, 0, 0, 1 }, // 10
 };
 
 void show_glyph(bool glyph[8])
