@@ -19,6 +19,7 @@ add_compile_options(-Wall)
 add_compile_options(-Werror)
 add_compile_options(-Wextra)
 add_compile_options(-Wshadow)
+add_compile_options(-Wextra)
 add_compile_options(-Wstack-usage=255) # Warn if stack is too large (in bytes)
 add_compile_options(-fanalyzer)
 # Leave behind intermediate artifacts. Super useful for debugging.
