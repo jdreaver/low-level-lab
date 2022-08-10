@@ -13,7 +13,7 @@ BUILD_TARGETS := $(addprefix build_,$(BUILD_DIRS))
 build: $(BUILD_TARGETS) ## Run cmake build (might require "make configure" first). Limit to one config w/ e.g. BUILD_CONFIGS=Release
 
 $(BUILD_TARGETS): build_%: $(BUILD_DIRS)
-	cmake --build $* ${BUILD_ARGS}
+	MAKEFLAGS=--no-print-directory cmake --build $* ${BUILD_ARGS}
 
 .PHONY: clean
 clean: ## Remove CMake build directories
