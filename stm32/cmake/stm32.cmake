@@ -40,3 +40,12 @@ function(stm32_print_size_of_target TARGET)
         DEPENDS ${TARGET}
     )
 endfunction()
+
+function(stm32_flash_target TARGET)
+    add_custom_target(${TARGET}_flash
+        COMMAND sudo st-flash write ${TARGET}.bin 0x8000000
+	COMMAND sudo st-flash reset
+        COMMENT "Flashing to STM32 board: "
+        DEPENDS ${TARGET}
+    )
+endfunction()

@@ -22,6 +22,7 @@ function(stm32_executable TARGET)
 
   stm32_generate_binary_file(${TARGET})
   stm32_print_size_of_target(${TARGET})
+  stm32_flash_target(${TARGET})
 endfunction()
 
 stm32_executable(blink)
