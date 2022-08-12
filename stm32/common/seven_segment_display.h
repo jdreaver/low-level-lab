@@ -32,9 +32,7 @@
 
 #pragma once
 
-#ifdef STM32F401xE
-
-#include "stm32f4xx.h"
+#include <stdint.h>
 
 enum seven_segment_display_segment {
 	SEVEN_SEGMENT_DISPLAY_SEGMENT_A,
@@ -79,7 +77,3 @@ void seven_segment_display_show_digit_glyph(struct seven_segment_display *displa
  * Turn on a given segment. Note: does not clear beforehand.
  */
 void seven_segment_display_show_segment(struct seven_segment_display *display, enum seven_segment_display_segment segment);
-
-#else
-  #error "Unknown board. Can't set up seven_segment_display.h"
-#endif

@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifdef STM32F401xE
-
 // Segments to turn on for a given number (10 is all of them).
 bool glyphs[SEVEN_SEGMENT_DISPLAY_NUM_GLYPHS][SEVEN_SEGMENT_DISPLAY_NUM_SEGMENTS] = {
 	{ 1, 1, 1, 1, 1, 1, 0, 0 }, // 0
@@ -48,8 +46,3 @@ void seven_segment_display_show_segment(struct seven_segment_display *display, e
 	struct segment_pin pin = display->segment_pins[segment];
 	*pin.reg |= pin.mask;
 }
-
-
-#else
-  #error "Unknown board. Can't set up seven_segment_display.c"
-#endif
