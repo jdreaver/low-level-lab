@@ -1,4 +1,5 @@
 add_library(common STATIC
+  seven_segment_display.c
   tim2.c
   usart2.c
   user_button.c

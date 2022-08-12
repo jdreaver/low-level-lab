@@ -12,30 +12,7 @@
  * Example inspired from
  * https://create.arduino.cc/projecthub/stannano/one-digit-7-segment-led-display-70b1a0
  *
- * My Elegoo kit came with a 5161AH. Data sheet here:
- * - http://www.xlitx.com/datasheet/5161AH.pdf
- * - http://www.lanpade.com/7-segment-led-dot-matrix/5161ah.html
- *
- * Good pinout diagram
- * (https://www.electronicsforu.com/resources/7-segment-display-pinout-understanding)
- * copied here. Lower case letters correspond to segments and DP (decimal
- * point), and GND is ground (note only one ground needs to be connected):
- *
- *   g f  GND  a b
- *  _|_|___|___|_|__
- * |                |
- * |    ___a___     |
- * |   |       |    |
- * |  f|       |b   |
- * |   |___g___|    |
- * |   |       |    |
- * |  e|       |c   |
- * |   |_______|  DP|
- * |       d      . |
- * |________________|
- *   | |   |   | |
- *   e d  GND  c DP
- *
+ * See seven_segment_display.h for pin diagram.
  *
  * Here is how I hooked the pins up. The pins are ordered from the top down on
  * the Nucleo (note we can't use PA3 and PA2 because they are there for
@@ -51,6 +28,7 @@
  * - DP: CN9 2 (PA10)
 **/
 
+#include "seven_segment_display.h"
 #include "tim2.h"
 #include "user_button.h"
 
@@ -70,50 +48,19 @@ enum visual_mode {
 
 volatile enum visual_mode current_mode = VISUAL_MODE_GLYPHS;
 
-// Simple tuple to hold ports so we can flip them
-struct gpio_odr_port {
-	GPIO_TypeDef *gpio_odr_reg;
-	uint32_t odr_mask;
-};
-
 // Ordered pins corresponding to numbers in the comment for this file
-struct gpio_odr_port gpio_odr_ports[8] = {
-	{ GPIOB, GPIO_ODR_OD6 },
-	{ GPIOA, GPIO_ODR_OD9 },
-	{ GPIOA, GPIO_ODR_OD8 },
-	{ GPIOB, GPIO_ODR_OD10 },
-	{ GPIOB, GPIO_ODR_OD4 },
-	{ GPIOB, GPIO_ODR_OD5 },
-	{ GPIOB, GPIO_ODR_OD3 },
-	{ GPIOA, GPIO_ODR_OD10 },
+struct seven_segment_display display = {
+	.segment_pins = {
+		{ &GPIOB->ODR, GPIO_ODR_OD6 },
+		{ &GPIOA->ODR, GPIO_ODR_OD9 },
+		{ &GPIOA->ODR, GPIO_ODR_OD8 },
+		{ &GPIOB->ODR, GPIO_ODR_OD10 },
+		{ &GPIOB->ODR, GPIO_ODR_OD4 },
+		{ &GPIOB->ODR, GPIO_ODR_OD5 },
+		{ &GPIOB->ODR, GPIO_ODR_OD3 },
+		{ &GPIOA->ODR, GPIO_ODR_OD10 },
+	},
 };
-
-// Segments to turn on for a given number (10 is the dot in the bottom right)
-bool glyphs[11][8] = {
-	{ 1, 1, 1, 1, 1, 1, 0, 0 }, // 0
-	{ 0, 1, 1, 0, 0, 0, 0, 0 }, // 1
-	{ 1, 1, 0, 1, 1, 0, 1, 0 }, // 2
-	{ 1, 1, 1, 1, 0, 0, 1, 0 }, // 3
-	{ 0, 1, 1, 0, 0, 1, 1, 0 }, // 4
-	{ 1, 0, 1, 1, 0, 1, 1, 0 }, // 5
-	{ 1, 0, 1, 1, 1, 1, 1, 0 }, // 6
-	{ 1, 1, 1, 0, 0, 0, 0, 0 }, // 7
-	{ 1, 1, 1, 1, 1, 1, 1, 0 }, // 8
-	{ 1, 1, 1, 0, 0, 1, 1, 0 }, // 9
-	{ 0, 0, 0, 0, 0, 0, 0, 1 }, // 10
-};
-
-void show_glyph(bool glyph[8])
-{
-	for (uint8_t segment = 0; segment < 8; segment++) {
-		struct gpio_odr_port port = gpio_odr_ports[segment];
-		if (glyph[segment]) {
-			port.gpio_odr_reg->ODR |= port.odr_mask;
-		} else {
-			port.gpio_odr_reg->ODR &= ~(port.odr_mask);
-		}
-	}
-}
 
 void start(void)
 {
@@ -158,16 +105,12 @@ void TIM2_IRQHandler(void)
         // Check the update flag. It'll be set every time the timer overflows
         if(TIM2->SR & TIM_SR_UIF) {
 		if (current_mode == VISUAL_MODE_GLYPHS) {
-			show_glyph(glyphs[counter]);
-			counter = (counter + 1) % 11;
+			seven_segment_display_show_digit_glyph(&display, counter);
+			counter = (counter + 1) % SEVEN_SEGMENT_DISPLAY_NUM_GLYPHS;
 		} else {
-			bool glyph[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-			for (uint8_t segment = 0; segment < 8; segment++) {
-				if (segment == counter)
-					glyph[segment] = 1;
-			}
-			show_glyph(glyph);
-			counter = (counter + 1) % 8;
+			seven_segment_display_clear(&display);
+			seven_segment_display_show_segment(&display, counter);
+			counter = (counter + 1) % SEVEN_SEGMENT_DISPLAY_NUM_SEGMENTS;
 		}
 
 		// Reset the flag, so that we can catch the next tick
