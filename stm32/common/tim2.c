@@ -2,6 +2,8 @@
 
 #ifdef STM32F401xE
 
+#include "system_clock.h"
+
 #include "stm32f4xx.h"
 
 // Set up prescaler values so we have a 1ms tick. Note that the TIMx_PSC
@@ -12,7 +14,7 @@
 // Default clock speed on STM32F401RE is 16MHz via the HSI clock source. We set
 // the prescalar value to 16000, which takes our 16 MHz clock down to 1000 Hz
 // ticks. This also lets us express the blink interval in integer milliseconds.
-#define PRESCALER_VALUE 16000
+#define PRESCALER_VALUE ((DEFAULT_SYSTEM_CLOCK_HZ) / 1000)
 
 void tim2_enable(void)
 {

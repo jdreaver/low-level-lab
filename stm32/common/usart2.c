@@ -2,11 +2,11 @@
 
 #ifdef STM32F401xE
 
+#include "system_clock.h"
+
 #include "stm32f4xx.h"
 
-// Default system clock is HSI clock source, which is 16MHz
 #define BAUD_RATE 9600
-#define DEFAULT_HSI_CLOCK_HZ 16000000UL
 
 void usart2_enable(void)
 {
@@ -32,7 +32,7 @@ void usart2_enable(void)
 	USART2->CR1 |= USART_CR1_RE; // Receiver enable
 
 	// Compute baud rate register
-	uint16_t uart_div = DEFAULT_HSI_CLOCK_HZ / BAUD_RATE;
+	uint16_t uart_div = DEFAULT_SYSTEM_CLOCK_HZ / BAUD_RATE;
 	uint16_t brr = (uart_div / 16) << USART_BRR_DIV_Mantissa_Pos;
 	brr |= (uart_div % 16) << USART_BRR_DIV_Fraction_Pos;
 	USART2->BRR = brr;
