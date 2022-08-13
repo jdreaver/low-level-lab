@@ -33,4 +33,6 @@ struct hd44780u_lcd {
 	struct hd44780u_lcd_pin data_pins[HD44780U_LCD_NUM_DATA_PINS]; ///< DB4-DB7 (just higher order in 4 bit mode)
 };
 
-void hd44780u_init(struct hd44780u_lcd *lcd);
+void hd44780u_lcd_init(struct hd44780u_lcd *lcd);
+void hd44780u_lcd_clear(struct hd44780u_lcd *lcd);
+void hd44780u_lcd_write_string(struct hd44780u_lcd *lcd, char *str);

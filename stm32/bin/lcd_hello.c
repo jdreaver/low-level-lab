@@ -37,5 +37,8 @@ void start(void)
 
 	usart2_enable();
 	systick_enable_passive();
-	hd44780u_init(&lcd);
+
+	hd44780u_lcd_init(&lcd);
+	hd44780u_lcd_write_string(&lcd, "Hello,");
+	hd44780u_lcd_write_string(&lcd, " Bob!");
 }
