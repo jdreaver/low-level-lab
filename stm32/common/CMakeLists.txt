@@ -1,4 +1,5 @@
 add_library(common STATIC
+  hd44780u_lcd.h
   seven_segment_display.c
   tim2.c
   usart2.c
