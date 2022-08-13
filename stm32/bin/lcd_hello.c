@@ -18,18 +18,18 @@
 
 struct hd44780u_lcd lcd = {
 	.delay_microseconds_fn = systick_delay_microseconds,
-	.rs_pin = make_lcd_pin(C, 11),
-	.rw_pin = make_lcd_pin(C, 10),
-	.e_pin = make_lcd_pin(C, 12),
+	.rs_pin = make_lcd_pin(B, 9), // TODO: PB9 might be special
+	.rw_pin = make_lcd_pin(A, 6),
+	.e_pin = make_lcd_pin(A, 7),
 	.data_pins = {
-		make_lcd_pin(A, 13),
-		make_lcd_pin(A, 14),
-		make_lcd_pin(A, 15),
-		make_lcd_pin(C, 2),
-		make_lcd_pin(C, 1),
-		make_lcd_pin(C, 3),
-		make_lcd_pin(C, 0),
-		make_lcd_pin(C, 7),
+		make_lcd_pin(B, 6),
+		make_lcd_pin(A, 9),
+		make_lcd_pin(A, 8),
+		make_lcd_pin(B, 10),
+		make_lcd_pin(B, 4),
+		make_lcd_pin(B, 5),
+		make_lcd_pin(B, 3),
+		make_lcd_pin(A, 10),
 	},
 };
 
@@ -37,7 +37,7 @@ void start(void)
 {
 	// Enable GPIO ports
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
 	usart2_enable();
 	systick_enable_passive();

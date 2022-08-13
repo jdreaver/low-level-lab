@@ -17,6 +17,24 @@ board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
 - https://www.st.com/en/microcontrollers-microprocessors/stm32f401re.html#documentation
   STMF401RE docs (datasheet, reference manual, programming manual, etc)
 
+## STM32F401RE Special Pins
+
+I generally avoid these pins because they are special:
+
+- PA5: User LED
+- PA2/PA3: Used for UART and ST-Link (PA2 is `USART2_RX`, PA3 is `USART2_TX`)
+- PB3: JTDO in floating state
+- PB4: NJTRST in pull-up
+- PA0/PA1/PA4/PB0/PC1/PB9/PC0/PB8: These are on the CN8 analog connector.
+- PC14/PC15: These can be GPIO or LSE pins, but I noticed when I used them as
+  GPIO pins I saw a faint voltage even when LSEON was unset.
+  - PC13 also seems fishy
+- PA13/PA14: PA13 and PA14 share with SWD signals connected to ST-LINK/V2-1, it
+  is not recommended to use them as IO pins if the ST-LINK part is not cut.
+  - PA15: JTDI in pull-up
+  - PA14: JTCK/SWCLK in pull-down
+  - PA13: JTMS/SWDAT in pull-up
+
 ## Debugging
 
 1. Make sure to compile with `-g3 -ggdb3 -O0` and all that jazz
