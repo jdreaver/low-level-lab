@@ -13,19 +13,24 @@
 /**
  * Memory location and mask used to set pin value for register.
  */
-struct hd4478u_lcd_pin {
-	volatile uint32_t *reg;
-	uint32_t mask;
+struct hd44780u_lcd_pin {
+	volatile uint32_t *mode_reg;
+	uint32_t mode_reg_clear_mask;
+	uint32_t mode_reg_output_mask;
+	uint32_t mode_reg_input_mask;
+
+	volatile uint32_t *output_data_reg;
+	uint32_t output_data_reg_mask;
 };
 
-#define HD4478U_LCD_NUM_DATA_PINS 8
+#define HD44780U_LCD_NUM_DATA_PINS 8
 
-/**
- * Struct containing pin definitions for HD4478U LCD.
- */
-struct hd4478u_lcd {
-	struct hd4478u_lcd_pin rs_pin; ///< Register select (0 == instruction, 1 == data)
-	struct hd4478u_lcd_pin rw_pin; ///< Read/Write (0 == write, 1 == read)
-	struct hd4478u_lcd_pin e_pin;  ///< Enable (1 == start data read/write, 0 == end it)
-	struct hd4478u_lcd_pin data_pins[HD4478U_LCD_NUM_DATA_PINS];
+struct hd44780u_lcd {
+	void (*delay_microseconds_fn)(uint32_t microseconds);
+	struct hd44780u_lcd_pin rs_pin; ///< Register select (0 == instruction, 1 == data)
+	struct hd44780u_lcd_pin rw_pin; ///< Read/Write (0 == write, 1 == read)
+	struct hd44780u_lcd_pin e_pin;  ///< Enable (1 == start data read/write, 0 == end it)
+	struct hd44780u_lcd_pin data_pins[HD44780U_LCD_NUM_DATA_PINS];
 };
+
+void hd44780u_init(struct hd44780u_lcd *lcd);

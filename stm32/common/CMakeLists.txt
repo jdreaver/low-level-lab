@@ -1,5 +1,5 @@
 add_library(common STATIC
-  hd44780u_lcd.h
+  hd44780u_lcd.c
   seven_segment_display.c
   system_clock.c
   tim2.c

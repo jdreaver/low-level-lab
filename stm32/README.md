@@ -118,10 +118,9 @@ table.
 
 - Use LCD
   - https://www.playembedded.org/blog/hd44780-lcdii-and-chibioshal/
-  - https://www.playembedded.org/blog/wp-content/uploads/2016/04/Datasheet_HD44780.pdf
+  - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
   - https://github.com/Matiasus/HD44780
   - https://github.com/murar8/stm32-HD44780
-  - https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 - Build system
   - (See TODOs in CMakeLists.txt files)
   - Make the Makefile variable API more palatable, or just calling
