@@ -38,11 +38,11 @@ void hd44780u_send_bits(struct hd44780u_lcd *lcd, uint8_t data)
 
 	// Total E cycle time is recorded as 1 microsecond, but we add extra
 	// waits to be safe.
-	lcd->delay_microseconds_fn(1);
+	lcd->delay_microseconds_fn(1000);
 	hd44780u_lcd_pin_set_value(&lcd->e_pin, true);
-	lcd->delay_microseconds_fn(1);
+	lcd->delay_microseconds_fn(1000);
 	hd44780u_lcd_pin_set_value(&lcd->e_pin, false);
-	lcd->delay_microseconds_fn(1);
+	lcd->delay_microseconds_fn(1000);
 }
 
 void hd44780u_send_instruction(struct hd44780u_lcd *lcd, uint8_t instruction)
@@ -59,44 +59,61 @@ void hd44780u_send_data(struct hd44780u_lcd *lcd, uint8_t data)
 	hd44780u_send_bits(lcd, data);
 }
 
+void hd44780u_clear(struct hd44780u_lcd *lcd)
+{
+	// 0 0 0 0 0 0 0 1 Clears entire display and sets DDRAM address 0 in
+	// address counter.
+	hd44780u_send_instruction(lcd, 1);
+	lcd->delay_microseconds_fn(1000 * 1);
+}
+
+void hd44780u_config_entry_mode(struct hd44780u_lcd *lcd, bool move_direction, bool shift)
+{
+	// 0 0 0 0 0 1 I/D S Sets cursor move direction (I/D) and specifies
+	// display shift (S). These operations are performed during data write
+	// and read.
+	uint8_t value = (1 << 2) | (move_direction << 1) | (shift << 0);
+	hd44780u_send_instruction(lcd, value);
+
+	// Wait at least 37 microseconds
+	lcd->delay_microseconds_fn(1000);
+}
+
+void hd44780u_config_function_set(struct hd44780u_lcd *lcd)
+{
+	// 0 0 1 DL N F — — Sets interface data length (DL), number of display
+	// lines (N), and character font (F).
+	//
+	// DL == 1: 8 bits (we want this)
+	// DL == 0: 4 bits
+	// If N is 1, then F doesn't matter (it is set to 5x8 dots)
+	//
+	// Given these values, we want DL = 1, N = 1, and F doesn't matter
+	bool data_length = true;
+	bool display_lines = true;
+	bool font = false;
+
+	uint8_t value = (1 << 5) | (data_length << 4) | (display_lines << 3) | (font << 2);
+	hd44780u_send_instruction(lcd, value);
+	lcd->delay_microseconds_fn(37);
+}
+
+
 void hd44780u_config_display_on_off_control(struct hd44780u_lcd *lcd, bool display, bool cursor, bool blinking)
 {
 	// 0 0 0 0 1 D C B: Sets entire display (D) on/off, cursor on/off
 	// (C), and blinking of cursor position character (B)
 	uint8_t value = (1 << 3) | (display << 2) | (cursor << 1) | (blinking << 0);
 	hd44780u_send_instruction(lcd, value);
-	lcd->delay_microseconds_fn(37);
+
+	// Wait at least 37 microseconds
+	lcd->delay_microseconds_fn(1000);
 }
 
 void hd44780u_init(struct hd44780u_lcd *lcd)
 {
-	// Defaults from the data sheet:
-	//
-	// Initializing by Internal Reset Circuit
-	//
-	// An internal reset circuit automatically initializes the HD44780U when
-	// the power is turned on. The following instructions are executed
-	// during the initialization. The busy flag (BF) is kept in the busy
-	// state until the initialization ends (BF = 1). The busy state lasts
-	// for 10 ms after VCC rises to 4.5 V.
-	//
-	// 1. Display clear
-	// 2. Function set:
-	//    DL = 1; 8-bit interface data
-	//    N = 0; 1-line display
-	//    F = 0; 5 × 8 dot character font
-	// 3. Display on/off control:
-	//    D = 0; Display off
-	//    C = 0; Cursor off
-	//    B = 0; Blinking off
-	// 4. Entry mode set:
-	//    I/D = 1; Increment by 1
-	//    S = 0; No shift
-
-	// Wait 10ms for initialization. (We could read busy flag here, but this
-	// is easier).
-	//lcd->delay_microseconds_fn(1000 * 10);
-	lcd->delay_microseconds_fn(1000 * 100);
+	// Wait for more than 15 ms after V CC rises to 4.5 V
+	lcd->delay_microseconds_fn(1000 * 30);
 
 	// Initial pin configs. These pins are always outputs.
 	hd44780u_lcd_pin_config_output(&lcd->rs_pin);
@@ -108,7 +125,30 @@ void hd44780u_init(struct hd44780u_lcd *lcd)
 	// Set data pins as output for now
 	hd44780u_config_data_pins_output(lcd);
 
-	// TODO: Do all of the reset stuff manually
+	// Function set
+	hd44780u_config_function_set(lcd);
+
+	// Wait for more than 4.1 ms
+	lcd->delay_microseconds_fn(1000 * 6);
+
+	// Function set
+	hd44780u_config_function_set(lcd);
+
+	// Wait for more than 100 μs
+	lcd->delay_microseconds_fn(1000);
+
+	// Function set
+	hd44780u_config_function_set(lcd);
+
+	// Display off
+	hd44780u_config_display_on_off_control(lcd, false, false, false);
+
+	// Display clear
+	hd44780u_clear(lcd);
+
+	// Entry mode set
+	hd44780u_config_entry_mode(lcd, true, false);
+
 	// Initial config
 	hd44780u_config_display_on_off_control(lcd, true, true, true);
 
