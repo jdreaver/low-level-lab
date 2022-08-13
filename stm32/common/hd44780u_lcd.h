@@ -3,7 +3,7 @@
  *
  * Data sheet: https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
  *
- * Assumes 8 bit operation mode, not 4 bit.
+ * Assumes 4 bit operation mode to save GPIO pins.
 **/
 
 #pragma once
@@ -23,14 +23,14 @@ struct hd44780u_lcd_pin {
 	uint32_t output_data_reg_mask;
 };
 
-#define HD44780U_LCD_NUM_DATA_PINS 8
+#define HD44780U_LCD_NUM_DATA_PINS 4
 
 struct hd44780u_lcd {
 	void (*delay_microseconds_fn)(uint32_t microseconds);
 	struct hd44780u_lcd_pin rs_pin; ///< Register select (0 == instruction, 1 == data)
 	struct hd44780u_lcd_pin rw_pin; ///< Read/Write (0 == write, 1 == read)
 	struct hd44780u_lcd_pin e_pin;  ///< Enable (1 == start data read/write, 0 == end it)
-	struct hd44780u_lcd_pin data_pins[HD44780U_LCD_NUM_DATA_PINS];
+	struct hd44780u_lcd_pin data_pins[HD44780U_LCD_NUM_DATA_PINS]; ///< DB4-DB7 (just higher order in 4 bit mode)
 };
 
 void hd44780u_init(struct hd44780u_lcd *lcd);

@@ -30,12 +30,8 @@ void hd44780u_lcd_pin_set_value(struct hd44780u_lcd_pin *pin, bool value)
 		*(pin->output_data_reg) &= ~(pin->output_data_reg_mask);
 }
 
-void hd44780u_send_bits(struct hd44780u_lcd *lcd, uint8_t data)
+void e_pin_cycle(struct hd44780u_lcd *lcd)
 {
-	// Set data lines. Assumes pins are already set to be output!
-	for (size_t i = 0; i < HD44780U_LCD_NUM_DATA_PINS; i++)
-		hd44780u_lcd_pin_set_value(&lcd->data_pins[i], data & (1 << i));
-
 	// Total E cycle time is recorded as 1 microsecond, but we add extra
 	// waits to be safe.
 	lcd->delay_microseconds_fn(1000);
@@ -45,25 +41,42 @@ void hd44780u_send_bits(struct hd44780u_lcd *lcd, uint8_t data)
 	lcd->delay_microseconds_fn(1000);
 }
 
-void hd44780u_send_instruction(struct hd44780u_lcd *lcd, uint8_t instruction)
+void hd44780u_send_bits(struct hd44780u_lcd *lcd, uint8_t data, bool is_4_bit)
+{
+	// NOTE: Assumes pins are already set to be output!
+
+	// Higher order bits first
+	for (size_t i = 0; i < HD44780U_LCD_NUM_DATA_PINS; i++)
+		hd44780u_lcd_pin_set_value(&lcd->data_pins[i], data & (1 << (i + 4)));
+	e_pin_cycle(lcd);
+
+	// Lower order bits
+	if (is_4_bit) {
+		for (size_t i = 0; i < HD44780U_LCD_NUM_DATA_PINS; i++)
+			hd44780u_lcd_pin_set_value(&lcd->data_pins[i], data & (1 << i));
+		e_pin_cycle(lcd);
+	}
+}
+
+void hd44780u_send_instruction(struct hd44780u_lcd *lcd, uint8_t instruction, bool is_4_bit)
 {
 	hd44780u_lcd_pin_set_value(&lcd->rs_pin, true); // Data register
 	hd44780u_lcd_pin_set_value(&lcd->rw_pin, false); // Write register
-	hd44780u_send_bits(lcd, instruction);
+	hd44780u_send_bits(lcd, instruction, is_4_bit);
 }
 
 void hd44780u_send_data(struct hd44780u_lcd *lcd, uint8_t data)
 {
 	hd44780u_lcd_pin_set_value(&lcd->rs_pin, false); // Instruction register
 	hd44780u_lcd_pin_set_value(&lcd->rw_pin, false); // Write register
-	hd44780u_send_bits(lcd, data);
+	hd44780u_send_bits(lcd, data, true);
 }
 
 void hd44780u_clear(struct hd44780u_lcd *lcd)
 {
 	// 0 0 0 0 0 0 0 1 Clears entire display and sets DDRAM address 0 in
 	// address counter.
-	hd44780u_send_instruction(lcd, 1);
+	hd44780u_send_instruction(lcd, 1, true);
 	lcd->delay_microseconds_fn(1000 * 1);
 }
 
@@ -73,28 +86,28 @@ void hd44780u_config_entry_mode(struct hd44780u_lcd *lcd, bool move_direction, b
 	// display shift (S). These operations are performed during data write
 	// and read.
 	uint8_t value = (1 << 2) | (move_direction << 1) | (shift << 0);
-	hd44780u_send_instruction(lcd, value);
+	hd44780u_send_instruction(lcd, value, true);
 
 	// Wait at least 37 microseconds
 	lcd->delay_microseconds_fn(1000);
 }
 
-void hd44780u_config_function_set(struct hd44780u_lcd *lcd)
+void hd44780u_config_function_set(struct hd44780u_lcd *lcd, bool is_4_bit)
 {
 	// 0 0 1 DL N F — — Sets interface data length (DL), number of display
 	// lines (N), and character font (F).
 	//
-	// DL == 1: 8 bits (we want this)
-	// DL == 0: 4 bits
+	// DL == 1: 8 bits
+	// DL == 0: 4 bits (we want this)
 	// If N is 1, then F doesn't matter (it is set to 5x8 dots)
 	//
 	// Given these values, we want DL = 1, N = 1, and F doesn't matter
-	bool data_length = true;
+	bool data_length = false;
 	bool display_lines = true;
 	bool font = false;
 
 	uint8_t value = (1 << 5) | (data_length << 4) | (display_lines << 3) | (font << 2);
-	hd44780u_send_instruction(lcd, value);
+	hd44780u_send_instruction(lcd, value, is_4_bit);
 	lcd->delay_microseconds_fn(37);
 }
 
@@ -104,7 +117,7 @@ void hd44780u_config_display_on_off_control(struct hd44780u_lcd *lcd, bool displ
 	// 0 0 0 0 1 D C B: Sets entire display (D) on/off, cursor on/off
 	// (C), and blinking of cursor position character (B)
 	uint8_t value = (1 << 3) | (display << 2) | (cursor << 1) | (blinking << 0);
-	hd44780u_send_instruction(lcd, value);
+	hd44780u_send_instruction(lcd, value, true);
 
 	// Wait at least 37 microseconds
 	lcd->delay_microseconds_fn(1000);
@@ -125,20 +138,23 @@ void hd44780u_init(struct hd44780u_lcd *lcd)
 	// Set data pins as output for now
 	hd44780u_config_data_pins_output(lcd);
 
-	// Function set
-	hd44780u_config_function_set(lcd);
+	// Function set (8 bit)
+	hd44780u_config_function_set(lcd, false);
 
 	// Wait for more than 4.1 ms
 	lcd->delay_microseconds_fn(1000 * 6);
 
-	// Function set
-	hd44780u_config_function_set(lcd);
+	// Function set (8 bit)
+	hd44780u_config_function_set(lcd, false);
 
 	// Wait for more than 100 μs
 	lcd->delay_microseconds_fn(1000);
 
-	// Function set
-	hd44780u_config_function_set(lcd);
+	// Function set (8 bit)
+	hd44780u_config_function_set(lcd, false);
+
+	// Function set (4 bit)
+	hd44780u_config_function_set(lcd, true);
 
 	// Display off
 	hd44780u_config_display_on_off_control(lcd, false, false, false);
