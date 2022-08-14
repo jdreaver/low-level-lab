@@ -9,7 +9,6 @@ add_library(common STATIC
   vector_table.c
 )
 
-# TODO: I wish headers weren't separate INTERFACE library from above STATIC
-# library
-add_library(common_interface INTERFACE)
-target_include_directories(common_interface INTERFACE .)
+# This tells any target that depends on this library to include this directory
+# to search for headers.
+target_include_directories(common INTERFACE .)

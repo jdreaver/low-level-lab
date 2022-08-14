@@ -3,7 +3,7 @@ cmake_path(SET linker_script "${CMAKE_SOURCE_DIR}/common/linker.ld")
 function(stm32_executable TARGET)
   # Create executable
   add_executable(${TARGET} "${TARGET}.c")
-  target_link_libraries(${TARGET} PRIVATE common common_interface vendor)
+  target_link_libraries(${TARGET} PRIVATE common vendor)
 
   # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
   target_link_options(${TARGET} PRIVATE -Wl,--gc-sections)
