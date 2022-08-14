@@ -9,12 +9,12 @@
 #include <stddef.h>
 
 #define make_lcd_pin(gpio, num) { \
-	.mode_reg = &GPIO ## gpio->MODER, \
-	.mode_reg_clear_mask = ~(GPIO_MODER_MODE ## num ## _0 | GPIO_MODER_MODE ## num ## _1), \
-	.mode_reg_output_mask = GPIO_MODER_MODE ## num ## _0,		\
-	.mode_reg_input_mask = 0,					\
-	.output_data_reg = &GPIO ## gpio->ODR,			\
-	.output_data_reg_mask = GPIO_ODR_OD ## num,			\
+		.mode_reg = &GPIO ## gpio->MODER,			\
+		.mode_reg_clear_mask = ~(GPIO_MODER_MODE ## num ## _0 | GPIO_MODER_MODE ## num ## _1), \
+		.mode_reg_output_mask = GPIO_MODER_MODE ## num ## _0,	\
+		.mode_reg_input_mask = 0,				\
+		.output_data_reg = &GPIO ## gpio->ODR,			\
+		.output_data_reg_mask = GPIO_ODR_OD ## num,		\
 	}
 
 struct hd44780u_lcd lcd = {
