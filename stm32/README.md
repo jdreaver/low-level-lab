@@ -134,6 +134,17 @@ table.
 
 ## TODO
 
+- Create snake game w/ OLED screen and joystick. Could put score/status on LCD
+  screen so we have more space for actual game (or put score/status on yellow
+  part, game on blue part)
+  - https://www.uctronics.com/tools-and-accessories/electrical-testing-tools/uctronics-0-96-inch-oled-module-12864-128x64-yellow-blue-ssd1306-driver-i2c-serial-self-luminous-display-board-for-arduino-raspberry-pi.html
+    - https://www.uctronics.com/download/Amazon/U602602.pdf
+  - https://github.com/UCTRONICS/SSD1306
+  - Might be actual datasheet?
+    https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+  - Good example library (for Arduino) https://github.com/greiman/SSD1306Ascii
+  - Another great library from Adafruit (again, Arduino)
+    https://github.com/adafruit/Adafruit_SSD1306
 - Build system
   - (See TODOs in CMakeLists.txt files)
   - Read about CMake modules and consider putting more function definitions in
