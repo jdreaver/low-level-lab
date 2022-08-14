@@ -136,8 +136,6 @@ table.
 
 - Build system
   - (See TODOs in CMakeLists.txt files)
-  - Make the Makefile variable API more palatable, or just calling
-    cmake directly w/ autocomplete if possible.
   - Read about CMake modules and consider putting more function definitions in
     `cmake/`
   - Consider having platform/board-dependent code in separate subdirectories

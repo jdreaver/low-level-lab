@@ -21,7 +21,11 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 set(BOARD_NAME "STM32F401xE" CACHE STRING "Name of target board")
 set(MCPU "cortex-m4" CACHE STRING "Name of target CPU")
 add_compile_definitions(${BOARD_NAME})
-set(CMAKE_C_FLAGS_INIT "-mthumb -mthumb-interwork -mcpu=${MCPU}")
+# N.B. The combination of both --specs tells the compiler to use newlib-nano,
+# which has a much, much smaller code size (it is compiled with -Os, among other
+# optimizations). As a data point, a simple program with printf goes from over
+# 31kB to about 5kB.
+set(CMAKE_C_FLAGS_INIT "-mthumb -mthumb-interwork -mcpu=${MCPU} --specs=nano.specs --specs=nosys.specs")
 
 function(stm32_generate_binary_file TARGET)
     add_custom_command(

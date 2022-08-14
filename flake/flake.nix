@@ -121,9 +121,13 @@
           # pkgsCross.arm-embedded.buildPackages.gcc. When I tried to use that
           # on my STM32, newlib was super funky (objdump said memcpy was using
           # 32 bit instructions, but gdb said they were thumb, and we were
-          # jumping to weird memory locations).
-          stlink # To flash to board
+          # jumping to weird memory locations). See
+          # https://github.com/NixOS/nixpkgs/issues/51907
+          #
+          # Note that gcc-arm-embedded is the upstream ARM fork of gcc, and
+          # includes newlib-nano.
           gcc-arm-embedded
+          stlink # To flash to board
         ];
       };
     };

@@ -5,8 +5,6 @@ function(stm32_executable TARGET)
   add_executable(${TARGET} "${TARGET}.c")
   target_link_libraries(${TARGET} PRIVATE common common_interface vendor)
 
-  # Link options
-  target_link_options(${TARGET} PRIVATE --specs=nosys.specs)
   # Clean up unused sections, particularly from -ffunction-sections -fdata-sections
   target_link_options(${TARGET} PRIVATE -Wl,--gc-sections)
   target_link_options(${TARGET} PRIVATE -lgcc)
