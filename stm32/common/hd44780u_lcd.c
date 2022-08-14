@@ -32,13 +32,17 @@ void hd44780u_lcd_pin_set_value(struct hd44780u_lcd_pin *pin, bool value)
 
 void e_pin_cycle(struct hd44780u_lcd *lcd)
 {
-	// Total E cycle time is recorded as 1 microsecond, but we add extra
-	// waits to be safe.
-	lcd->delay_microseconds_fn(1000);
+	// Total E cycle time is recorded as 1 microsecond total, but we add
+	// extra waits to be safe. Anything less than 500 shows garbage data for
+	// some reason.
+	//
+	// TODO: Use the Busy Flag (BF) throughout this module more, and then I
+	// bet we can lower these delays.
+	lcd->delay_microseconds_fn(50);
 	hd44780u_lcd_pin_set_value(&lcd->e_pin, true);
-	lcd->delay_microseconds_fn(1000);
+	lcd->delay_microseconds_fn(500);
 	hd44780u_lcd_pin_set_value(&lcd->e_pin, false);
-	lcd->delay_microseconds_fn(1000);
+	lcd->delay_microseconds_fn(500);
 }
 
 void hd44780u_send_bits(struct hd44780u_lcd *lcd, uint8_t data, bool is_4_bit)
@@ -68,6 +72,7 @@ void hd44780u_send_instruction(struct hd44780u_lcd *lcd, uint8_t instruction, bo
 void hd44780u_send_data(struct hd44780u_lcd *lcd, uint8_t data)
 {
 	hd44780u_lcd_pin_set_value(&lcd->rs_pin, true); // Data register
+	lcd->delay_microseconds_fn(50);
 	hd44780u_lcd_pin_set_value(&lcd->rw_pin, false); // Write
 	hd44780u_send_bits(lcd, data, true);
 }
@@ -89,7 +94,7 @@ void hd44780u_config_entry_mode(struct hd44780u_lcd *lcd, bool move_direction, b
 	hd44780u_send_instruction(lcd, value, true);
 
 	// Wait at least 37 microseconds
-	lcd->delay_microseconds_fn(1000);
+	lcd->delay_microseconds_fn(50);
 }
 
 void hd44780u_config_function_set(struct hd44780u_lcd *lcd, bool set_8_bit, bool is_4_bit)
@@ -120,7 +125,7 @@ void hd44780u_config_display_on_off_control(struct hd44780u_lcd *lcd, bool displ
 	hd44780u_send_instruction(lcd, value, true);
 
 	// Wait at least 37 microseconds
-	lcd->delay_microseconds_fn(1000);
+	lcd->delay_microseconds_fn(50);
 }
 
 void hd44780u_lcd_init(struct hd44780u_lcd *lcd)
@@ -148,7 +153,7 @@ void hd44780u_lcd_init(struct hd44780u_lcd *lcd)
 	hd44780u_config_function_set(lcd, true, false);
 
 	// Wait for more than 100 μs
-	lcd->delay_microseconds_fn(1000);
+	lcd->delay_microseconds_fn(200);
 
 	// Function set (8 bit)
 	hd44780u_config_function_set(lcd, true, false);
