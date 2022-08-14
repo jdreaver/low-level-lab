@@ -1,9 +1,12 @@
 /**
  * HD44780U LCD driver module.
  *
- * Data sheet: https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
- *
  * Assumes 4 bit operation mode to save GPIO pins.
+ *
+ * Resources:
+ * - Data sheet: https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
+ * - Implementation: https://github.com/Matiasus/HD44780
+ * - Another implementation: https://github.com/murar8/stm32-HD44780
 **/
 
 #pragma once
