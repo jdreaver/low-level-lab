@@ -39,6 +39,7 @@ char *messages[] = {
 #define NUM_MESSAGES (sizeof messages / sizeof messages[0]);
 
 volatile size_t message_index = 0;
+volatile size_t counter = 0;
 
 int _write(__attribute__((unused)) int handle, char* data, int size) {
 	int count = size;
@@ -57,6 +58,10 @@ void refresh_message(void)
 	// Note: this also works with NULL instead of stdout because we aren't
 	// actually using stdout. Also, perhaps we might want to disable
 	// buffering entirely with setbuf(stdout, NULL);
+	fflush(stdout);
+
+	hd44780u_lcd_move_to_second_line(&lcd);
+	printf("Counter: %d", counter);
 	fflush(stdout);
 }
 
@@ -80,6 +85,7 @@ void EXTI15_10_IRQHandler(void) {
 
 		// Pick next message
 		message_index = (message_index + 1) % NUM_MESSAGES;
+		counter += 1;
 		refresh_message();
 	}
 }

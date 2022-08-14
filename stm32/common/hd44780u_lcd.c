@@ -182,3 +182,19 @@ void hd44780u_lcd_write_string(struct hd44780u_lcd *lcd, char *str)
 	while (*str)
 		hd44780u_lcd_write_char(lcd, *(str++));
 }
+
+void hd44780u_lcd_set_address_counter(struct hd44780u_lcd *lcd, uint8_t address)
+{
+	// 1 ADD ADD ADD ADD ADD ADD ADD Sets DDRAM address. DDRAM data is sent
+	// and received after this setting.
+	uint8_t instruction = 0b10000000 | address;
+	hd44780u_send_instruction(lcd, instruction, true);
+	// Wait at least 37 microseconds
+	lcd->delay_microseconds_fn(50);
+}
+
+void hd44780u_lcd_move_to_second_line(struct hd44780u_lcd *lcd)
+{
+	// In a two line display, the second line starts at address 0x40.
+	hd44780u_lcd_set_address_counter(lcd, 0x40);
+}
