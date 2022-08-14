@@ -35,4 +35,5 @@ struct hd44780u_lcd {
 
 void hd44780u_lcd_init(struct hd44780u_lcd *lcd);
 void hd44780u_lcd_clear(struct hd44780u_lcd *lcd);
+void hd44780u_lcd_write_char(struct hd44780u_lcd *lcd, char c);
 void hd44780u_lcd_write_string(struct hd44780u_lcd *lcd, char *str);

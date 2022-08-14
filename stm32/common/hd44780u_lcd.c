@@ -172,8 +172,13 @@ void hd44780u_lcd_init(struct hd44780u_lcd *lcd)
 	hd44780u_config_display_on_off_control(lcd, true, true, true);
 }
 
+void hd44780u_lcd_write_char(struct hd44780u_lcd *lcd, char c)
+{
+	hd44780u_send_data(lcd, c);
+}
+
 void hd44780u_lcd_write_string(struct hd44780u_lcd *lcd, char *str)
 {
 	while (*str)
-		hd44780u_send_data(lcd, *(str++));
+		hd44780u_lcd_write_char(lcd, *(str++));
 }

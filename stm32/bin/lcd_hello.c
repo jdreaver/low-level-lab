@@ -7,6 +7,7 @@
 #include "user_button.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 #define make_lcd_pin(gpio, num) { \
 		.mode_reg = &GPIO ## gpio->MODER,			\
@@ -39,10 +40,24 @@ char *messages[] = {
 
 volatile size_t message_index = 0;
 
+int _write(__attribute__((unused)) int handle, char* data, int size) {
+	int count = size;
+	while(count--) {
+		hd44780u_lcd_write_char(&lcd, *data++);
+	}
+	return size;
+}
+
 void refresh_message(void)
 {
 	hd44780u_lcd_clear(&lcd);
-	hd44780u_lcd_write_string(&lcd, messages[message_index]);
+	printf("%s", messages[message_index]);
+	// fflush is necessary b/c printf will buffer without a newline.
+	//
+	// Note: this also works with NULL instead of stdout because we aren't
+	// actually using stdout. Also, perhaps we might want to disable
+	// buffering entirely with setbuf(stdout, NULL);
+	fflush(stdout);
 }
 
 void start(void)
