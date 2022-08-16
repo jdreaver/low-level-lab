@@ -145,6 +145,7 @@ table.
   - Good example library (for Arduino) https://github.com/greiman/SSD1306Ascii
   - Another great library from Adafruit (again, Arduino)
     https://github.com/adafruit/Adafruit_SSD1306
+- Get bigger display, like https://www.amazon.com/dp/B073R7Q8FF
 - Build system
   - (See TODOs in CMakeLists.txt files)
   - Read about CMake modules and consider putting more function definitions in
