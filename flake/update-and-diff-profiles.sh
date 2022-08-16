@@ -4,14 +4,38 @@
 
 set -eu
 
-rm -f old-profile new-profile
+shell_names=$(nix eval --impure --expr 'builtins.attrNames (builtins.getFlake (toString ./.)).outputs.devShells.x86_64-linux' --json | jq .[] -r)
 
-nix build .#devShells.x86_64-linux.default --out-link ./old-profile
+generate_profile() {
+    shell=$1
+    profile_prefix=$2
 
+    profile_name="profile-${profile_prefix}-${shell}"
+    rm -f "$profile_name"
+
+    nix build ".#devShells.x86_64-linux.$shell" --out-link "./$profile_name"
+}
+
+for shell in $shell_names; do
+    echo "Generating old profile for shell: $shell"
+    generate_profile "$shell" old
+done
+
+echo "Updating flake"
 nix flake update
 
-nix build .#devShells.x86_64-linux.default --out-link ./new-profile
+for shell in $shell_names; do
+    echo "Generating new profile for shell: $shell"
+    generate_profile "$shell" new
+done
 
-nix store diff-closures ./old-profile ./new-profile
+for shell in $shell_names; do
+    echo "Diff for shell: $shell"
 
-rm -f old-profile new-profile
+    old_profile="profile-old-$shell"
+    new_profile="profile-new-$shell"
+
+    nix store diff-closures "./$old_profile" "./$new_profile"
+
+    rm -f "$old_profile" "$new_profile"
+done
