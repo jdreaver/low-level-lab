@@ -134,7 +134,6 @@ table.
 
 ## TODO
 
-- Increase USART baud rate
 - Make an I2C scanner
   - https://learn.adafruit.com/scanning-i2c-addresses/arduino
   - Good video on STM32 I2C without HAL https://www.youtube.com/watch?v=usvAIEdp_I8&list=PLfIJKC1ud8gi_y7yQivRMi9RARPRE8fmh&index=4

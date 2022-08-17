@@ -6,7 +6,7 @@
 
 #include "stm32f4xx.h"
 
-#define BAUD_RATE 9600
+#define BAUD_RATE 38400
 
 void usart2_enable(void)
 {
