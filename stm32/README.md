@@ -137,8 +137,9 @@ table.
 
 - Make an I2C scanner
   - https://learn.adafruit.com/scanning-i2c-addresses/arduino
-  - Good video on STM32 I2C without HAL https://www.youtube.com/watch?v=usvAIEdp_I8&list=PLfIJKC1ud8gi_y7yQivRMi9RARPRE8fmh&index=4
-  - NOTE: There are special I2C pins on STM32
+  - Good article on STM32 I2C without HAL https://controllerstech.com/stm32-i2c-configuration-using-registers/
+    - Video for article: https://www.youtube.com/watch?v=usvAIEdp_I8&list=PLfIJKC1ud8gi_y7yQivRMi9RARPRE8fmh&index=4
+  - https://stackoverflow.com/questions/24078696/configuring-stm32-output-ports-for-i2c
 - Make DS1307 module to practice I2C
   - https://datasheets.maximintegrated.com/en/ds/DS1307.pdf
 - Create snake game w/ OLED screen and joystick. Could put score/status on LCD
