@@ -25,5 +25,6 @@ endfunction()
 
 stm32_executable(blink)
 stm32_executable(blink_timer)
+stm32_executable(i2c_scanner)
 stm32_executable(lcd_hello)
 stm32_executable(one_digit_7_segment_counter)

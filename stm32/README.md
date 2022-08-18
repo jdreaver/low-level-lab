@@ -26,6 +26,7 @@ I generally avoid these pins because they are special:
 - PB3: JTDO in floating state
 - PB4: NJTRST in pull-up
 - PA0/PA1/PA4/PB0/PC1/PB9/PC0/PB8: These are on the CN8 analog connector.
+  - PB8/PB9 are for I2C1. PB9 is `I2C1_SDA`, PB8 is `I2C1_SCL`
 - PC14/PC15: These can be GPIO or LSE pins, but I noticed when I used them as
   GPIO pins I saw a faint voltage even when LSEON was unset.
   - PC13 also seems fishy
