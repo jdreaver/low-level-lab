@@ -12,7 +12,13 @@ add_custom_target(
         ${CMAKE_CURRENT_LIST_DIR}
     )
 
+# This is how you set -flto in CMake without pain
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 add_compile_options(-Wall -Wextra -pedantic -Wshadow -fanalyzer)
+add_compile_options("$<$<CONFIG:Release>:-O2>")
+add_compile_options("$<$<CONFIG:Debug>:-g3;-ggdb3;-O0;-fsanitize=address,leak,undefined;-fsanitize-undefined-trap-on-error>")
+add_link_options("$<$<CONFIG:Debug>:-fsanitize=address,leak,undefined;-fsanitize-undefined-trap-on-error>")
 
 add_library(file_utils STATIC file_utils.c)
 
