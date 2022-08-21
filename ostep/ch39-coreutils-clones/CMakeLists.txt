@@ -1,7 +1,7 @@
 # Testing out CMake against this module
 
 project(ch39-coreutils-clones LANGUAGES C)
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.24)
 
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
