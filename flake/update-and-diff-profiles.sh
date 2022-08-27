@@ -29,8 +29,12 @@ for shell in $shell_names; do
     generate_profile "$shell" new
 done
 
+LIGHT_BLUE="\e[94m"
+END_COLOR="\e[0m"
+
 for shell in $shell_names; do
-    echo "Diff for shell: $shell"
+    echo ""
+    echo -e "${LIGHT_BLUE}Diff for shell: $shell${END_COLOR}"
 
     old_profile="profile-old-$shell"
     new_profile="profile-new-$shell"
