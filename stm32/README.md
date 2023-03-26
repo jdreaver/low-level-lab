@@ -5,7 +5,7 @@ board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
 
 ## Usage
 
-1. Configure/build CMake using `make configure` and `make build`
+1. Configure/build via CMake using `make configure` and `make build`
 2. Flash a target to a board plugged in via USB with `make FLASH_TARGET=build/path/to.bin flash`
 
 ## References
@@ -80,7 +80,7 @@ I used to have a _fairly_ simple Makefile, but I hit a few snags just using
   builds and dealing with a more complex linking setup.
 
 Resources:
-- I read (Professional CMake)[https://crascit.com/professional-cmake/], which
+- I read [Professional CMake](https://crascit.com/professional-cmake/), which
   helped a ton.
 - Good CMake example for stm32: <https://github.com/ObKo/stm32-cmake>. That repo
   support tons of different boards, HAL, etc and is more complex than I need,
