@@ -82,6 +82,13 @@
         ];
       };
 
+      devShells.x86_64-linux.ebpf = mkShell {
+        nativeBuildInputs = with pkgs; [
+          bcc
+          bpftrace
+        ];
+      };
+
       devShells.x86_64-linux.armv7-cross-compile = mkShell {
         nativeBuildInputs = with pkgs; [
           # C
