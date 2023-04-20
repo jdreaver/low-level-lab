@@ -86,6 +86,10 @@
         nativeBuildInputs = with pkgs; [
           bcc
           bpftrace
+          bpftools
+          libbpf
+          pkgs.llvmPackages_15.tools.llvm # e.g. llvm-objdump
+          pkgs.llvmPackages_15.clang
         ];
       };
 
