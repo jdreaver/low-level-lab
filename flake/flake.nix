@@ -93,6 +93,28 @@
         ];
       };
 
+      devShells.x86_64-linux.os-dev-64-bit = mkShell {
+        nativeBuildInputs = with pkgs; [
+          # C
+          binutils
+          gcc
+          gcc.man
+          gdb
+
+          # LLVM
+          pkgs.llvmPackages_15.tools.llvm # e.g. llvm-objdump
+          pkgs.llvmPackages_15.clang
+
+          # Assembly
+          nasm
+
+          # OS stuff
+          grub2
+          xorriso
+          qemu
+        ];
+      };
+
       devShells.x86_64-linux.i686-cross-compile = mkShell {
         nativeBuildInputs = with pkgs; [
           # C
