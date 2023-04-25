@@ -93,6 +93,24 @@
         ];
       };
 
+      devShells.x86_64-linux.i686-cross-compile = mkShell {
+        nativeBuildInputs = with pkgs; [
+          # C
+          binutils
+          gcc
+          gcc.man
+          gdb
+
+          # OS stuff
+          grub2
+          xorriso
+          qemu
+
+          # Cross compilation packages
+          pkgsCross.i686-embedded.buildPackages.gcc
+        ];
+      };
+
       devShells.x86_64-linux.armv7-cross-compile = mkShell {
         nativeBuildInputs = with pkgs; [
           # C
