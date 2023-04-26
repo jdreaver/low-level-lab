@@ -666,19 +666,12 @@ times 512 - ($ - bootsector_extended) db 0x00
 [bits 64]
 begin_long_mode:
 
+call clear_vga_long
+
+mov rsi, long_mode_note
+call print_vga_long
+
 jmp $
-
-; mov rdi, style_blue
-; call clear_long
-
-; mov rdi, style_blue
-; mov rsi, long_mode_note
-; call print_long
-
-
-long_mode_note:
-        db `Now running in fully-enabled, 64-bit long mode!`, 0
-style_blue:                     equ 0x1F
 
 init_long_mode:
         cli
@@ -690,6 +683,68 @@ init_long_mode:
         mov ss, ax                    ; Set the stack segment to the A-register.
 
         jmp begin_long_mode
+
+
+; Clear the VGA memory. (AKA write blank spaces to every character slot)
+clear_vga_long:
+        push rdi
+        push rax
+        push rcx
+
+        ; Very similar to VGA in 32 bit mode, but we use 64 bit registers
+        xor rax, rax            ; Zero out rax
+        mov ah, vga_white_on_blue
+        mov al, ' '
+
+        ; stosw is "store string word". It starts at rdi, loops rcx times, and
+        ; stores the lower word of rax (which is just ax, or ah + al) at each
+        ; entry.
+        mov rdi, vga_start
+        mov rcx, vga_extent / 2 ; Divide by 2 because we are storing 2 bytes each loop iteration
+        rep stosw               ; stosw: Store AX at address RDI + i, repeat rcx times
+
+        pop rcx
+        pop rax
+        pop rdi
+        ret
+
+; Print a string from rsi to the screen
+print_vga_long:
+        push rax
+        push rdx
+
+        mov rdx, vga_start
+        xor rax, rax            ; Clear rax. We only want to use lower half.
+
+print_vga_long_loop:
+        ; Loop condition
+        cmp byte[rsi], 0        ; Have we reached the end of the string?
+        je print_vga_long_done
+
+        ; Lower part of al is the character to print and ah is the background
+        ; color.
+        mov al, byte[rsi]
+        mov ah, vga_white_on_blue
+
+        ; Write ax (2 bytes) to next spot in VGA
+        mov [rdx], ax
+
+        add rsi, 1
+        ; Increment rdx by 2 (since we're writing 2 bytes)
+        add rdx, 2
+
+        jmp print_vga_long_loop
+
+print_vga_long_done:
+        pop rdx
+        pop rax
+        ret
+
+
+long_mode_note:
+        db `Now running in fully-enabled, 64-bit long mode!`, 0
+
+vga_white_on_blue: equ 0x1F
 
 
 times 512 - ($ - begin_long_mode) db 0x00
