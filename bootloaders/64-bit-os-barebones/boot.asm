@@ -29,7 +29,7 @@ call print_hex_bios
 ; Load the next sector
 mov bx, 0x7C00 + 512            ; Destination is boot sector destination + 512 bytes
 mov cl, 0x02                    ; Start at sector 2 (sectors are 1-based)
-mov dl, 0x01                    ; Load 1 sector
+mov dl, 0x02                    ; Load 2 sectors
 call bios_load
 
 mov bx, about_to_jump_to_protected
@@ -334,11 +334,15 @@ begin_protected:
 
 call clear_vga_protected
 
+; TODO: We could check that the CPU supports long mode, like with:
+; https://github.com/gmarino2048/64bit-os-tutorial/blob/master/Chapter%201/1.6%20-%20Paging/protected_mode/detect_lm.asm
+
 mov esi, protected_alert
 call print_vga_protected
 
-; Loop forever so we can see output
-jmp $
+call init_page_table
+
+call elevate_protected
 
 init_protected_mode:
     ; Congratulations! You're now in 32-bit mode!
@@ -436,5 +440,256 @@ print_vga_protected_done:
 protected_alert:
         db `Now in 32-bit protected mode!`, 0
 
+
+;
+; Page tables
+;
+; See https://wiki.osdev.org/Paging, specifically https://wiki.osdev.org/Paging#64-Bit_Paging
+;
+; We will be using the default 4 level page table structure in x86_64. We will
+; map the 4 levels as follows:
+;
+;   PML4T -> 0x1000 (Page Map Level 4 Table)
+;   PDPT  -> 0x2000 (Page Directory Pointer Table)
+;   PDT   -> 0x3000 (Page Directory Table)
+;   PT    -> 0x4000 (Page table)
+;
+; In x86_64, by default this 4 level structure maps 48-bit virtual addresses to
+; 52-bit physical addresses. This allows us to map 2^48 bytes (256 TB) of
+; virtual memory to 2^52 bytes (4 PB) of physical memory.
+;
+; Each table in the page table has 512 entries, all of which are 8 bytes (one
+; quadword or 64 bits) long. In this step we'll be identity mapping ONLY the
+; lowest 2 MB of memory, since this is all we need for now. Note that this only
+; requires one page table, so the upper 511 entries in the PML4T, PDPT, and PDT
+; will all be NULL.
+;
+; Once we have the zeroth address in all pointing to our page table, we will
+; need to create an identity map, which will point each virtual page to the
+; physical page accessed with that address. Note that in the x86_64
+; architecture, a page is addressed using 12 bits, which corresponds to 4096
+; addressible bytes (4KB). Remember this, it'll be important later.
+
+pt_PML4T_base: equ 0x1000
+pt_PDPT_base:  equ 0x2000
+pt_PDT_base:   equ 0x3000
+pt_PT_base:    equ 0x4000
+
+init_page_table:
+        push eax
+        push ebx
+        push ecx
+        push edx
+
+        ; Clear all page table areas
+
+        ; rep stosd is what's known as a "repeating string command", meaning
+        ; that it will write the same thing over and over until a certain
+        ; criteria is met. How does it know when to stop though? We tell it with
+        ; the eax, edi, and ecx registers. eax is the value to write, edi is the
+        ; start address, and ecx is the number of repetitions to perform.
+        ;
+        ; The 'd' at the end of 'stosd' tells the CPU to write a "double word"
+        ; or 4 bytes with each repetition (the same size as eax). It also
+        ; increments edi by 4 rather than by 1 to ensure no data overlap. So
+        ; let's get into the function then:
+        mov edi, pt_PML4T_base  ; Set the base address for rep stosd. Our page table goes from
+                                ; 0x1000 to 0x4FFF, so we want to start at 0x1000
+        xor eax, eax            ; Set eax to 0. Note that xor is actually faster than "mov eax, 0".
+        mov ecx, 4096           ; Repeat 4096 times. Since each page table is 4096 bytes, and we're
+                                ; writing 4 bytes each repetition, this will zero out all 4 page tables
+        rep stosd               ; Now actually zero out the page table entries
+
+        ; Set up the first entry of each table
+        ;
+        ; Note that page tables MUST be page aligned. This means the lower 12
+        ; bits of the physical address (3 hex digits) MUST be 0. Then, each page
+        ; table entry can use the lower 12 bits as flags for that entry.
+        ;
+        ; You may notice that we're setting our flags to "0b11", because we care only
+        ; about bits 0 and 1. Bit 0 is the "exists" bit, and is only set if the entry
+        ; corresponds to another page table (for the PML4T, PDPT, and PDT) or a page of
+        ; physical memory (in the PT). Obviously we want to set this. Bit 1 is the
+        ; "read/write" bit, which allows us to view and modify the given entry. Since we
+        ; want our OS to have full control, we'll set this as well.
+        mov dword[pt_PML4T_base], pt_PDPT_base | 0b11  ; Set PML4T[0]
+        mov dword[pt_PDPT_base],  pt_PDT_base  | 0b11  ; Set PDPT[0]
+        mov dword[pt_PDT_base],   pt_PT_base   | 0b11  ; Set PDT[0]
+
+        ; Fill in the final page table
+        ;
+        ; We now want to make an Identity Mapping in our PT. We still want to have the flags
+        ; set to 0x0003 as shown above, but we want to set PT[0].addr to 0x00, PT[1].addr to
+        ; 0x01, etc. We'll do this using the "loop" command. In 16 bit mode, we had to program
+        ; loops ourselves using comparison operators, but now we can just use a single command.
+        ;
+        ; The "loop" command is essentially equivalent to the following pseudocode:
+        ; while (ecx > 0){
+        ;   {instructions}
+        ;   ecx --
+        ; }
+        ; Or, more simply: "Do {instructions} ecx times, and decrement ecx each time".
+        ; We can use this loop command to fill in all 512 entries of the page table as follows:
+        mov edi, pt_PT_base      ; Go to PT[0]
+        mov ebx, 0b11            ; EBX has address 0x0000 with bits 0 and 1 (exists bit and read/write bit) set
+        mov ecx, 512             ; Do the operation 512 times
+
+        add_page_entry_protected:
+            ; a = address, x = index of page table, flags are entry flags
+            mov dword[edi], ebx                 ; Write ebx to PT[x] = a.append(flags)
+            add ebx, 0x1000                     ; Increment address of ebx (a+1)
+            add edi, 8                          ; Increment page table location (since entries are 8 bytes)
+            loop add_page_entry_protected       ; Decrement ecx and loop again (not this is `loop`, not `jmp`!)
+
+        ; Set up PAE paging via the 5th bit of cr4, but don't enable it quite
+        ; yet. We need PAE enabled to enter long mode.
+        mov eax, cr4
+        or eax, 1 << 5  ; Set the PAE-bit, which is the 5th bit
+        mov cr4, eax
+
+        ; Return
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        ret
+
+;
+; Long mode GDT
+;
+; Note, we only need this so we can enter long mode. This is exactly the same as
+; the 32 bit GDT, except we set the 64 bit flag instead of the 32 bit flag for
+; both segments, and we set a 0x0000 limit for the data segment because we don't
+; need it.
+
+gdt_64_start:
+
+; Define the null sector for the 64 bit gdt, which is 8 bytes of nulls. Null
+; sector is required for memory integrity check.
+gdt_64_null:
+        ; All values in null entry are 0
+        dd 0x00000000
+        dd 0x00000000
+
+; After the null section comes sector entries, each 8 bytes long.
+gdt_64_code:
+        ; Base:     0x00000
+        ; Limit:    0xFFFFF
+        ; 1st Flags:        0b1001
+        ;   Present:        1  (1 = a valid segment)
+        ;   Privilege:      00 (0 = highest)
+        ;   Descriptor:     1  (1 = code or data segment)
+        ; Type Flags:       0b1010
+        ;   Code:           1  (1 = executable, or code segment)
+        ;   Conforming:     0  (0 = can only be executed from the privilege level set above, which is 0)
+        ;   Readable:       1  (1 = readable. Write access is never allow for code segments)
+        ;   Accessed:       0  (CPU sets this to 1 when accessed. We keep is clear for now)
+        ; 2nd Flags:        0b1100
+        ;   Granularity:    1  (1 = limit is in 4KB blocks, not bytes)
+        ;   32-bit Default: 0  (0 = not 32 bit mode)
+        ;   64-bit Segment: 1  (1 = 64 bit mode Mutually exclusive with previous flag)
+        ;   Reserved:       0  (reserved, always 0)
+
+        dw 0xFFFF           ; Limit (bits 0-15)
+        dw 0x0000           ; Base  (bits 0-15)
+        db 0x00             ; Base  (bits 16-23)
+        db 0b10011010       ; 1st Flags, Type flags
+        db 0b10101111       ; 2nd Flags, Limit (bits 16-19)
+        db 0x00             ; Base  (bits 24-31)
+
+; Define the data sector for the 64 bit gdt
+gdt_64_data:
+        ; Base:     0x00000
+        ; Limit:    0x00000
+        ; 1st Flags:        0b1001
+        ;   Present:        1  (1 = a valid segment)
+        ;   Privilege:      00 (0 = highest)
+        ;   Descriptor:     1  (1 = code or data segment)
+        ; Type Flags:       0b0010
+        ;   Code:           0  (0 = data segment, not code)
+        ;   Expand Down:    0  (0 = data segment grows up, not down)
+        ;   Writeable:      1  (1 = writeable, not read only)
+        ;   Accessed:       0  (CPU sets this to 1 when accessed. We keep is clear for now)
+        ; 2nd Flags:        0b1100
+        ;   Granularity:    1  (1 = limit is in 4KB blocks, not bytes)
+        ;   32-bit Default: 0  (0 = not 32 bit mode)
+        ;   64-bit Segment: 1  (1 = 64 bit mode Mutually exclusive with previous flag)
+        ;   Reserved:       0  (reserved, always 0)
+
+        dw 0x0000           ; Limit (bits 0-15)
+        dw 0x0000           ; Base  (bits 0-15)
+        db 0x00             ; Base  (bits 16-23)
+        db 0b10010010       ; 1st Flags, Type flags
+        db 0b10100000       ; 2nd Flags, Limit (bits 16-19)
+        db 0x00             ; Base  (bits 24-31)
+
+gdt_64_end:
+
+; The GDT descriptor data structure gives the CPU the length and start address
+; of gdt. We will feed this structure to the CPU in order to set the protected
+; mode GDT.
+gdt_64_descriptor:
+        dw gdt_64_end - gdt_64_start - 1        ; Size of GDT, one byte less than true size
+        dd gdt_64_start                         ; Start of the 64 bit gdt
+
+; Define helpers to find pointers to Code and Data segments
+gdt_64_code_seg: equ gdt_64_code - gdt_64_start
+gdt_64_data_seg: equ gdt_64_data - gdt_64_start
+
+elevate_protected:
+        ; Elevate to 64-bit mode
+        mov ecx, 0xC0000080
+        rdmsr
+        or eax, 1 << 8
+        wrmsr
+
+        ; cr3 stores the PML4T physical address. The CPU uses cr3 to locate the
+        ; page table entries.
+        mov eax, pt_PML4T_base
+        mov cr3, eax
+
+        ; Enable paging
+        mov eax, cr0
+        or eax, 1 << 31
+        mov cr0, eax
+
+        lgdt [gdt_64_descriptor]
+        jmp gdt_64_code_seg:init_long_mode
+
 ; Fill with zeros to the end of the sector
 times 512 - ($ - bootsector_extended) db 0x00
+
+;
+; Next sector. Just long mode stuff
+;
+
+[bits 64]
+begin_long_mode:
+
+jmp $
+
+; mov rdi, style_blue
+; call clear_long
+
+; mov rdi, style_blue
+; mov rsi, long_mode_note
+; call print_long
+
+
+long_mode_note:
+        db `Now running in fully-enabled, 64-bit long mode!`, 0
+style_blue:                     equ 0x1F
+
+init_long_mode:
+        cli
+        mov ax, gdt_64_data_seg       ; Set the A-register to the data descriptor.
+        mov ds, ax                    ; Set the data segment to the A-register.
+        mov es, ax                    ; Set the extra segment to the A-register.
+        mov fs, ax                    ; Set the F-segment to the A-register.
+        mov gs, ax                    ; Set the G-segment to the A-register.
+        mov ss, ax                    ; Set the stack segment to the A-register.
+
+        jmp begin_long_mode
+
+
+times 512 - ($ - begin_long_mode) db 0x00
