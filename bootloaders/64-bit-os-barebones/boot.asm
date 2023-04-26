@@ -285,31 +285,6 @@ elevate_bios:
         ; but the type of jump needs to be specified as 'far'
         jmp gdt_32_code_seg:init_protected_mode
 
-[bits 32]
-init_protected_mode:
-    ; Congratulations! You're now in 32-bit mode!
-    ; There's just a bit more setup we need to do before we're ready
-    ; to actually execute instructions
-
-    ; We need to tell all segment registers to point to our flat-mode data
-    ; segment. If you're curious about what all of these do, you might want
-    ; to look on the OSDev Wiki. We will not be using them enough to matter.
-    mov ax, gdt_32_data_seg
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    ; Since the stack pointers got messed up in the elevation process, and we
-    ; want a fresh stack, we need to reset them now.
-    mov ebp, 0x90000
-    mov esp, ebp
-
-    ; Go to the second sector with 32-bit code
-    jmp begin_protected
-[bits 16]
-
 ; Data
 
 ; Boot drive storage. The BIOS stores the boot drive in register dl. The first
@@ -348,7 +323,7 @@ dw 0xaa55
 
 
 ;
-; Next sector
+; Next sector. This sector will only hold 32 bit code.
 ;
 
 [bits 32]
@@ -364,6 +339,29 @@ call print_vga_protected
 
 ; Loop forever so we can see output
 jmp $
+
+init_protected_mode:
+    ; Congratulations! You're now in 32-bit mode!
+    ; There's just a bit more setup we need to do before we're ready
+    ; to actually execute instructions
+
+    ; We need to tell all segment registers to point to our flat-mode data
+    ; segment. If you're curious about what all of these do, you might want
+    ; to look on the OSDev Wiki. We will not be using them enough to matter.
+    mov ax, gdt_32_data_seg
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    ; Since the stack pointers got messed up in the elevation process, and we
+    ; want a fresh stack, we need to reset them now.
+    mov ebp, 0x90000
+    mov esp, ebp
+
+    ; Go to the second sector with 32-bit code
+    jmp begin_protected
 
 ;
 ; VGA stuff. See https://wiki.osdev.org/Printing_To_Screen
