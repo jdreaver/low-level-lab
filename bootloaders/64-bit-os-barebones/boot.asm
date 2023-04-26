@@ -8,25 +8,34 @@
 ; commonly used. So, we'll need to tell NASM to generate 16 bit instructions.
 [BITS 16]
 
-; Print 'Hello'
-;
-; When in BIOS (https://wiki.osdev.org/BIOS), we can BIOS functions to perform
-; certain actions. These functions are activated with interrupts. You set the
-; values of certain registers to select which function to use and to pass args.
-;
-; The BIOS function to print a character is 0x10. The subfunction to print a
-; character is 0x0e. The character to print is passed in the al register.
+; Initialize the base pointer and the stack pointer. Set to 0x7C00, which is
+; where our BIOS is loaded. The space below this should be free, and the stack
+; grows down.
+mov bp, 0x07C00
+mov sp, bp
 
+; Before we do anything else, we want to save the ID of the boot
+; drive, which the BIOS stores in register dl. We can offload this
+; to a specific location in memory
+mov byte[boot_drive], dl
+
+; Load the next sector
+mov bx, 0x7C00 + 512            ; Destination is boot sector destination + 512 bytes
+mov cl, 0x02                    ; Start at sector 2 (sectors are 1-based)
+mov dl, 0x01                    ; Load 1 sector
+call bios_load
+
+; Print some stuff
 mov bx, hello
 call print_bios
 
-mov bx, goodbye
+mov bx, bootsector_extended_msg
 call print_bios
 
 mov dx, 0x8934
 call print_hex_bios
 
-; A simple boot sector program that loops forever
+; Loop forever so we can see output
 loop:
     jmp loop
 
@@ -40,6 +49,11 @@ print_bios:
         push ax
         push bx
 
+        ; When in BIOS (https://wiki.osdev.org/BIOS), we can BIOS functions to
+        ; perform certain actions. These functions are activated with
+        ; interrupts. You set the values of certain registers to select which
+        ; function to use and to pass args.
+        ;
         ; The BIOS function to print a character is 0x10. The subfunction to
         ; print a character is 0x0e. The character to print is passed in the al
         ; register.
@@ -115,12 +129,68 @@ print_hex_bios_end:
 
         ret
 
+; BIOS load function to read more sectors than just the boot sector into memory.
+; See:
+; - https://web.archive.org/web/20201021171813/https://wiki.osdev.org/ATA_in_x86_RealMode_%28BIOS%29
+; - https://github.com/gmarino2048/64bit-os-tutorial/tree/master/Chapter%201/1.3%20-%20Load%20More%20Code
+;
+; Args:
+;   bx: destination buffer (only uses bl)
+;   cl: start sector (ch is overwritten). Also remember sectors are 1-based
+;   dl: number of sectors to load
+bios_load:
+        push dx                 ; Save number of sectors to read
+
+        ; For now, we only need to load a few sectors, so we can assume we are
+        ; on the 0th cylinder and the 0th head.
+        mov ah, 0x02            ; BIOS function to read sectors
+        mov al, dl              ; Number of sectors to read
+        ; bl contains the destination address
+        mov ch, 0x00            ; Cylinder number
+        ; cl contains the sector number
+        mov dh, 0x00            ; Head number
+        mov dl, [boot_drive]    ; Boot drive number
+        int 0x13                ; Call BIOS interrupt
+
+        ; If there's a read error, then the BIOS function will set the 'carry'
+        ; bit in the 8086 special register. We can use the 'jc' command to 'jump
+        ; if the carry bit is set'. We'll jump to the error handling function
+        ; defined below
+        jc bios_load_disk_error
+
+        pop dx                ; get back original number of sectors to read
+        cmp al, dl            ; BIOS sets 'al' to the # of sectors actually read
+        jne bios_load_sectors_error   ; compare it to 'dl' and error out if they are !=
+
+        ; We already popped dx above
+        ret
+
+bios_load_disk_error:
+        mov bx, bios_disk_error_string
+        call print_bios
+        jmp loop
+
+bios_load_sectors_error:
+        mov bx, bios_sector_error_string
+        call print_bios
+        jmp loop
+
 ; Data
+
+; Boot drive storage. The BIOS stores the boot drive in register dl. The first
+; thing we do is save it to this location in memory.
+boot_drive:
+        db 0x00
+
 hello:
         db `Hello, World!\r\n`, 0
 
-goodbye:
-        db `Goodbye!\r\n`, 0
+bios_disk_error_string:
+        db `Error reading disk\r\n`, 0
+
+bios_sector_error_string:
+        db `Error reading disk: not enough sectors loaded\r\n`, 0
+
 
 ; The magic number must come at the end of the boot
 ; sector. We need to fill the space with zeros to ensure that
@@ -131,9 +201,18 @@ goodbye:
 ; to pad the rest. Remeber, we will use the '$' and '$$' commands to
 ; determine how much space is left between the final instruction and
 ; the magic number.
-times 510-($-$$) db 0
+times 510 - ($ - $$) db 0x00
 
 ; The 'dw' command stands for "define word", and puts
 ; a 16-bit literal integer at that specific location in the file.
 ; We use 'dw' here to define the magic number, 'AA55'
 dw 0xaa55
+
+; This will be loaded into the sector _after_ the boot sector.
+bootsector_extended:
+
+bootsector_extended_msg:
+        db `Now reading from the next sector!\r\n`, 0
+
+; Fill with zeros to the end of the sector
+times 512 - ($ - bootsector_extended) db 0x00
