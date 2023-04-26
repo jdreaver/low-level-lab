@@ -23,7 +23,12 @@ call print_bios
 mov bx, goodbye
 call print_bios
 
-jmp loop
+mov dx, 0x8934
+call print_hex_bios
+
+; A simple boot sector program that loops forever
+loop:
+    jmp loop
 
 ; Define function print_bios
 ; Input pointer to string in bx
@@ -59,16 +64,63 @@ print_bios_done:
         ; C, but you can't give it a value.
         ret
 
-; A simple boot sector program that loops forever
-loop:
-    jmp loop
+
+; Define print_hex_bios
+; The number to print is in the dx register
+print_hex_bios:
+        ; Save registers we will use
+        push ax
+        push bx
+        push cx
+
+        ; The BIOS function to print a character is 0x10. The subfunction to
+        ; print a character is 0x0e. The character to print is passed in the al
+        ; register.
+        mov ah, 0x0e
+
+        ; Print the "0x" prefix
+        mov al, '0'
+        int 0x10
+        mov al, 'x'
+        int 0x10
+
+        ; Set number of digits to print
+        mov cx, 4
+
+print_hex_bios_loop:
+        cmp cx, 0               ; Check if we've printed all the digits
+        je print_hex_bios_end   ; If we have, we're done
+        dec cx                  ; Decrement the digit counter
+
+        ; Rotate the number left so the most significant nibble is in the
+        ; least significant position
+        rol dx, 4
+        mov bx, dx              ; Copy least significant nibble to bx
+        and bx, 0x0f            ; Mask out all but the least significant nibble
+        add bx, '0'             ; Convert to ASCII
+        cmp bx, '9'             ; Check if the nibble is greater than 9
+        jle print_hex_bios_print_char ; If it's not, it's a number
+        add bx, 'A' - '9'       ; Otherwise, it's a letter ('A' is 0x40 in ASCII and '9' is 0x39)
+
+print_hex_bios_print_char:
+        mov al, bl              ; Move the char to print into al
+        int 0x10                ; Print the char
+        jmp print_hex_bios_loop ; Loop back to the beginning
+
+print_hex_bios_end:
+        ; Restore registers
+        pop cx
+        pop bx
+        pop ax
+
+        ret
 
 ; Data
 hello:
-    db `Hello, World!\r\n`, 0
+        db `Hello, World!\r\n`, 0
 
 goodbye:
-    db `Goodbye!\r\n`, 0
+        db `Goodbye!\r\n`, 0
 
 ; The magic number must come at the end of the boot
 ; sector. We need to fill the space with zeros to ensure that
