@@ -29,7 +29,7 @@ call print_hex_bios
 ; Load the next sector
 mov bx, 0x7C00 + 512            ; Destination is boot sector destination + 512 bytes
 mov cl, 0x02                    ; Start at sector 2 (sectors are 1-based)
-mov dl, 0x02                    ; Load 2 sectors
+mov dl, 3                       ; Load 3 sectors
 call bios_load
 
 mov bx, about_to_jump_to_protected
@@ -671,7 +671,8 @@ call clear_vga_long
 mov rsi, long_mode_note
 call print_vga_long
 
-jmp $
+kernel_start: equ 0x8200 ; Kernel is at 1MB
+call kernel_start
 
 init_long_mode:
         cli

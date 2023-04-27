@@ -104,6 +104,7 @@
           # LLVM
           pkgs.llvmPackages_15.tools.llvm # e.g. llvm-objdump
           pkgs.llvmPackages_15.clang
+          pkgs.llvmPackages_15.lld
 
           # Assembly
           nasm
