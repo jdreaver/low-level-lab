@@ -559,8 +559,8 @@ init_page_table:
 ;
 ; Note, we only need this so we can enter long mode. This is exactly the same as
 ; the 32 bit GDT, except we set the 64 bit flag instead of the 32 bit flag for
-; both segments, and we set a 0x0000 limit for the data segment because we don't
-; need it.
+; both segments. Also, the base and limit are ignored in 64 bit mode; each
+; descriptor covers the entire linear address space.
 
 gdt_64_start:
 
@@ -574,7 +574,7 @@ gdt_64_null:
 ; After the null section comes sector entries, each 8 bytes long.
 gdt_64_code:
         ; Base:     0x00000
-        ; Limit:    0xFFFFF
+        ; Limit:    0x00000
         ; 1st Flags:        0b1001
         ;   Present:        1  (1 = a valid segment)
         ;   Privilege:      00 (0 = highest)
@@ -590,11 +590,11 @@ gdt_64_code:
         ;   64-bit Segment: 1  (1 = 64 bit mode Mutually exclusive with previous flag)
         ;   Reserved:       0  (reserved, always 0)
 
-        dw 0xFFFF           ; Limit (bits 0-15)
+        dw 0x0000           ; Limit (bits 0-15)
         dw 0x0000           ; Base  (bits 0-15)
         db 0x00             ; Base  (bits 16-23)
         db 0b10011010       ; 1st Flags, Type flags
-        db 0b10101111       ; 2nd Flags, Limit (bits 16-19)
+        db 0b10100000       ; 2nd Flags, Limit (bits 16-19)
         db 0x00             ; Base  (bits 24-31)
 
 ; Define the data sector for the 64 bit gdt
