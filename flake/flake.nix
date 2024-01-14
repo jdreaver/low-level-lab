@@ -164,7 +164,7 @@
         ];
       };
 
-      devShells.x86_64-linux.stm32 = mkShell {
+      devShells.x86_64-linux.stm32-c = mkShell {
         nativeBuildInputs = with pkgs; [
           # C
           gcc

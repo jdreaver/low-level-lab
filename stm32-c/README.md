@@ -1,4 +1,4 @@
-# STM32
+# STM32 C Code
 
 Bits of code for STM32 microcontrollers. I bought an [STMF401RE Nucleo
 board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html).
